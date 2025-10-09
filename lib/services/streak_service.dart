@@ -1,69 +1,101 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/streak.dart';
-import 'package:flutter/foundation.dart';
+import '../services/local_storage.dart';
 
-class StreakService {
+/// Global provider to access streak state and actions reactively
+final streakServiceProvider =
+    StateNotifierProvider<StreakServiceNotifier, StreakData>((ref) {
+  return StreakServiceNotifier();
+});
+
+class StreakServiceNotifier extends StateNotifier<StreakData> {
   static const _key = 'streak_data';
 
-  // Global live notifier for UI to listen to
-  final ValueNotifier<StreakData> notifier =
-      ValueNotifier<StreakData>(StreakData(currentStreak: 0, longestStreak: 0, totalXP: 0));
+  StreakServiceNotifier()
+      : super(StreakData(
+          currentStreak: 0,
+          longestStreak: 0,
+          totalXP: 0,
+          lastCompletion: null,
+        )) {
+    _load();
+  }
 
-  Future<StreakData> load() async {
+  // ---------------- LOAD / SAVE ----------------
+
+  Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_key);
     if (raw == null) {
-      final data = StreakData(currentStreak: 0, longestStreak: 0, totalXP: 0);
-      notifier.value = data;
-      return data;
+      await _save(state);
+      return;
     }
     final data = StreakData.fromJson(jsonDecode(raw));
-    notifier.value = data;
-    return data;
+    state = data;
   }
 
-  Future<void> save(StreakData data) async {
+  Future<void> _save(StreakData data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, jsonEncode(data.toJson()));
-    notifier.value = data;
+    state = data;
   }
 
+  // ---------------- INCREMENT ----------------
+
+  /// Called when user completes a habit for today
   Future<void> increment({int xp = 15}) async {
-    final data = await load();
     final today = DateTime.now();
     final yesterday = today.subtract(const Duration(days: 1));
-    bool continues = data.lastCompletion != null &&
-        _ymd(data.lastCompletion!) == _ymd(yesterday);
 
-    final newStreak = continues ? data.currentStreak + 1 : 1;
-    final longest = newStreak > data.longestStreak ? newStreak : data.longestStreak;
+    final lastCompletion = state.lastCompletion;
+    final continues =
+        lastCompletion != null && _isSameDay(lastCompletion, yesterday);
 
-    await save(StreakData(
+    final newStreak = continues ? state.currentStreak + 1 : 1;
+    final longest =
+        newStreak > state.longestStreak ? newStreak : state.longestStreak;
+
+    final updated = state.copyWith(
       currentStreak: newStreak,
       longestStreak: longest,
-      totalXP: data.totalXP + xp,
+      totalXP: state.totalXP + xp,
       lastCompletion: today,
-    ));
+    );
+    await _save(updated);
   }
 
+  // ---------------- RESET / CHECK ----------------
+
+  /// Called each morning (5am job) to reset streaks if missed 2+ days
   Future<void> checkAndResetStreaks() async {
-    final data = await load();
     final today = DateTime.now();
-    if (data.lastCompletion == null) return;
-    if (today.difference(data.lastCompletion!).inDays >= 2) {
-      await save(StreakData(
+    if (state.lastCompletion == null) return;
+    final diff = today.difference(state.lastCompletion!).inDays;
+    if (diff >= 2) {
+      final reset = state.copyWith(
         currentStreak: 0,
-        longestStreak: data.longestStreak,
-        totalXP: data.totalXP,
-        lastCompletion: data.lastCompletion,
         lastMissed: today,
-      ));
+      );
+      await _save(reset);
     }
   }
 
-  String _ymd(DateTime d) => '${d.year}-${d.month}-${d.day}';
+  /// Force recompute from actual habit data (for full accuracy)
+  Future<void> refreshStreaks() async {
+    final current = LocalStorageService.calculateCurrentStreak();
+    final longest = LocalStorageService.calculateLongestStreak();
+    final updated = state.copyWith(
+      currentStreak: current,
+      longestStreak: longest,
+    );
+    await _save(updated);
+  }
+
+  // ---------------- UTIL ----------------
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 }
-
-final streakService = StreakService();
-
