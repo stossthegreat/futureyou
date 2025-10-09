@@ -154,9 +154,13 @@ class HabitEngine extends StateNotifier<HabitEngineState> {
       await LocalStorageService.deleteHabit(habitId);
       print('🗑️ Deleted from local storage');
       
-      // Cancel alarm
-      await AlarmService.cancelAlarm(habitId);
-      print('🗑️ Cancelled alarm');
+      // Cancel alarm (skip on non-Android platforms)
+      try {
+        await AlarmService.cancelAlarm(habitId);
+        print('🗑️ Cancelled alarm');
+      } catch (e) {
+        print('🗑️ Skipped alarm cancel (not Android): $e');
+      }
       
       // Reload to reflect removal
       await _loadHabits();
