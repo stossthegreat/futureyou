@@ -60,7 +60,6 @@ class Habit extends HiveObject {
     this.xp = 0,
   });
 
-  // Helper methods
   TimeOfDay get timeOfDay {
     final parts = time.split(':');
     return TimeOfDay(
@@ -69,25 +68,25 @@ class Habit extends HiveObject {
     );
   }
 
+  /// Checks if the habit is scheduled on a given date.
   bool isScheduledForDate(DateTime date) {
-    // Check if date is within range
     final dateOnly = DateTime(date.year, date.month, date.day);
     final startOnly = DateTime(startDate.year, startDate.month, startDate.day);
     final endOnly = DateTime(endDate.year, endDate.month, endDate.day);
-    
-    if (dateOnly.isBefore(startOnly) || dateOnly.isAfter(endOnly)) {
-      return false;
-    }
+    if (dateOnly.isBefore(startOnly) || dateOnly.isAfter(endOnly)) return false;
 
-    // Check if weekday matches repeatDays
-    // Dart: Monday=1, Tuesday=2, ..., Sunday=7
-    // Our system: Sunday=0, Monday=1, ..., Saturday=6
-    final weekday = date.weekday == 7 ? 0 : date.weekday; // Convert Sunday from 7 to 0
+    final weekday = date.weekday == 7 ? 0 : date.weekday; // convert Sunday
     return repeatDays.contains(weekday);
   }
 
-  bool isScheduledForToday() {
-    return isScheduledForDate(DateTime.now());
+  bool isScheduledForToday() => isScheduledForDate(DateTime.now());
+
+  /// NEW — checks if marked done on a specific date
+  bool isDoneOn(DateTime date) {
+    if (completedAt == null) return false;
+    final d = DateTime(date.year, date.month, date.day);
+    final c = DateTime(completedAt!.year, completedAt!.month, completedAt!.day);
+    return d == c;
   }
 
   Habit copyWith({
@@ -122,41 +121,37 @@ class Habit extends HiveObject {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'type': type,
-      'time': time,
-      'startDate': startDate.toIso8601String(),
-      'endDate': endDate.toIso8601String(),
-      'repeatDays': repeatDays,
-      'done': done,
-      'reminderOn': reminderOn,
-      'createdAt': createdAt.toIso8601String(),
-      'completedAt': completedAt?.toIso8601String(),
-      'streak': streak,
-      'xp': xp,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'type': type,
+        'time': time,
+        'startDate': startDate.toIso8601String(),
+        'endDate': endDate.toIso8601String(),
+        'repeatDays': repeatDays,
+        'done': done,
+        'reminderOn': reminderOn,
+        'createdAt': createdAt.toIso8601String(),
+        'completedAt': completedAt?.toIso8601String(),
+        'streak': streak,
+        'xp': xp,
+      };
 
-  factory Habit.fromJson(Map<String, dynamic> json) {
-    return Habit(
-      id: json['id'],
-      title: json['title'],
-      type: json['type'],
-      time: json['time'],
-      startDate: DateTime.parse(json['startDate']),
-      endDate: DateTime.parse(json['endDate']),
-      repeatDays: List<int>.from(json['repeatDays']),
-      done: json['done'] ?? false,
-      reminderOn: json['reminderOn'] ?? true,
-      createdAt: DateTime.parse(json['createdAt']),
-      completedAt: json['completedAt'] != null 
-          ? DateTime.parse(json['completedAt']) 
-          : null,
-      streak: json['streak'] ?? 0,
-      xp: json['xp'] ?? 0,
-    );
-  }
+  factory Habit.fromJson(Map<String, dynamic> json) => Habit(
+        id: json['id'],
+        title: json['title'],
+        type: json['type'],
+        time: json['time'],
+        startDate: DateTime.parse(json['startDate']),
+        endDate: DateTime.parse(json['endDate']),
+        repeatDays: List<int>.from(json['repeatDays']),
+        done: json['done'] ?? false,
+        reminderOn: json['reminderOn'] ?? true,
+        createdAt: DateTime.parse(json['createdAt']),
+        completedAt: json['completedAt'] != null
+            ? DateTime.parse(json['completedAt'])
+            : null,
+        streak: json['streak'] ?? 0,
+        xp: json['xp'] ?? 0,
+      );
 }
