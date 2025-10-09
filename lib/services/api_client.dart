@@ -1,0 +1,383 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
+import '../models/habit.dart';
+
+class ApiClient {
+  static const String _baseUrl = 'https://api.futureyouos.com'; // Replace with actual backend URL
+  static const Duration _timeout = Duration(seconds: 30);
+  
+  static final Map<String, String> _defaultHeaders = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+  
+  // Authentication token (to be set after login)
+  static String? _authToken;
+  
+  static void setAuthToken(String token) {
+    _authToken = token;
+  }
+  
+  static Map<String, String> get _headers {
+    final headers = Map<String, String>.from(_defaultHeaders);
+    if (_authToken != null) {
+      headers['Authorization'] = 'Bearer $_authToken';
+    }
+    return headers;
+  }
+  
+  // Generic HTTP methods
+  static Future<http.Response> _get(String endpoint) async {
+    try {
+      final uri = Uri.parse('$_baseUrl$endpoint');
+      final response = await http.get(uri, headers: _headers).timeout(_timeout);
+      return response;
+    } catch (e) {
+      debugPrint('GET request failed: $e');
+      rethrow;
+    }
+  }
+  
+  static Future<http.Response> _post(String endpoint, Map<String, dynamic> data) async {
+    try {
+      final uri = Uri.parse('$_baseUrl$endpoint');
+      final response = await http.post(
+        uri,
+        headers: _headers,
+        body: jsonEncode(data),
+      ).timeout(_timeout);
+      return response;
+    } catch (e) {
+      debugPrint('POST request failed: $e');
+      rethrow;
+    }
+  }
+  
+  static Future<http.Response> _put(String endpoint, Map<String, dynamic> data) async {
+    try {
+      final uri = Uri.parse('$_baseUrl$endpoint');
+      final response = await http.put(
+        uri,
+        headers: _headers,
+        body: jsonEncode(data),
+      ).timeout(_timeout);
+      return response;
+    } catch (e) {
+      debugPrint('PUT request failed: $e');
+      rethrow;
+    }
+  }
+  
+  static Future<http.Response> _delete(String endpoint) async {
+    try {
+      final uri = Uri.parse('$_baseUrl$endpoint');
+      final response = await http.delete(uri, headers: _headers).timeout(_timeout);
+      return response;
+    } catch (e) {
+      debugPrint('DELETE request failed: $e');
+      rethrow;
+    }
+  }
+  
+  // Habit API endpoints
+  static Future<ApiResponse<Habit>> createHabit(Habit habit) async {
+    try {
+      final response = await _post('/habits', habit.toJson());
+      
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return ApiResponse.success(Habit.fromJson(data));
+      } else {
+        return ApiResponse.error('Failed to create habit: ${response.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+  
+  static Future<ApiResponse<Habit>> updateHabit(Habit habit) async {
+    try {
+      final response = await _put('/habits/${habit.id}', habit.toJson());
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return ApiResponse.success(Habit.fromJson(data));
+      } else {
+        return ApiResponse.error('Failed to update habit: ${response.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+  
+  static Future<ApiResponse<void>> deleteHabit(String habitId) async {
+    try {
+      final response = await _delete('/habits/$habitId');
+      
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return ApiResponse.success(null);
+      } else {
+        return ApiResponse.error('Failed to delete habit: ${response.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+  
+  static Future<ApiResponse<List<Habit>>> getHabits() async {
+    try {
+      final response = await _get('/habits');
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        final habits = data.map((json) => Habit.fromJson(json)).toList();
+        return ApiResponse.success(habits);
+      } else {
+        return ApiResponse.error('Failed to fetch habits: ${response.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+  
+  static Future<ApiResponse<void>> logAction(String habitId, bool completed, DateTime timestamp) async {
+    try {
+      final data = {
+        'habitId': habitId,
+        'completed': completed,
+        'timestamp': timestamp.toIso8601String(),
+      };
+      
+      final response = await _post('/habits/log', data);
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return ApiResponse.success(null);
+      } else {
+        return ApiResponse.error('Failed to log action: ${response.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+  
+  // Chat API endpoints
+  static Future<ApiResponse<ChatResponse>> sendChatMessage(String message) async {
+    try {
+      final data = {
+        'message': message,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+      
+      final response = await _post('/chat/send', data);
+      
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return ApiResponse.success(ChatResponse.fromJson(responseData));
+      } else {
+        return ApiResponse.error('Failed to send message: ${response.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+  
+  static Future<ApiResponse<List<ChatMessage>>> getChatHistory() async {
+    try {
+      final response = await _get('/chat/history');
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        final messages = data.map((json) => ChatMessage.fromJson(json)).toList();
+        return ApiResponse.success(messages);
+      } else {
+        return ApiResponse.error('Failed to fetch chat history: ${response.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+  
+  // Sync API endpoints
+  static Future<ApiResponse<SyncResponse>> syncAll(List<Habit> localHabits) async {
+    try {
+      final data = {
+        'habits': localHabits.map((h) => h.toJson()).toList(),
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+      
+      final response = await _post('/sync/all', data);
+      
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return ApiResponse.success(SyncResponse.fromJson(responseData));
+      } else {
+        return ApiResponse.error('Failed to sync: ${response.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+  
+  // Analytics API endpoints
+  static Future<ApiResponse<AnalyticsData>> getAnalytics(DateTime startDate, DateTime endDate) async {
+    try {
+      final queryParams = {
+        'startDate': startDate.toIso8601String(),
+        'endDate': endDate.toIso8601String(),
+      };
+      
+      final uri = Uri.parse('$_baseUrl/analytics').replace(queryParameters: queryParams);
+      final response = await http.get(uri, headers: _headers).timeout(_timeout);
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return ApiResponse.success(AnalyticsData.fromJson(data));
+      } else {
+        return ApiResponse.error('Failed to fetch analytics: ${response.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+}
+
+// Response wrapper class
+class ApiResponse<T> {
+  final bool success;
+  final T? data;
+  final String? error;
+  
+  ApiResponse.success(this.data) : success = true, error = null;
+  ApiResponse.error(this.error) : success = false, data = null;
+}
+
+// Chat related models
+class ChatMessage {
+  final String id;
+  final String role; // 'user' or 'future'
+  final String text;
+  final DateTime timestamp;
+  
+  ChatMessage({
+    required this.id,
+    required this.role,
+    required this.text,
+    required this.timestamp,
+  });
+  
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    return ChatMessage(
+      id: json['id'],
+      role: json['role'],
+      text: json['text'],
+      timestamp: DateTime.parse(json['timestamp']),
+    );
+  }
+  
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'role': role,
+      'text': text,
+      'timestamp': timestamp.toIso8601String(),
+    };
+  }
+}
+
+class ChatResponse {
+  final String message;
+  final List<QuickCommit>? quickCommits;
+  
+  ChatResponse({
+    required this.message,
+    this.quickCommits,
+  });
+  
+  factory ChatResponse.fromJson(Map<String, dynamic> json) {
+    return ChatResponse(
+      message: json['message'],
+      quickCommits: json['quickCommits'] != null
+          ? (json['quickCommits'] as List)
+              .map((q) => QuickCommit.fromJson(q))
+              .toList()
+          : null,
+    );
+  }
+}
+
+class QuickCommit {
+  final String label;
+  final String type;
+  final String title;
+  final String time;
+  
+  QuickCommit({
+    required this.label,
+    required this.type,
+    required this.title,
+    required this.time,
+  });
+  
+  factory QuickCommit.fromJson(Map<String, dynamic> json) {
+    return QuickCommit(
+      label: json['label'],
+      type: json['type'],
+      title: json['title'],
+      time: json['time'],
+    );
+  }
+}
+
+// Sync related models
+class SyncResponse {
+  final List<Habit> updatedHabits;
+  final List<String> deletedHabitIds;
+  final DateTime lastSyncTime;
+  
+  SyncResponse({
+    required this.updatedHabits,
+    required this.deletedHabitIds,
+    required this.lastSyncTime,
+  });
+  
+  factory SyncResponse.fromJson(Map<String, dynamic> json) {
+    return SyncResponse(
+      updatedHabits: (json['updatedHabits'] as List)
+          .map((h) => Habit.fromJson(h))
+          .toList(),
+      deletedHabitIds: List<String>.from(json['deletedHabitIds']),
+      lastSyncTime: DateTime.parse(json['lastSyncTime']),
+    );
+  }
+}
+
+// Analytics related models
+class AnalyticsData {
+  final double averageFulfillment;
+  final int totalHabits;
+  final int completedHabits;
+  final int currentStreak;
+  final int longestStreak;
+  final Map<String, double> weeklyTrends;
+  
+  AnalyticsData({
+    required this.averageFulfillment,
+    required this.totalHabits,
+    required this.completedHabits,
+    required this.currentStreak,
+    required this.longestStreak,
+    required this.weeklyTrends,
+  });
+  
+  factory AnalyticsData.fromJson(Map<String, dynamic> json) {
+    return AnalyticsData(
+      averageFulfillment: json['averageFulfillment'].toDouble(),
+      totalHabits: json['totalHabits'],
+      completedHabits: json['completedHabits'],
+      currentStreak: json['currentStreak'],
+      longestStreak: json['longestStreak'],
+      weeklyTrends: Map<String, double>.from(json['weeklyTrends']),
+    );
+  }
+}
