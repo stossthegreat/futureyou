@@ -12,28 +12,23 @@ if (localPropertiesFile.exists()) {
     }
 }
 
-def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
-if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
-}
-
-def flutterVersionName = localProperties.getProperty('flutter.versionName')
-if (flutterVersionName == null) {
-    flutterVersionName = '1.0'
-}
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode') ?: '1'
+def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '1.0'
 
 android {
     namespace "com.example.future_you_os"
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
+    // ✅ Java 11 + core library desugaring (required by flutter_local_notifications)
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
 
     sourceSets {
@@ -51,6 +46,7 @@ android {
 
     buildTypes {
         release {
+            // TODO: add release signing later; debug key for now
             signingConfig signingConfigs.debug
         }
     }
@@ -58,4 +54,12 @@ android {
 
 flutter {
     source '../..'
+}
+
+dependencies {
+    // ✅ Required for flutter_local_notifications and Java 8/11 APIs
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+
+    // ✅ Required for multidex
+    implementation "androidx.multidex:multidex:2.0.1"
 }
