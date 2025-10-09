@@ -13,6 +13,23 @@ class StreakData {
     this.lastMissed,
   });
 
+  // ✅ Add this missing method
+  StreakData copyWith({
+    int? currentStreak,
+    int? longestStreak,
+    int? totalXP,
+    DateTime? lastCompletion,
+    DateTime? lastMissed,
+  }) {
+    return StreakData(
+      currentStreak: currentStreak ?? this.currentStreak,
+      longestStreak: longestStreak ?? this.longestStreak,
+      totalXP: totalXP ?? this.totalXP,
+      lastCompletion: lastCompletion ?? this.lastCompletion,
+      lastMissed: lastMissed ?? this.lastMissed,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'currentStreak': currentStreak,
         'longestStreak': longestStreak,
@@ -33,4 +50,3 @@ class StreakData {
             : null,
       );
 }
-
