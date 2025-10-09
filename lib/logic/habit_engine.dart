@@ -6,9 +6,9 @@ import '../services/api_client.dart';
 import '../services/alarm_service.dart';
 import '../services/streak_service.dart';
 
-// Provider for the habit engine
-final habitEngineProvider = StateNotifierProvider<HabitEngine, HabitEngineState>((ref) {
-  return HabitEngine();
+final habitEngineProvider =
+    StateNotifierProvider<HabitEngine, HabitEngineState>((ref) {
+  return HabitEngine(ref);
 });
 
 class HabitEngineState {
@@ -16,14 +16,14 @@ class HabitEngineState {
   final bool isLoading;
   final String? error;
   final bool isSyncing;
-  
+
   const HabitEngineState({
     this.habits = const [],
     this.isLoading = false,
     this.error,
     this.isSyncing = false,
   });
-  
+
   HabitEngineState copyWith({
     List<Habit>? habits,
     bool? isLoading,
@@ -40,17 +40,15 @@ class HabitEngineState {
 }
 
 class HabitEngine extends StateNotifier<HabitEngineState> {
+  final Ref ref;
   static const Uuid _uuid = Uuid();
-  final StreakService streakService = StreakService();
-  
-  HabitEngine() : super(const HabitEngineState()) {
+
+  HabitEngine(this.ref) : super(const HabitEngineState()) {
     _loadHabits();
   }
-  
-  // Load habits from local storage
+
+  // -------------------- LOAD --------------------
   Future<void> _loadHabits() async {
-    state = state.copyWith(isLoading: true, error: null);
-    
     try {
       final habits = LocalStorageService.getAllHabits();
       state = state.copyWith(habits: habits, isLoading: false);
@@ -58,13 +56,10 @@ class HabitEngine extends StateNotifier<HabitEngineState> {
       state = state.copyWith(error: e.toString(), isLoading: false);
     }
   }
-  
-  // Public method to reload habits (for refresh)
-  Future<void> reloadHabits() async {
-    await _loadHabits();
-  }
-  
-  // Create a new habit
+
+  Future<void> reloadHabits() async => _loadHabits();
+
+  // -------------------- CREATE --------------------
   Future<void> createHabit({
     required String title,
     required String type,
@@ -74,11 +69,11 @@ class HabitEngine extends StateNotifier<HabitEngineState> {
     List<int>? repeatDays,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final habit = Habit(
         id: _uuid.v4(),
-        title: title,
+        title: title.trim(),
         type: type,
         time: time,
         startDate: startDate ?? DateTime.now(),
@@ -86,150 +81,86 @@ class HabitEngine extends StateNotifier<HabitEngineState> {
         repeatDays: repeatDays ?? _getDefaultRepeatDays(type),
         createdAt: DateTime.now(),
       );
-      
-      // Save locally
+
       await LocalStorageService.saveHabit(habit);
-      
-      // Schedule alarm
       await AlarmService.scheduleAlarm(habit);
-      
-      // Reload from storage to ensure single source of truth
+
       await _loadHabits();
       state = state.copyWith(isLoading: false);
-      
-      print('✅ Habit created: ${habit.title}');
-      print('📅 RepeatDays: ${habit.repeatDays}');
-      print('📅 StartDate: ${habit.startDate}');
-      print('📅 EndDate: ${habit.endDate}');
-      print('📅 Total habits now: ${state.habits.length}');
-      
-      // Test if habit is scheduled for today
-      final today = DateTime.now();
-      final isScheduledToday = habit.isScheduledForDate(today);
-      print('📅 Scheduled for today (${today.weekday}): $isScheduledToday');
-      
-      // Sync to backend (fire and forget)
       _syncHabitToBackend(habit);
-      
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
     }
   }
-  
-  // Update an existing habit
+
+  // -------------------- UPDATE --------------------
   Future<void> updateHabit(Habit updatedHabit) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
     try {
-      // Save locally
       await LocalStorageService.saveHabit(updatedHabit);
-      
-      // Reschedule alarm
       await AlarmService.cancelAlarm(updatedHabit.id);
       await AlarmService.scheduleAlarm(updatedHabit);
-      
-      // Reload to reflect latest persisted state
       await _loadHabits();
-      state = state.copyWith(isLoading: false);
-      
-      // Sync to backend (fire and forget)
       _syncHabitToBackend(updatedHabit);
-      
     } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
+      state = state.copyWith(error: e.toString());
     }
   }
-  
-  // Delete a habit
+
+  // -------------------- DELETE --------------------
   Future<void> deleteHabit(String habitId) async {
-    print('🗑️ Attempting to delete habit: $habitId');
-    state = state.copyWith(isLoading: true, error: null);
-    
     try {
-      // Find the habit first
-      final habitToDelete = state.habits.firstWhere((h) => h.id == habitId);
-      print('🗑️ Found habit to delete: ${habitToDelete.title}');
-      
-      // Delete locally
       await LocalStorageService.deleteHabit(habitId);
-      print('🗑️ Deleted from local storage');
-      
-      // Cancel alarm (skip on non-Android platforms)
-      try {
-        await AlarmService.cancelAlarm(habitId);
-        print('🗑️ Cancelled alarm');
-      } catch (e) {
-        print('🗑️ Skipped alarm cancel (not Android): $e');
-      }
-      
-      // Reload to reflect removal
+      await AlarmService.cancelAlarm(habitId);
       await _loadHabits();
-      state = state.copyWith(isLoading: false);
-      
-      print('🗑️ Habit deleted successfully: $habitId');
-      print('📅 Total habits now: ${state.habits.length}');
-      
-      // Sync to backend (fire and forget)
       _deleteHabitFromBackend(habitId);
-      
     } catch (e) {
-      print('❌ Error deleting habit: $e');
-      state = state.copyWith(error: e.toString(), isLoading: false);
-      rethrow;
+      state = state.copyWith(error: e.toString());
     }
   }
-  
-  // Toggle habit completion
+
+  // -------------------- TOGGLE COMPLETION --------------------
   Future<void> toggleHabitCompletion(String habitId) async {
     final habit = state.habits.firstWhere((h) => h.id == habitId);
-    final updatedHabit = habit.copyWith(
-      done: !habit.done,
-      completedAt: !habit.done ? DateTime.now() : null,
-      streak: !habit.done ? habit.streak + 1 : habit.streak,
-      xp: !habit.done ? habit.xp + _calculateXP(habit) : habit.xp,
+    final nowDone = !habit.done;
+    final updated = habit.copyWith(
+      done: nowDone,
+      completedAt: nowDone ? DateTime.now() : null,
+      streak: nowDone ? habit.streak + 1 : 0,
+      xp: nowDone ? habit.xp + _calculateXP(habit) : habit.xp,
     );
-    
-    await updateHabit(updatedHabit);
-    
-    // Log action to backend
-    syncHabitCompletion(habitId, !habit.done);
 
-    // Update streaks
-    if (!habit.done) {
-      await streakService.increment(xp: 15 + (updatedHabit.streak ~/ 7) * 5);
-    }
+    await LocalStorageService.saveHabit(updated);
+    await _loadHabits();
+
+    // update streak service
+    final streakService = ref.read(streakServiceProvider.notifier);
+    streakService.refreshStreaks();
+
+    // backend
+    syncHabitCompletion(habitId, nowDone);
   }
-  
-  // Sync habit completion to backend
+
   Future<void> syncHabitCompletion(String habitId, bool completed) async {
     try {
       await ApiClient.logAction(habitId, completed, DateTime.now());
     } catch (e) {
-      // Silently fail - will be synced later
-      print('Failed to sync habit completion: $e');
+      print('❌ Habit sync fail: $e');
     }
   }
-  
-  // Sync all habits to backend
+
+  // -------------------- SYNC ALL --------------------
   Future<void> syncAllHabits() async {
     state = state.copyWith(isSyncing: true);
-    
     try {
       final response = await ApiClient.syncAll(state.habits);
-      
       if (response.success && response.data != null) {
-        // Update local storage with server data
-        for (final habit in response.data!.updatedHabits) {
-          await LocalStorageService.saveHabit(habit);
+        for (final h in response.data!.updatedHabits) {
+          await LocalStorageService.saveHabit(h);
         }
-        
-        // Delete habits that were deleted on server
-        for (final habitId in response.data!.deletedHabitIds) {
-          await LocalStorageService.deleteHabit(habitId);
-          await AlarmService.cancelAlarm(habitId);
+        for (final id in response.data!.deletedHabitIds) {
+          await LocalStorageService.deleteHabit(id);
+          await AlarmService.cancelAlarm(id);
         }
-        
-        // Reload habits
         await _loadHabits();
       }
     } catch (e) {
@@ -238,90 +169,61 @@ class HabitEngine extends StateNotifier<HabitEngineState> {
       state = state.copyWith(isSyncing: false);
     }
   }
-  
-  // Get habits for a specific date
-  List<Habit> getHabitsForDate(DateTime date) {
-    return state.habits.where((habit) => habit.isScheduledForDate(date)).toList();
-  }
-  
-  // Get today's habits
-  List<Habit> getTodayHabits() {
-    return getHabitsForDate(DateTime.now());
-  }
-  
-  // Calculate fulfillment percentage for a date
+
+  // -------------------- GETTERS --------------------
+  List<Habit> getHabitsForDate(DateTime date) =>
+      state.habits.where((h) => h.isScheduledForDate(date)).toList();
+
+  List<Habit> getTodayHabits() => getHabitsForDate(DateTime.now());
+
   double getFulfillmentPercentage(DateTime date) {
     final dayHabits = getHabitsForDate(date);
-    if (dayHabits.isEmpty) return 0.0;
-    
-    final completedCount = dayHabits.where((habit) => habit.done).length;
-    return (completedCount / dayHabits.length) * 100;
+    if (dayHabits.isEmpty) return 0;
+    final doneCount = dayHabits.where((h) => h.isDoneOn(date)).length;
+    return (doneCount / dayHabits.length) * 100;
   }
-  
-  // Calculate current streak
-  int getCurrentStreak() {
-    return LocalStorageService.calculateCurrentStreak();
-  }
-  
-  // Calculate longest streak
-  int getLongestStreak() {
-    return LocalStorageService.calculateLongestStreak();
-  }
-  
-  // Private helper methods
-  List<int> _getDefaultRepeatDays(String type) {
-    if (type == 'habit') {
-      return [1, 2, 3, 4, 5]; // Weekdays
-    } else {
-      return [DateTime.now().weekday % 7]; // Today only for tasks
-    }
-  }
-  
+
+  int getCurrentStreak() => LocalStorageService.calculateCurrentStreak();
+
+  int getLongestStreak() => LocalStorageService.calculateLongestStreak();
+
+  // -------------------- HELPERS --------------------
+  List<int> _getDefaultRepeatDays(String type) =>
+      type == 'habit' ? [1, 2, 3, 4, 5] : [DateTime.now().weekday % 7];
+
   int _calculateXP(Habit habit) {
-    // Base XP
     int xp = 10;
-    
-    // Bonus for streaks
-    if (habit.streak > 0) {
-      xp += (habit.streak / 7).floor() * 5; // +5 XP per week of streak
-    }
-    
-    // Bonus for habit type
-    if (habit.type == 'habit') {
-      xp += 5; // Habits are worth more than tasks
-    }
-    
+    xp += (habit.streak ~/ 7) * 5;
+    if (habit.type == 'habit') xp += 5;
     return xp;
   }
-  
+
   Future<void> _syncHabitToBackend(Habit habit) async {
     try {
       await ApiClient.createHabit(habit);
     } catch (e) {
-      // Silently fail - will be synced later
-      print('Failed to sync habit to backend: $e');
+      print('❌ Failed to sync habit: $e');
     }
   }
-  
-  Future<void> _deleteHabitFromBackend(String habitId) async {
+
+  Future<void> _deleteHabitFromBackend(String id) async {
     try {
-      await ApiClient.deleteHabit(habitId);
+      await ApiClient.deleteHabit(id);
     } catch (e) {
-      // Silently fail - will be synced later
-      print('Failed to delete habit from backend: $e');
+      print('❌ Failed to delete from backend: $e');
     }
   }
-  
-  // Clear error state
-  void clearError() {
-    state = state.copyWith(error: null);
-  }
+
+  void clearError() => state = state.copyWith(error: null);
 }
 
-// Utility providers
+// -------------- PROVIDERS --------------
+
 final todayHabitsProvider = Provider<List<Habit>>((ref) {
-  final habitEngine = ref.watch(habitEngineProvider);
-  return habitEngine.habits.where((habit) => habit.isScheduledForToday()).toList();
+  final engine = ref.watch(habitEngineProvider);
+  return engine.habits
+      .where((h) => h.isScheduledForToday())
+      .toList();
 });
 
 final currentStreakProvider = Provider<int>((ref) {
