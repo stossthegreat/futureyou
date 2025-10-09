@@ -71,12 +71,18 @@ class Habit extends HiveObject {
 
   bool isScheduledForDate(DateTime date) {
     // Check if date is within range
-    if (date.isBefore(startDate) || date.isAfter(endDate)) {
+    final dateOnly = DateTime(date.year, date.month, date.day);
+    final startOnly = DateTime(startDate.year, startDate.month, startDate.day);
+    final endOnly = DateTime(endDate.year, endDate.month, endDate.day);
+    
+    if (dateOnly.isBefore(startOnly) || dateOnly.isAfter(endOnly)) {
       return false;
     }
 
     // Check if weekday matches repeatDays
-    final weekday = date.weekday % 7; // Convert to 0=Sun...6=Sat
+    // Dart: Monday=1, Tuesday=2, ..., Sunday=7
+    // Our system: Sunday=0, Monday=1, ..., Saturday=6
+    final weekday = date.weekday == 7 ? 0 : date.weekday; // Convert Sunday from 7 to 0
     return repeatDays.contains(weekday);
   }
 

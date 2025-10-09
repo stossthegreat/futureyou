@@ -15,6 +15,7 @@ class StreakScreen extends StatefulWidget {
 }
 
 class _StreakScreenState extends State<StreakScreen> {
+  final StreakService streakService = StreakService();
   final ValueNotifier<StreakData> streakNotifier =
       ValueNotifier<StreakData>(StreakData(currentStreak: 0, longestStreak: 0, totalXP: 0));
 

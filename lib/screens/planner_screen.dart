@@ -193,13 +193,17 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           _frequency = 'daily';
           _startDate = DateTime.now();
           _endDate = DateTime.now().add(const Duration(days: 365));
+          // Reset to default weekdays for habits
           for (int i = 0; i < 7; i++) {
-            _repeatDays[i] = false;
+            _repeatDays[i] = (_selectedType == 'habit') ? (i >= 1 && i <= 5) : false;
           }
         });
         
         // Show success message
         _showSuccessSnackBar('${_selectedType.capitalize()} created successfully!');
+        
+        // Switch to manage tab to show the new habit
+        _tabController.animateTo(1);
         
       } catch (e) {
         _showErrorSnackBar('Failed to create ${_selectedType}: $e');
@@ -668,16 +672,22 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       );
     }
     
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      itemCount: allHabits.length,
-      itemBuilder: (context, index) {
-        final habit = allHabits[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          child: _buildHabitManageCard(habit),
-        );
+    return RefreshIndicator(
+      onRefresh: () async {
+        // Force reload habits from storage
+        await ref.read(habitEngineProvider.notifier).reloadHabits();
       },
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        itemCount: allHabits.length,
+        itemBuilder: (context, index) {
+          final habit = allHabits[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: _buildHabitManageCard(habit),
+          );
+        },
+      ),
     );
   }
   

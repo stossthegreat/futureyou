@@ -41,6 +41,7 @@ class HabitEngineState {
 
 class HabitEngine extends StateNotifier<HabitEngineState> {
   static const Uuid _uuid = Uuid();
+  final StreakService streakService = StreakService();
   
   HabitEngine() : super(const HabitEngineState()) {
     _loadHabits();
@@ -56,6 +57,11 @@ class HabitEngine extends StateNotifier<HabitEngineState> {
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
     }
+  }
+  
+  // Public method to reload habits (for refresh)
+  Future<void> reloadHabits() async {
+    await _loadHabits();
   }
   
   // Create a new habit
@@ -91,6 +97,17 @@ class HabitEngine extends StateNotifier<HabitEngineState> {
       await _loadHabits();
       state = state.copyWith(isLoading: false);
       
+      print('✅ Habit created: ${habit.title}');
+      print('📅 RepeatDays: ${habit.repeatDays}');
+      print('📅 StartDate: ${habit.startDate}');
+      print('📅 EndDate: ${habit.endDate}');
+      print('📅 Total habits now: ${state.habits.length}');
+      
+      // Test if habit is scheduled for today
+      final today = DateTime.now();
+      final isScheduledToday = habit.isScheduledForDate(today);
+      print('📅 Scheduled for today (${today.weekday}): $isScheduledToday');
+      
       // Sync to backend (fire and forget)
       _syncHabitToBackend(habit);
       
@@ -125,24 +142,36 @@ class HabitEngine extends StateNotifier<HabitEngineState> {
   
   // Delete a habit
   Future<void> deleteHabit(String habitId) async {
+    print('🗑️ Attempting to delete habit: $habitId');
     state = state.copyWith(isLoading: true, error: null);
     
     try {
+      // Find the habit first
+      final habitToDelete = state.habits.firstWhere((h) => h.id == habitId);
+      print('🗑️ Found habit to delete: ${habitToDelete.title}');
+      
       // Delete locally
       await LocalStorageService.deleteHabit(habitId);
+      print('🗑️ Deleted from local storage');
       
       // Cancel alarm
       await AlarmService.cancelAlarm(habitId);
+      print('🗑️ Cancelled alarm');
       
       // Reload to reflect removal
       await _loadHabits();
       state = state.copyWith(isLoading: false);
       
+      print('🗑️ Habit deleted successfully: $habitId');
+      print('📅 Total habits now: ${state.habits.length}');
+      
       // Sync to backend (fire and forget)
       _deleteHabitFromBackend(habitId);
       
     } catch (e) {
+      print('❌ Error deleting habit: $e');
       state = state.copyWith(error: e.toString(), isLoading: false);
+      rethrow;
     }
   }
   
