@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +34,18 @@ jobs:
           flutter config --no-analytics || true
           flutter doctor -v
 
+      # 🩹 Fix flutter_native_timezone namespace error for AGP 8+
+      - name: Patch flutter_native_timezone namespace
+        run: |
+          set -e
+          PLUGIN_DIR=$(find $HOME/.pub-cache -type d -path "*/flutter_native_timezone-*/android" | head -n 1)
+          if [ -n "$PLUGIN_DIR" ]; then
+            echo "⚙️ Patching flutter_native_timezone namespace in: $PLUGIN_DIR/build.gradle"
+            echo -e "\nandroid {\n    namespace 'com.crazecoder.flutter_native_timezone'\n}" >> "$PLUGIN_DIR/build.gradle"
+          else
+            echo "⚠️ flutter_native_timezone plugin not found; skipping patch."
+          fi
+
       - name: Build APK (debug)
         run: flutter build apk --debug
 
@@ -46,4 +59,3 @@ jobs:
           path: |
             build/app/outputs/flutter-apk/app-debug.apk
             build/app/outputs/flutter-apk/app-release.apk
-
