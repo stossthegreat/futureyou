@@ -6,6 +6,11 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Timezone init
+import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+
 import 'models/habit.dart';
 import 'services/alarm_service.dart';
 import 'services/local_storage.dart';
@@ -13,23 +18,43 @@ import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'design/theme.dart';
 
-void main() async {
+Future<void> _initTimezone() async {
+  try {
+    tzdata.initializeTimeZones();
+    final String localTz = await FlutterNativeTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(localTz));
+  } catch (e) {
+    // Fallback to UTC if lookup fails (e.g., emulator edge cases)
+    tz.setLocalLocation(tz.getLocation('Etc/UTC'));
+  }
+}
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Hive
+
+  // Hive (models & boxes)
   await Hive.initFlutter();
-  Hive.registerAdapter(HabitAdapter());
-  
-  // Initialize services
+  if (!Hive.isAdapterRegistered(0)) {
+    Hive.registerAdapter(HabitAdapter());
+  }
   await LocalStorageService.initialize();
-  // Android-only initialization (guards prevent crashes on web/desktop)
+
+  // Timezone for scheduled notifications
+  await _initTimezone();
+
+  // Android-only alarm/notification bootstrap
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    // Initialize local notifications + channels
     await AlarmService.initialize();
+
+    // Android AlarmManager (for daily maintenance / 5am checks)
     await AndroidAlarmManager.initialize();
+
+    // Schedule daily maintenance check (streak reset, etc.)
     await AlarmService.scheduleDailyCheck();
   }
-  
-  // Set system UI overlay style
+
+  // System UI
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -38,7 +63,7 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
-  
+
   runApp(const ProviderScope(child: FutureYouApp()));
 }
 
