@@ -6,6 +6,7 @@ import '../widgets/glass_card.dart';
 import '../widgets/date_strip.dart';
 import '../widgets/habit_card.dart';
 import '../logic/habit_engine.dart';
+import '../models/habit.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -33,7 +34,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return habit.isScheduledForDate(_selectedDate);
     }).toList();
     
-    final completedCount = dayHabits.where((h) => h.done).length;
+    // ✅ Date-aware completion
+    final completedCount = dayHabits.where((h) => h.isDoneOn(_selectedDate)).length;
     final totalCount = dayHabits.length;
     final fulfillmentPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0.0;
     final driftPercentage = 100.0 - fulfillmentPercentage;
@@ -42,7 +44,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Date strip (exactly like React version)
+          // Date strip
           DateStrip(
             selectedDate: _selectedDate,
             onDateSelected: _onDateSelected,
@@ -50,7 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           
           const SizedBox(height: AppSpacing.xl),
           
-          // Fulfillment overview card (exactly like React version)
+          // Fulfillment overview card
           GlassCard(
             child: Column(
               children: [
@@ -80,7 +82,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 
                 const SizedBox(height: AppSpacing.lg),
                 
-                // Progress bars (exactly like React version)
+                // Progress bars
                 Column(
                   children: [
                     _buildProgressBar(
@@ -104,7 +106,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           
           const SizedBox(height: AppSpacing.xl),
           
-          // Habits list (exactly like React version)
+          // Habits list
           if (dayHabits.isEmpty)
             GlassCard(
               child: Column(
@@ -153,7 +155,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           
           const SizedBox(height: AppSpacing.xl),
           
-          // Integrity meter footer (exactly like React version)
+          // Integrity footer
           GlassCard(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -271,4 +273,3 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 }
-
