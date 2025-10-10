@@ -24,36 +24,36 @@ class _MainScreenState extends State<MainScreen>
   late PageController _pageController;
   late AnimationController _tabAnimationController;
   
-  final List<TabItem> _tabs = [
+  final List<TabItem> _tabs = const [
     TabItem(
       icon: LucideIcons.activity,
       label: 'Home',
-      screen: const HomeScreen(),
+      screen: HomeScreen(),
     ),
     TabItem(
       icon: LucideIcons.plus,
       label: 'Planner',
-      screen: const PlannerScreen(),
+      screen: PlannerScreen(),
     ),
     TabItem(
       icon: LucideIcons.messageSquare,
       label: 'Chat',
-      screen: const ChatScreen(),
+      screen: ChatScreen(),
     ),
     TabItem(
       icon: LucideIcons.flame,
       label: 'Streak',
-      screen: const StreakScreen(),
+      screen: StreakScreen(),
     ),
     TabItem(
       icon: LucideIcons.user,
       label: 'Mirror',
-      screen: const MirrorScreen(),
+      screen: MirrorScreen(),
     ),
     TabItem(
       icon: LucideIcons.settings,
       label: 'Settings',
-      screen: const SettingsScreen(),
+      screen: SettingsScreen(),
     ),
   ];
   

@@ -6,7 +6,6 @@ import '../widgets/glass_card.dart';
 import '../widgets/date_strip.dart';
 import '../widgets/habit_card.dart';
 import '../logic/habit_engine.dart';
-import '../models/habit.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -111,7 +110,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             GlassCard(
               child: Column(
                 children: [
-                  Icon(
+                  const Icon(
                     LucideIcons.calendar,
                     size: 48,
                     color: AppColors.textQuaternary,
@@ -163,7 +162,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Expanded(
                   child: Row(
                     children: [
-                      Icon(
+                      const Icon(
                         LucideIcons.gauge,
                         size: 16,
                         color: AppColors.emerald,

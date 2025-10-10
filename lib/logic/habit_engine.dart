@@ -144,7 +144,7 @@ class HabitEngine extends StateNotifier<HabitEngineState> {
     try {
       await ApiClient.logAction(habitId, completed, DateTime.now());
     } catch (e) {
-      print('❌ Habit sync fail: $e');
+      // Log error silently in production
     }
   }
 
@@ -202,7 +202,7 @@ class HabitEngine extends StateNotifier<HabitEngineState> {
     try {
       await ApiClient.createHabit(habit);
     } catch (e) {
-      print('❌ Failed to sync habit: $e');
+      // Log error silently in production
     }
   }
 
@@ -210,7 +210,7 @@ class HabitEngine extends StateNotifier<HabitEngineState> {
     try {
       await ApiClient.deleteHabit(id);
     } catch (e) {
-      print('❌ Failed to delete from backend: $e');
+      // Log error silently in production
     }
   }
 

@@ -206,7 +206,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         _tabController.animateTo(1);
         
       } catch (e) {
-        _showErrorSnackBar('Failed to create ${_selectedType}: $e');
+        _showErrorSnackBar('Failed to create $_selectedType: $e');
       }
     }
   }
@@ -251,7 +251,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
 
   @override
   Widget build(BuildContext context) {
-    final habitEngineState = ref.watch(habitEngineProvider);
+    // final habitEngineState = ref.watch(habitEngineProvider);
     
     return Column(
       children: [
@@ -371,7 +371,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                         controller: _titleController,
                         style: AppTextStyles.body,
                         decoration: InputDecoration(
-                          hintText: 'Add a ${_selectedType} title...',
+                          hintText: 'Add a $_selectedType title...',
                           prefixIcon: Icon(
                             _selectedType == 'habit' ? LucideIcons.flame : LucideIcons.alarmCheck,
                             color: AppColors.textTertiary,
@@ -516,11 +516,11 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                         spacing: AppSpacing.sm,
                         runSpacing: AppSpacing.sm,
                         children: [
-                          _FrequencyChip('Daily', 'daily'),
-                          _FrequencyChip('Weekdays', 'weekdays'),
-                          _FrequencyChip('Weekends', 'weekends'),
-                          _FrequencyChip('Custom', 'custom'),
-                          _FrequencyChip('Every N Days', 'everyN'),
+                          _frequencyChip('Daily', 'daily'),
+                          _frequencyChip('Weekdays', 'weekdays'),
+                          _frequencyChip('Weekends', 'weekends'),
+                          _frequencyChip('Custom', 'custom'),
+                          _frequencyChip('Every N Days', 'everyN'),
                         ],
                       ),
                     ],
@@ -530,9 +530,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                     const SizedBox(height: AppSpacing.md),
                     Row(
                       children: [
-                        Text('Every', style: AppTextStyles.body),
+                        const Text('Every', style: AppTextStyles.body),
                         const SizedBox(width: AppSpacing.sm),
-                        Container(
+                        SizedBox(
                           width: 60,
                           child: TextFormField(
                             initialValue: _everyNDays.toString(),
@@ -547,7 +547,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        Text('days', style: AppTextStyles.body),
+                        const Text('days', style: AppTextStyles.body),
                       ],
                     ),
                   ],
@@ -646,7 +646,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 LucideIcons.calendar,
                 size: 48,
                 color: AppColors.textQuaternary,
@@ -803,7 +803,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           
           Row(
             children: [
-              Icon(
+              const Icon(
                 LucideIcons.clock,
                 size: 14,
                 color: AppColors.textTertiary,
@@ -816,7 +816,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
-              Icon(
+              const Icon(
                 LucideIcons.calendar,
                 size: 14,
                 color: AppColors.textTertiary,
@@ -950,7 +950,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     }
   }
 
-  Widget _FrequencyChip(String label, String value) {
+  Widget _frequencyChip(String label, String value) {
     final isSelected = _frequency == value;
     return GestureDetector(
       onTap: () => setState(() => _frequency = value),

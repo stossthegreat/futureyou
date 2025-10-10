@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Timezone init
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 
 import 'models/habit.dart';
 import 'services/alarm_service.dart';
@@ -21,8 +20,8 @@ import 'design/theme.dart';
 Future<void> _initTimezone() async {
   try {
     tzdata.initializeTimeZones();
-    final String localTz = await FlutterNativeTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(localTz));
+    // Use a default timezone - this can be improved later with proper timezone detection
+    tz.setLocalLocation(tz.getLocation('UTC'));
   } catch (e) {
     // Fallback to UTC if lookup fails (e.g., emulator edge cases)
     tz.setLocalLocation(tz.getLocation('Etc/UTC'));

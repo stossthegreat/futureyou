@@ -146,12 +146,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       
     } catch (e) {
       // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to create ${commit.type}: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create ${commit.type}: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
   
@@ -213,7 +215,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             borderRadius: BorderRadius.circular(AppBorderRadius.lg),
                             border: Border.all(color: AppColors.glassBorder),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               SizedBox(
@@ -226,12 +228,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 'Future You is thinking...',
-                                style: AppTextStyles.caption.copyWith(
-                                  color: AppColors.textTertiary,
-                                ),
+                                style: AppTextStyles.caption,
                               ),
                             ],
                           ),
