@@ -69,7 +69,7 @@ class GlassCard extends StatelessWidget {
   }
 }
 
-class GlassButton extends StatefulWidget {
+class AnimatedGlassButton extends StatefulWidget {
   final Widget child;
   final VoidCallback? onPressed;
   final EdgeInsetsGeometry? padding;
@@ -82,7 +82,7 @@ class GlassButton extends StatefulWidget {
   final Gradient? gradient;
   final bool enabled;
   
-  const GlassButton({
+  const AnimatedGlassButton({
     super.key,
     required this.child,
     this.onPressed,
@@ -98,10 +98,10 @@ class GlassButton extends StatefulWidget {
   });
 
   @override
-  State<GlassButton> createState() => _GlassButtonState();
+  State<AnimatedGlassButton> createState() => _AnimatedGlassButtonState();
 }
 
-class _GlassButtonState extends State<GlassButton>
+class _AnimatedGlassButtonState extends State<AnimatedGlassButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;

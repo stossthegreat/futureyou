@@ -4,12 +4,18 @@ import 'package:flutter/foundation.dart';
 import '../models/habit.dart';
 
 class ApiClient {
-  static const String _baseUrl = 'https://api.futureyouos.com'; // Replace with actual backend URL
+  // Drillos Backend Integration
+  static const String _baseUrl = 'https://your-drillos-backend.railway.app'; // Update with your Railway URL
+  static const String _localUrl = 'http://localhost:3000'; // For local development
   static const Duration _timeout = Duration(seconds: 30);
+  
+  // Use demo user for now (from Drillos backend)
+  static const String _demoUserId = 'demo-user-123';
   
   static final Map<String, String> _defaultHeaders = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'x-user-id': _demoUserId, // Drillos backend uses this header
   };
   
   // Authentication token (to be set after login)

@@ -45,7 +45,10 @@ class AlarmService {
       _channelId,
       _channelName,
       description: _channelDescription,
-      importance: Importance.high,
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
     );
     await _notifications
         .resolvePlatformSpecificImplementation<
@@ -92,11 +95,20 @@ class AlarmService {
           _channelId,
           _channelName,
           channelDescription: _channelDescription,
-          importance: Importance.high,
+          importance: Importance.max,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
+          playSound: true,
+          enableVibration: true,
+          enableLights: true,
+          audioAttributesUsage: AudioAttributesUsage.alarm,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          sound: 'default',
+        ),
       );
 
       await _notifications.zonedSchedule(

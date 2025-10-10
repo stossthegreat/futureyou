@@ -4,8 +4,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/glass_button.dart';
 import '../widgets/date_strip.dart';
-import '../logic/habit_engine.dart';
+import '../providers/habit_provider.dart';
 import '../services/api_client.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -121,7 +122,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   
   Future<void> _handleQuickCommit(QuickCommit commit) async {
     try {
-      await ref.read(habitEngineProvider.notifier).createHabit(
+      await ref.read(habitEngineProvider).createHabit(
         title: commit.title,
         type: commit.type,
         time: commit.time,
@@ -261,7 +262,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               Wrap(
                 spacing: AppSpacing.sm,
                 runSpacing: AppSpacing.sm,
-                children: _quickCommits.map((commit) {
+                children: _quickCommits.map<Widget>((commit) {
                   return GlassButton(
                     onPressed: () => _handleQuickCommit(commit),
                     backgroundColor: AppColors.emerald.withOpacity(0.15),

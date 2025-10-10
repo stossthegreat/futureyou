@@ -44,6 +44,9 @@ class Habit extends HiveObject {
   @HiveField(12)
   int xp;
 
+  @HiveField(13)
+  int colorValue;
+
   Habit({
     required this.id,
     required this.title,
@@ -58,6 +61,7 @@ class Habit extends HiveObject {
     this.completedAt,
     this.streak = 0,
     this.xp = 0,
+    this.colorValue = 0xFF10B981, // Default emerald color
   });
 
   TimeOfDay get timeOfDay {
@@ -67,6 +71,8 @@ class Habit extends HiveObject {
       minute: int.parse(parts[1]),
     );
   }
+
+  Color get color => Color(colorValue);
 
   /// Checks if the habit is scheduled on a given date.
   bool isScheduledForDate(DateTime date) {
@@ -104,6 +110,7 @@ class Habit extends HiveObject {
     DateTime? completedAt,
     int? streak,
     int? xp,
+    int? colorValue,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -119,6 +126,7 @@ class Habit extends HiveObject {
       completedAt: completedAt ?? this.completedAt,
       streak: streak ?? this.streak,
       xp: xp ?? this.xp,
+      colorValue: colorValue ?? this.colorValue,
     );
   }
 
@@ -136,6 +144,7 @@ class Habit extends HiveObject {
         'completedAt': completedAt?.toIso8601String(),
         'streak': streak,
         'xp': xp,
+        'colorValue': colorValue,
       };
 
   factory Habit.fromJson(Map<String, dynamic> json) => Habit(
@@ -154,5 +163,6 @@ class Habit extends HiveObject {
             : null,
         streak: json['streak'] ?? 0,
         xp: json['xp'] ?? 0,
+        colorValue: json['colorValue'] ?? 0xFF10B981,
       );
 }

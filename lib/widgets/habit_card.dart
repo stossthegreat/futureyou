@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../models/habit.dart';
 import '../design/tokens.dart';
 import 'glass_card.dart';
+import 'glass_button.dart';
 
 class HabitCard extends StatefulWidget {
   final Habit habit;
@@ -57,9 +58,7 @@ class _HabitCardState extends State<HabitCard>
     if (widget.habit.done) {
       return AppColors.success;
     }
-    return widget.habit.type == 'habit' 
-        ? AppColors.emerald 
-        : AppColors.cyan;
+    return widget.habit.color;
   }
   
   void _handleToggle() {

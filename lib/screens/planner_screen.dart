@@ -5,7 +5,7 @@ import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/date_strip.dart';
-import '../logic/habit_engine.dart';
+import '../providers/habit_provider.dart';
 import '../models/habit.dart';
 
 class PlannerScreen extends ConsumerStatefulWidget {
@@ -19,7 +19,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     with SingleTickerProviderStateMixin {
   DateTime _selectedDate = DateTime.now();
   DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now().add(const Duration(days: 365));
+  DateTime _endDate = DateTime.now();
   String _selectedType = 'habit';
   String _frequency = 'daily';
   int _everyNDays = 2;
@@ -39,7 +39,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    for (int i = 1; i <= 5; i++) _repeatDays[i] = true; // weekdays default
+    // Initialize repeat days based on default type
+    _onTypeChanged(_selectedType);
   }
 
   @override
@@ -57,9 +58,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       _selectedType = type;
       for (int i = 0; i < 7; i++) {
         if (type == 'habit') {
-          _repeatDays[i] = i >= 1 && i <= 5;
+          _repeatDays[i] = i >= 1 && i <= 5; // weekdays for habits
         } else {
-          _repeatDays[i] = i == DateTime.now().weekday % 7;
+          _repeatDays[i] = i == DateTime.now().weekday % 7; // today only for tasks
         }
       }
     });
@@ -135,13 +136,14 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
     try {
-      await ref.read(habitEngineProvider.notifier).createHabit(
+      await ref.read(habitEngineProvider).createHabit(
         title: _titleController.text.trim(),
         type: _selectedType,
         time: _timeController.text,
-        startDate: _startDate,
+        startDate: DateTime.now(), // Always start from today
         endDate: _endDate,
         repeatDays: _getRepeatDays(),
+        color: _selectedColor,
       );
 
       _titleController.clear();
@@ -158,6 +160,10 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         ]),
         backgroundColor: AppColors.success,
       ));
+      // Switch to manage tab and ensure we're looking at today
+      setState(() {
+        _selectedDate = DateTime.now();
+      });
       _tabController.animateTo(1);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -357,11 +363,17 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   // 🧠 MANAGE TAB (fixed + upgraded visuals)
   // ---------------------------------------------------------
   Widget _buildManageTab() {
-    final habitEngineState = ref.watch(habitEngineProvider);
+    final habitEngine = ref.watch(habitEngineProvider);
     // ✅ Filter habits by the calendar's selected date
-    final filtered = habitEngineState.habits
+    print('🔍 Manage tab - Selected date: $_selectedDate');
+    print('🔍 Manage tab - Total habits: ${habitEngine.habits.length}');
+    final filtered = habitEngine.habits
         .where((h) => h.isScheduledForDate(_selectedDate))
         .toList();
+    print('🔍 Manage tab - Filtered habits: ${filtered.length}');
+    for (final habit in filtered) {
+      print('  - ${habit.title} is scheduled for $_selectedDate');
+    }
 
     if (filtered.isEmpty) {
       return Center(
@@ -385,7 +397,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
 
     return RefreshIndicator(
       onRefresh: () async {
-        await ref.read(habitEngineProvider.notifier).reloadHabits();
+        await ref.read(habitEngineProvider).loadHabits();
       },
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),

@@ -5,7 +5,7 @@ import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/date_strip.dart';
 import '../widgets/habit_card.dart';
-import '../logic/habit_engine.dart';
+import '../providers/habit_provider.dart';
 import '../models/habit.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -26,8 +26,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final habitEngineState = ref.watch(habitEngineProvider);
-    final allHabits = habitEngineState.habits;
+    final habitEngine = ref.watch(habitEngineProvider);
+    final allHabits = habitEngine.habits;
     
     // Filter habits for selected date
     final dayHabits = allHabits.where((habit) {
@@ -143,10 +143,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     key: ValueKey(habit.id),
                     habit: habit,
                     onToggle: () async {
-                      await ref.read(habitEngineProvider.notifier).toggleHabitCompletion(habit.id);
+                      await ref.read(habitEngineProvider).toggleHabitCompletion(habit.id);
                     },
                     onDelete: () async {
-                      await ref.read(habitEngineProvider.notifier).deleteHabit(habit.id);
+                      await ref.read(habitEngineProvider).deleteHabit(habit.id);
                     },
                   ),
                 );

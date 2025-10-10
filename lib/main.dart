@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 // Timezone init
 import 'package:timezone/data/latest.dart' as tzdata;
@@ -17,6 +18,7 @@ import 'services/local_storage.dart';
 import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'design/theme.dart';
+import 'logic/habit_engine.dart';
 
 Future<void> _initTimezone() async {
   try {
@@ -25,12 +27,46 @@ Future<void> _initTimezone() async {
     tz.setLocalLocation(tz.getLocation(localTz));
   } catch (e) {
     // Fallback to UTC if lookup fails (e.g., emulator edge cases)
-    tz.setLocalLocation(tz.getLocation('Etc/UTC'));
+    tz.setLocalLocation(tz.getLocation('UTC'));
   }
 }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ Init timezones for zonedSchedule
+  tzdata.initializeTimeZones();
+
+  // ✅ Init Alarm Manager + Notifications (only on Android)
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    await AndroidAlarmManager.initialize();
+  }
+  
+  final plugin = flutterLocalNotificationsPlugin;
+  const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const iosInit = DarwinInitializationSettings(
+    requestAlertPermission: true,
+    requestBadgePermission: true,
+    requestSoundPermission: true,
+  );
+  const settings = InitializationSettings(android: androidInit, iOS: iosInit);
+  await plugin.initialize(settings);
+  
+  // Create notification channel with sound
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    const androidChannel = AndroidNotificationChannel(
+      'futureyou_channel',
+      'Future You OS',
+      description: 'Habit reminders',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
+    );
+    await plugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(androidChannel);
+  }
 
   // Hive (models & boxes)
   await Hive.initFlutter();
@@ -46,9 +82,6 @@ Future<void> main() async {
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
     // Initialize local notifications + channels
     await AlarmService.initialize();
-
-    // Android AlarmManager (for daily maintenance / 5am checks)
-    await AndroidAlarmManager.initialize();
 
     // Schedule daily maintenance check (streak reset, etc.)
     await AlarmService.scheduleDailyCheck();

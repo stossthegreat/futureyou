@@ -10,6 +10,7 @@ class GlassButton extends StatelessWidget {
   final BorderRadius? borderRadius;
   final Color? backgroundColor;
   final Color? borderColor;
+  final Gradient? gradient;
   
   const GlassButton({
     super.key,
@@ -21,6 +22,7 @@ class GlassButton extends StatelessWidget {
     this.borderRadius,
     this.backgroundColor,
     this.borderColor,
+    this.gradient,
   });
 
   @override
@@ -29,7 +31,8 @@ class GlassButton extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.glassBackground,
+        gradient: gradient,
+        color: gradient == null ? (backgroundColor ?? AppColors.glassBackground) : null,
         borderRadius: borderRadius ?? BorderRadius.circular(AppBorderRadius.md),
         border: Border.all(
           color: borderColor ?? AppColors.glassBorder,

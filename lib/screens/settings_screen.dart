@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/glass_button.dart';
 import '../services/local_storage.dart';
-import '../logic/habit_engine.dart';
+import '../providers/habit_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -54,7 +55,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   
   Future<void> _syncNow() async {
     try {
-      await ref.read(habitEngineProvider.notifier).syncAllHabits();
+      await ref.read(habitEngineProvider).syncAllHabits();
       _showSuccessSnackBar('Sync completed successfully');
     } catch (e) {
       _showErrorSnackBar('Sync failed: $e');
@@ -87,7 +88,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await LocalStorageService.clearAllSettings();
       
       // Reload habit engine
-      ref.invalidate(habitEngineProvider);
+      await ref.read(habitEngineProvider).loadHabits();
       
       _showSuccessSnackBar('Local data reset successfully');
     }
@@ -174,7 +175,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final habitEngineState = ref.watch(habitEngineProvider);
+    final habitEngine = ref.watch(habitEngineProvider);
     
     return SingleChildScrollView(
       child: Column(
@@ -380,9 +381,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: GlassButton(
-                    onPressed: habitEngineState.isSyncing ? null : _syncNow,
+                    onPressed: habitEngine.isSyncing ? null : _syncNow,
                     gradient: AppColors.primaryGradient,
-                    child: habitEngineState.isSyncing
+                    child: habitEngine.isSyncing
                         ? Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
