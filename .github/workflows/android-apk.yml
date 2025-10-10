@@ -26,6 +26,22 @@ jobs:
         with:
           channel: 'stable'
 
+      # Ensure Gradle can find Flutter SDK and Android SDK even without local.properties
+      - name: Prepare Android local.properties
+        run: |
+          set -e
+          mkdir -p android
+          FLUTTER_SDK_PATH="${FLUTTER_HOME:-$FLUTTER_ROOT}"
+          if [ -n "$FLUTTER_SDK_PATH" ]; then
+            echo "flutter.sdk=$FLUTTER_SDK_PATH" > android/local.properties
+          fi
+          if [ -n "${ANDROID_SDK_ROOT:-}" ]; then
+            echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
+          elif [ -n "${ANDROID_HOME:-}" ]; then
+            echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
+          fi
+          echo "Created android/local.properties:" && cat android/local.properties
+
       - name: Flutter pub get
         run: flutter pub get
 
@@ -34,17 +50,8 @@ jobs:
           flutter config --no-analytics || true
           flutter doctor -v
 
-      # 🩹 Fix flutter_native_timezone namespace error for AGP 8+
-      - name: Patch flutter_native_timezone namespace
-        run: |
-          set -e
-          PLUGIN_DIR=$(find $HOME/.pub-cache -type d -path "*/flutter_native_timezone-*/android" | head -n 1)
-          if [ -n "$PLUGIN_DIR" ]; then
-            echo "⚙️ Patching flutter_native_timezone namespace in: $PLUGIN_DIR/build.gradle"
-            echo -e "\nandroid {\n    namespace 'com.crazecoder.flutter_native_timezone'\n}" >> "$PLUGIN_DIR/build.gradle"
-          else
-            echo "⚠️ flutter_native_timezone plugin not found; skipping patch."
-          fi
+      # Remove fragile plugin patch; use plugin versions that work with AGP 8+
+      # If plugin issues arise, manage via pubspec versions rather than mutating cache
 
       - name: Build APK (debug)
         run: flutter build apk --debug
