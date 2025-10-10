@@ -24,7 +24,7 @@ class Habit extends HiveObject {
   DateTime endDate;
 
   @HiveField(6)
-  List<int> repeatDays; // 0=Sun...6=Sat
+  List<int> repeatDays; // 0 = Sun ... 6 = Sat
 
   @HiveField(7)
   bool done;
@@ -60,6 +60,7 @@ class Habit extends HiveObject {
     this.xp = 0,
   });
 
+  /// Returns TimeOfDay object for convenience
   TimeOfDay get timeOfDay {
     final parts = time.split(':');
     return TimeOfDay(
@@ -68,26 +69,61 @@ class Habit extends HiveObject {
     );
   }
 
-  /// Checks if the habit is scheduled on a given date.
+  // ----------------------------------------------------
+  // 🔥 CORE SCHEDULING LOGIC
+  // ----------------------------------------------------
+
+  /// Determines if this habit/task is active on a given date.
   bool isScheduledForDate(DateTime date) {
     final dateOnly = DateTime(date.year, date.month, date.day);
     final startOnly = DateTime(startDate.year, startDate.month, startDate.day);
     final endOnly = DateTime(endDate.year, endDate.month, endDate.day);
-    if (dateOnly.isBefore(startOnly) || dateOnly.isAfter(endOnly)) return false;
 
-    final weekday = date.weekday == 7 ? 0 : date.weekday; // convert Sunday
-    return repeatDays.contains(weekday);
+    // 1️⃣ Range check
+    if (dateOnly.isBefore(startOnly) || dateOnly.isAfter(endOnly)) {
+      return false;
+    }
+
+    // 2️⃣ TASK: single-day execution only
+    if (type == 'task') {
+      return dateOnly.isAtSameMomentAs(startOnly);
+    }
+
+    // 3️⃣ HABIT: weekly repeating logic
+    int weekday0to6 = date.weekday % 7; // Dart: Mon=1..Sun=7 → 1..0
+    if (weekday0to6 == 0) weekday0to6 = 0; // Sunday fix
+
+    // Daily fallback if list empty
+    if (repeatDays.isEmpty) return true;
+
+    // Match repeat days
+    if (repeatDays.contains(weekday0to6)) {
+      return true;
+    }
+
+    // 4️⃣ OPTIONAL — support "Every N days" (future use)
+    if (repeatDays.length == 1 && repeatDays.first == -1) {
+      final diff = dateOnly.difference(startOnly).inDays;
+      final interval = xp > 0 ? xp : 2; // reuse XP as interval
+      return diff % interval == 0;
+    }
+
+    return false;
   }
 
   bool isScheduledForToday() => isScheduledForDate(DateTime.now());
 
-  /// NEW — checks if marked done on a specific date
+  /// Checks if marked done on a specific date
   bool isDoneOn(DateTime date) {
     if (completedAt == null) return false;
     final d = DateTime(date.year, date.month, date.day);
     final c = DateTime(completedAt!.year, completedAt!.month, completedAt!.day);
-    return d == c;
+    return d.isAtSameMomentAs(c);
   }
+
+  // ----------------------------------------------------
+  // 🧩 HELPERS & SERIALIZATION
+  // ----------------------------------------------------
 
   Habit copyWith({
     String? id,
