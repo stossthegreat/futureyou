@@ -94,12 +94,12 @@ class AppTheme {
       ),
       
       // Card theme
-      cardTheme: CardTheme(
+      cardTheme: const CardTheme(
         color: AppColors.glassBackground,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
-          side: const BorderSide(color: AppColors.glassBorder),
+          borderRadius: BorderRadius.all(Radius.circular(AppBorderRadius.xxl)),
+          side: BorderSide(color: AppColors.glassBorder),
         ),
       ),
       
