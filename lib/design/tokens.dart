@@ -31,6 +31,10 @@ class AppColors {
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFEF4444);
   
+  // Additional colors for habit picker
+  static const Color purple = Color(0xFF8B5CF6);
+  static const Color rose = Color(0xFFF43F5E);
+  
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [emerald, cyan],

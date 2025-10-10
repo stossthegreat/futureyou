@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/glass_button.dart';
 import '../widgets/date_strip.dart';
 import '../logic/habit_engine.dart';
 import '../models/habit.dart';
@@ -188,7 +189,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         Expanded(
           child: TabBarView(
             controller: _tabController,
-            children: [_buildAddNewTab(), Container()], // Part 2 replaces Container
+            children: [_buildAddNewTab(), _buildManageTab()],
           ),
         )
       ],
@@ -351,36 +352,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       ),
     ),
   );
-}
 
-class _FrequencyChip extends StatelessWidget{
-  final String label,value;
-  const _FrequencyChip(this.label,this.value,{super.key});
-  @override
-  Widget build(BuildContext context){
-    final state=context.findAncestorStateOfType<_PlannerScreenState>()!;
-    final sel=state._frequency==value;
-    return GestureDetector(
-      onTap:()=>state.setState(()=>state._frequency=value),
-      child:Container(
-        padding:const EdgeInsets.symmetric(horizontal:12,vertical:6),
-        decoration:BoxDecoration(
-          color:sel?AppColors.emerald.withOpacity(0.2):AppColors.glassBackground,
-          border:Border.all(color:sel?AppColors.emerald:AppColors.glassBorder),
-          borderRadius:BorderRadius.circular(AppBorderRadius.full),
-        ),
-        child:Text(label,
-          style:AppTextStyles.captionSmall.copyWith(
-            color:sel?AppColors.emerald:AppColors.textTertiary)),
-      ),
-    );
-  }
-}
-
-extension StringC on String {
-  String capitalize()=>isEmpty?this:'${this[0].toUpperCase()}${substring(1)}';
-}
-// ---------------------------------------------------------
+  // ---------------------------------------------------------
   // 🧠 MANAGE TAB (fixed + upgraded visuals)
   // ---------------------------------------------------------
   Widget _buildManageTab() {
@@ -620,4 +593,32 @@ extension StringC on String {
       ));
     }
   }
+}
+
+class _FrequencyChip extends StatelessWidget{
+  final String label,value;
+  const _FrequencyChip(this.label,this.value,{super.key});
+  @override
+  Widget build(BuildContext context){
+    final state=context.findAncestorStateOfType<_PlannerScreenState>()!;
+    final sel=state._frequency==value;
+    return GestureDetector(
+      onTap:()=>state.setState(()=>state._frequency=value),
+      child:Container(
+        padding:const EdgeInsets.symmetric(horizontal:12,vertical:6),
+        decoration:BoxDecoration(
+          color:sel?AppColors.emerald.withOpacity(0.2):AppColors.glassBackground,
+          border:Border.all(color:sel?AppColors.emerald:AppColors.glassBorder),
+          borderRadius:BorderRadius.circular(AppBorderRadius.full),
+        ),
+        child:Text(label,
+          style:AppTextStyles.captionSmall.copyWith(
+            color:sel?AppColors.emerald:AppColors.textTertiary)),
+      ),
+    );
+  }
+}
+
+extension StringC on String {
+  String capitalize()=>isEmpty?this:'${this[0].toUpperCase()}${substring(1)}';
 }
