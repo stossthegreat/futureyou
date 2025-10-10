@@ -74,8 +74,11 @@ class LocalStorageService {
 
       final allCompleted =
           dayHabits.every((h) => h.isDoneOn(checkDate));
-      if (allCompleted) streak++;
-      else break;
+      if (allCompleted) {
+        streak++;
+      } else {
+        break;
+      }
     }
     return streak;
   }

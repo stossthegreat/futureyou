@@ -128,7 +128,7 @@ class _HabitCardState extends State<HabitCard>
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       LucideIcons.clock,
                       size: 12,
                       color: AppColors.textTertiary,
@@ -166,7 +166,7 @@ class _HabitCardState extends State<HabitCard>
                       const SizedBox(width: AppSpacing.sm),
                       Row(
                         children: [
-                          Icon(
+                          const Icon(
                             LucideIcons.flame,
                             size: 12,
                             color: AppColors.warning,

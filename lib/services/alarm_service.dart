@@ -87,7 +87,7 @@ class AlarmService {
       final time = _nextWeeklyInstance(day, habit.timeOfDay);
       final id = _notifId(habit.id, day);
 
-      final details = NotificationDetails(
+      const details = NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
           _channelName,
@@ -96,7 +96,7 @@ class AlarmService {
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
         ),
-        iOS: const DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(),
       );
 
       await _notifications.zonedSchedule(
