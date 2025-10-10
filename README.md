@@ -96,28 +96,41 @@ lib/
 - Android Studio / VS Code with Flutter extensions
 - Android device/emulator (API level 21+) or iOS device/simulator (iOS 12+)
 
-### **Installation**
+### **Quick Setup**
 
-1. **Clone the repository**
+1. **Clone and setup**
    ```bash
    git clone <repository-url>
    cd futureyouos
+   ./setup-dev.sh  # Automated setup script
    ```
 
-2. **Install dependencies**
+2. **Manual setup** (if needed)
    ```bash
    flutter pub get
-   ```
-
-3. **Generate Hive adapters**
-   ```bash
    dart run build_runner build
-   ```
-
-4. **Run the app**
-   ```bash
    flutter run
    ```
+
+### **Git Workflow**
+
+This project includes a simplified Git workflow:
+
+```bash
+# Easy commit and push
+./git-workflow.sh "your commit message"
+
+# Or use default message
+./git-workflow.sh
+```
+
+See [GIT_WORKFLOW.md](GIT_WORKFLOW.md) for detailed instructions.
+
+### **Automated Builds**
+
+- **GitHub Actions** automatically builds APK files on every push
+- Download APK files from the Actions tab in GitHub
+- No manual build process needed for testing
 
 ### **Android Setup**
 
