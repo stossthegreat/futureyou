@@ -102,7 +102,7 @@ class _DateStripState extends State<DateStrip> {
           children: [
             Row(
               children: [
-                Icon(
+                const Icon(
                   LucideIcons.calendar,
                   size: 16,
                   color: AppColors.emerald,
@@ -127,7 +127,7 @@ class _DateStripState extends State<DateStrip> {
                       borderRadius: BorderRadius.circular(AppBorderRadius.sm),
                       border: Border.all(color: AppColors.glassBorder),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       LucideIcons.chevronLeft,
                       size: 16,
                       color: AppColors.textSecondary,
@@ -144,7 +144,7 @@ class _DateStripState extends State<DateStrip> {
                       borderRadius: BorderRadius.circular(AppBorderRadius.sm),
                       border: Border.all(color: AppColors.glassBorder),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       LucideIcons.chevronRight,
                       size: 16,
                       color: AppColors.textSecondary,
