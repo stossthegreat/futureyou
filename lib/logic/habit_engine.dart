@@ -29,7 +29,7 @@ class HabitEngine extends ChangeNotifier {
     _habits.add(h);
     notifyListeners();
 
-    // 🔇 Only schedule alarm if user explicitly enabled it
+    // Only schedule alarm if explicitly turned on
     if (h.reminderOn) {
       await _scheduleNext(h);
     }
@@ -59,29 +59,33 @@ class HabitEngine extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 🔔 SCHEDULE
+  // 🔔 Schedule next alarm
   Future<void> _scheduleNext(Habit h) async {
     if (h.repeatDays.isEmpty) return;
 
     final next = _nextOccurrence(h.startDate, h.repeatDays, h.timeOfDay);
 
+    const androidDetails = AndroidNotificationDetails(
+      'futureyou_channel',
+      'Future You OS',
+      channelDescription: 'Habit reminders',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
+      sound: RawResourceAndroidNotificationSound('default'),
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
     const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        'futureyou_channel',
-        'Future You OS',
-        channelDescription: 'Habit reminders',
-        importance: Importance.max,
-        priority: Priority.high,
-        playSound: true,
-        enableVibration: true,
-        enableLights: true,
-        // ❌ Removed custom RawResourceAndroidNotificationSound
-        sound: RawResourceAndroidNotificationSound('default'),
-      iOS: DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-      ),
+      android: androidDetails,
+      iOS: iosDetails,
     );
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
@@ -129,7 +133,7 @@ class HabitEngine extends ChangeNotifier {
     DateTime? endDate,
     List<int>? repeatDays,
     Color? color,
-    bool reminderOn = false, // 👈 Default to OFF
+    bool reminderOn = false, // default OFF
   }) async {
     final habit = Habit(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -141,7 +145,7 @@ class HabitEngine extends ChangeNotifier {
       repeatDays: repeatDays ?? _getDefaultRepeatDays(type),
       createdAt: DateTime.now(),
       colorValue: color?.value ?? 0xFF10B981,
-      reminderOn: reminderOn, // 👈 Saved with default OFF
+      reminderOn: reminderOn,
     );
 
     await addHabit(habit);
