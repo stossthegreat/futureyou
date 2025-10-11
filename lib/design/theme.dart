@@ -7,7 +7,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppColors.baseDark1,
+      scaffoldBackgroundColor: Colors.black, // fallback to prevent grey screen
 
       // ----- Color scheme -----
       colorScheme: const ColorScheme.dark(
