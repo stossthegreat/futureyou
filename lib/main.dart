@@ -74,11 +74,13 @@ Future<void> main() async {
   await LocalStorageService.initialize();
 
   // Timezone + alarms
+  // Timezone for scheduled notifications
+try {
+  await Future.delayed(const Duration(milliseconds: 300));
   await _initTimezone();
-  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-    await AlarmService.initialize();
-    await AlarmService.scheduleDailyCheck();
-  }
+} catch (e) {
+  debugPrint('⚠️ Timezone init failed: $e');
+}
 
   // System UI
   SystemChrome.setSystemUIOverlayStyle(
