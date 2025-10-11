@@ -26,7 +26,6 @@ Future<void> _initTimezone() async {
     final String localTz = await FlutterTimezone.getLocalTimezone();
     tz.setLocalLocation(tz.getLocation(localTz));
   } catch (e) {
-    // Fallback to UTC if lookup fails (e.g., emulator edge cases)
     tz.setLocalLocation(tz.getLocation('UTC'));
   }
 }
@@ -34,14 +33,14 @@ Future<void> _initTimezone() async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Init timezones for zonedSchedule
+  // Timezones
   tzdata.initializeTimeZones();
 
-  // ✅ Init Alarm Manager + Notifications (only on Android)
+  // Alarm + notifications (Android only)
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
     await AndroidAlarmManager.initialize();
   }
-  
+
   final plugin = flutterLocalNotificationsPlugin;
   const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
   const iosInit = DarwinInitializationSettings(
@@ -51,8 +50,7 @@ Future<void> main() async {
   );
   const settings = InitializationSettings(android: androidInit, iOS: iosInit);
   await plugin.initialize(settings);
-  
-  // Create notification channel with sound
+
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
     const androidChannel = AndroidNotificationChannel(
       'futureyou_channel',
@@ -68,17 +66,15 @@ Future<void> main() async {
         ?.createNotificationChannel(androidChannel);
   }
 
-  // Hive (models & boxes)
+  // Hive setup
   await Hive.initFlutter();
   if (!Hive.isAdapterRegistered(0)) {
     Hive.registerAdapter(HabitAdapter());
   }
   await LocalStorageService.initialize();
 
-  // Timezone for scheduled notifications
+  // Timezone + alarms
   await _initTimezone();
-
-  // Android-only alarm/notification bootstrap
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
     await AlarmService.initialize();
     await AlarmService.scheduleDailyCheck();
@@ -120,7 +116,7 @@ class AppRouter extends StatefulWidget {
 
 class _AppRouterState extends State<AppRouter> {
   bool _showOnboarding = true;
-  bool _isLoading = true; // 👈 Added flag for splash
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -129,40 +125,53 @@ class _AppRouterState extends State<AppRouter> {
   }
 
   Future<void> _checkOnboardingStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-    if (!mounted) return;
-    setState(() {
-      _showOnboarding = !hasSeenOnboarding;
-      _isLoading = false; // 👈 done loading
-    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+      if (!mounted) return;
+      setState(() {
+        _showOnboarding = !hasSeenOnboarding;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('❌ Prefs load error: $e');
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
   }
 
   void _completeOnboarding() {
-    setState(() {
-      _showOnboarding = false;
-    });
     SharedPreferences.getInstance().then((prefs) {
       prefs.setBool('has_seen_onboarding', true);
     });
+    if (mounted) {
+      setState(() => _showOnboarding = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 👇 Splash while checking prefs
+    debugPrint('🟢 Building AppRouter | loading=$_isLoading | onboarding=$_showOnboarding');
+
+    // --- Visual fallback (never blank) ---
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(
-          child: CircularProgressIndicator(color: Colors.greenAccent),
+          child: Text(
+            'Loading...',
+            style: TextStyle(color: Colors.white, fontSize: 18),
+          ),
         ),
       );
     }
 
     if (_showOnboarding) {
+      debugPrint('🟢 Showing OnboardingScreen');
       return OnboardingScreen(onComplete: _completeOnboarding);
     }
 
+    debugPrint('🟢 Showing MainScreen');
     return const MainScreen();
   }
 }
@@ -199,9 +208,7 @@ class TestScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const MainScreen(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const MainScreen()),
                 );
               },
               child: const Text('Go to Main App'),
