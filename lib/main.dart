@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 import 'models/habit.dart';
 
 final FlutterLocalNotificationsPlugin _notifier = FlutterLocalNotificationsPlugin();
@@ -8,42 +11,38 @@ final FlutterLocalNotificationsPlugin _notifier = FlutterLocalNotificationsPlugi
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await Hive.initFlutter();
-    if (!Hive.isAdapterRegistered(0)) {
-      Hive.registerAdapter(HabitAdapter());
-    }
-  } catch (e) {
-    debugPrint('Hive failed: $e');
+  // Hive
+  await Hive.initFlutter();
+  if (!Hive.isAdapterRegistered(0)) {
+    Hive.registerAdapter(HabitAdapter());
   }
 
-  // 2️⃣ Notifications test
-  try {
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosInit = DarwinInitializationSettings();
-    const settings = InitializationSettings(android: androidInit, iOS: iosInit);
-    await _notifier.initialize(settings);
+  // Notifications
+  const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const iosInit = DarwinInitializationSettings();
+  const settings = InitializationSettings(android: androidInit, iOS: iosInit);
+  await _notifier.initialize(settings);
 
-    // create channel
-    const channel = AndroidNotificationChannel(
-      'futureyou_test',
-      'FutureYou Test',
-      description: 'debug channel',
-      importance: Importance.max,
-    );
-    await _notifier
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+  // 3️⃣ Timezone test
+  String tzName = 'unknown';
+  try {
+    tzdata.initializeTimeZones();
+    tzName = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(tzName));
   } catch (e) {
-    debugPrint('Notifications failed: $e');
+    debugPrint('Timezone init failed: $e');
   }
 
-  runApp(const MaterialApp(
+  runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     home: Scaffold(
       backgroundColor: Colors.black,
       body: Center(
-        child: Text('Notifications OK', style: TextStyle(color: Colors.white, fontSize: 32)),
+        child: Text(
+          'Timezone: $tzName',
+          style: const TextStyle(color: Colors.white, fontSize: 26),
+          textAlign: TextAlign.center,
+        ),
       ),
     ),
   ));
