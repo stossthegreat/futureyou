@@ -8,6 +8,7 @@ import '../widgets/glass_button.dart';
 import '../widgets/date_strip.dart';
 import '../providers/habit_provider.dart';
 import '../services/api_client.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -20,6 +21,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   DateTime _selectedDate = DateTime.now();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  String? _lastVoiceUrl;
   
   final List<ChatMessage> _messages = [
     ChatMessage(
@@ -37,6 +40,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
   
@@ -79,6 +83,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         setState(() {
           _messages.add(responseMessage);
           _quickCommits = [];
+          _lastVoiceUrl = result.data!.voiceUrl;
           _isLoading = false;
         });
         // If voice URL provided, you can handle playback here (future enhancement)
@@ -292,6 +297,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
+
+        // Voice playback button (if available)
+        if (_lastVoiceUrl != null) ...[
+          GlassButton(
+            onPressed: () async {
+              try {
+                await _audioPlayer.stop();
+                await _audioPlayer.play(UrlSource(_lastVoiceUrl!));
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Voice playback failed: $e')),
+                );
+              }
+            },
+            backgroundColor: AppColors.emerald.withOpacity(0.15),
+            borderColor: AppColors.emerald.withOpacity(0.3),
+            child: Text(
+              'Play Voice',
+              style: AppTextStyles.captionSmall.copyWith(
+                color: AppColors.emerald,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
         ],
         
         // Input field

@@ -32,6 +32,7 @@ dependencies:
 
   # HTTP & API
   http: ^1.2.1
+  audioplayers: ^5.2.1
 
   # UI & Icons
   cupertino_icons: ^1.0.6
