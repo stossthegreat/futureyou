@@ -25,7 +25,7 @@ dependencies:
 
   # Timezone (for correct local scheduling)
   timezone: ^0.9.4
-  flutter_timezone: ^2.1.0
+  flutter_timezone: ^3.0.0
 
   # Animations
   flutter_animate: ^4.5.0
