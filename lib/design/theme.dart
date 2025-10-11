@@ -94,8 +94,8 @@ class AppTheme {
         ),
       ),
 
-      // ----- Card theme (Material 3 fix) -----
-      cardTheme: const CardThemeData(
+      // ----- Card theme (stable Material 3) -----
+      cardTheme: const CardTheme(
         color: AppColors.glassBackground,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -104,18 +104,14 @@ class AppTheme {
         ),
       ),
 
-      // ----- Switch theme (MaterialStateProperty fix) -----
+      // ----- Switch theme (WidgetStateProperty for 3.35+) -----
       switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
-            return Colors.white;
-          }
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.white;
           return Colors.white;
         }),
-        trackColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
-            return AppColors.emerald;
-          }
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColors.emerald;
           return AppColors.textQuaternary;
         }),
       ),
