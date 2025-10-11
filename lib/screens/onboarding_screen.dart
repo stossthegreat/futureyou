@@ -490,12 +490,12 @@ class _SlideCard extends StatelessWidget {
   Widget _buildSlideImage(int slideIndex) {
     // Asset paths for each slide - you can replace these with your actual image paths
     final List<String> imagePaths = [
-      'assets/images/onboarding/awakening.png',      // Slide 1: The Awakening
-      'assets/images/onboarding/choice.png',         // Slide 2: The Choice  
-      'assets/images/onboarding/mentor.png',         // Slide 3: The Mentor
-      'assets/images/onboarding/shadow.png',         // Slide 4: The Shadow
-      'assets/images/onboarding/mirror.png',         // Slide 5: The Mirror (handled separately)
-      'assets/images/onboarding/pact.png',           // Slide 6: The Pact
+      'assets/images/onboarding/awakening.jpg',      // Slide 1: The Awakening
+      'assets/images/onboarding/choice.jpg',         // Slide 2: The Choice  
+      'assets/images/onboarding/mentor.jpg',         // Slide 3: The Mentor
+      'assets/images/onboarding/shadow.jpg',         // Slide 4: The Shadow
+      'assets/images/onboarding/mirror.jpg',         // Slide 5: The Mirror (handled separately)
+      'assets/images/onboarding/pact.jpg',           // Slide 6: The Pact
     ];
 
     return Container(
@@ -528,21 +528,16 @@ class _SlideCard extends StatelessWidget {
               ),
             ),
             
-            // Uncomment this when you add your images to assets/images/onboarding/
-            /*
+            // Load actual onboarding image; contain to avoid cropping
             Image.asset(
               imagePaths[slideIndex],
               width: double.infinity,
               height: double.infinity,
-              fit: BoxFit.cover,
+              fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 return _buildImagePlaceholder(slideIndex);
               },
             ),
-            */
-            
-            // For now, show a placeholder with the slide icon
-            _buildImagePlaceholder(slideIndex),
           ],
         ),
       ),
