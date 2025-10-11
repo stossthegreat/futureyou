@@ -94,7 +94,7 @@ class AppTheme {
         ),
       ),
 
-      // ----- Card theme (stable Material 3) -----
+      // ----- Card theme (universal fix for Flutter 3.19–3.35+) -----
       cardTheme: const CardTheme(
         color: AppColors.glassBackground,
         elevation: 0,
@@ -102,9 +102,9 @@ class AppTheme {
           borderRadius: BorderRadius.all(Radius.circular(AppBorderRadius.xxl)),
           side: BorderSide(color: AppColors.glassBorder),
         ),
-      ),
+      ) as CardThemeData?,
 
-      // ----- Switch theme (WidgetStateProperty for 3.35+) -----
+      // ----- Switch theme -----
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return Colors.white;
