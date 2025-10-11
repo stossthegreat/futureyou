@@ -173,6 +173,12 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     }
   }
 
+  void _updateFrequency(String newFrequency) {
+    setState(() {
+      _frequency = newFrequency;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -303,10 +309,10 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     spacing:AppSpacing.sm,
     runSpacing:AppSpacing.sm,
     children:[
-      _FrequencyChip('Daily','daily'),
-      _FrequencyChip('Weekdays','weekdays'),
-      _FrequencyChip('Weekends','weekends'),
-      _FrequencyChip('Custom','custom'),
+      _FrequencyChip('Daily','daily', _frequency, _updateFrequency),
+      _FrequencyChip('Weekdays','weekdays', _frequency, _updateFrequency),
+      _FrequencyChip('Weekends','weekends', _frequency, _updateFrequency),
+      _FrequencyChip('Custom','custom', _frequency, _updateFrequency),
     ],
   );
 
@@ -608,14 +614,18 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
 }
 
 class _FrequencyChip extends StatelessWidget{
-  final String label,value;
-  const _FrequencyChip(this.label,this.value,{super.key});
+  final String label;
+  final String value;
+  final String currentFrequency;
+  final Function(String) onSelected;
+
+  const _FrequencyChip(this.label, this.value, this.currentFrequency, this.onSelected, {super.key});
+
   @override
   Widget build(BuildContext context){
-    final state=context.findAncestorStateOfType<_PlannerScreenState>()!;
-    final sel=state._frequency==value;
+    final sel = currentFrequency == value;
     return GestureDetector(
-      onTap:()=>state.setState(()=>state._frequency=value),
+      onTap: () => onSelected(value),
       child:Container(
         padding:const EdgeInsets.symmetric(horizontal:12,vertical:6),
         decoration:BoxDecoration(
