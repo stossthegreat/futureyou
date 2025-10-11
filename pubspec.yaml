@@ -1,74 +1,44 @@
-name: future_you_os
-description: A premium Flutter app for self-improvement and habit mastery - Future You OS (Unicorn)
-publish_to: 'none'
+name: drillos
+description: "Drill OS — The active habit operating system."
+publish_to: "none"
+
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
-  flutter: ">=3.24.0"
+  sdk: ">=3.3.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  # State Management
-  flutter_riverpod: ^2.4.9
+  # Core UI + Routing
+  cupertino_icons: ^1.0.8
+  go_router: ^13.2.5
+  google_fonts: ^6.2.1
+  http: ^1.2.2
+  shared_preferences: ^2.2.3
 
-  # Local Storage
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-
-  # Notifications & Alarms
-  flutter_local_notifications: ^17.2.2
-  android_alarm_manager_plus: ^4.0.2
-  permission_handler: ^11.3.1
-
-  # Timezone (for correct local scheduling)
-  timezone: ^0.9.4
-  flutter_timezone: ^3.0.0
-
-  # Animations
-  flutter_animate: ^4.5.0
-
-  # HTTP & API
-  http: ^1.2.1
+  # Audio + Speech
   audioplayers: ^5.2.1
 
-  # UI & Icons
-  cupertino_icons: ^1.0.6
-  lucide_icons: ^0.257.0
+  # Notifications + Alarms (FIXED: removed android_alarm_manager_plus)
+  flutter_local_notifications: ^19.4.2
+  # Use workmanager as alternative for background tasks
+  workmanager: ^0.5.2
+  timezone: ^0.10.1
 
   # Utils
-  uuid: ^4.3.3
-  shared_preferences: ^2.2.3
-  intl: ^0.19.0
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
-  hive_generator: ^2.0.1
-  build_runner: ^2.4.8
+  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/onboarding/
+    - assets/audio/
     - assets/images/
-    # If you add a custom notification sound file later, place it in:
-    # android/app/src/main/res/raw/notification_sound.(mp3|wav)
-    # (No pubspec entry needed for raw/)
-
-  # fonts:
-  #   - family: Inter
-  #     fonts:
-  #       - asset: assets/fonts/Inter-Regular.ttf
-  #       - asset: assets/fonts/Inter-Medium.ttf
-  #         weight: 500
-  #       - asset: assets/fonts/Inter-SemiBold.ttf
-  #         weight: 600
-  #       - asset: assets/fonts/Inter-Bold.ttf
-  #         weight: 700
-  #       - asset: assets/fonts/Inter-ExtraBold.ttf
-  #         weight: 800
+    - assets/avatars/
