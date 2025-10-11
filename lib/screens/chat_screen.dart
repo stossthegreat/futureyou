@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/glass_button.dart';
-import '../widgets/date_strip.dart';
+// Removed DateStrip from chat per new UI
 import '../providers/habit_provider.dart';
 import '../services/api_client.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -22,7 +22,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final AudioPlayer _audioPlayer = AudioPlayer();
-  String? _lastVoiceUrl;
+  final Map<String, String> _messageVoiceUrls = {};
   
   final List<ChatMessage> _messages = [
     ChatMessage(
@@ -44,11 +44,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.dispose();
   }
   
-  void _onDateSelected(DateTime date) {
-    setState(() {
-      _selectedDate = date;
-    });
-  }
+  // Removed date selection bar from chat screen
   
   Future<void> _sendMessage() async {
     final message = _messageController.text.trim();
@@ -83,7 +79,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         setState(() {
           _messages.add(responseMessage);
           _quickCommits = [];
-          _lastVoiceUrl = result.data!.voiceUrl;
+          if (result.data!.voiceUrl != null) {
+            _messageVoiceUrls[responseMessage.id] = result.data!.voiceUrl!;
+          }
           _isLoading = false;
         });
         // If voice URL provided, you can handle playback here (future enhancement)
@@ -189,18 +187,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Date strip
-        DateStrip(
-          selectedDate: _selectedDate,
-          onDateSelected: _onDateSelected,
-        ),
-        
-        const SizedBox(height: AppSpacing.xl),
-        
-        // Chat messages
+        // Full-screen chat messages
         Expanded(
           child: GlassCard(
-            height: 420,
             child: Column(
               children: [
                 Expanded(
@@ -214,7 +203,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     },
                   ),
                 ),
-                
                 if (_isLoading)
                   Padding(
                     padding: const EdgeInsets.all(AppSpacing.md),
@@ -298,31 +286,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           const SizedBox(height: AppSpacing.lg),
 
-        // Voice playback button (if available)
-        if (_lastVoiceUrl != null) ...[
-          GlassButton(
-            onPressed: () async {
-              try {
-                await _audioPlayer.stop();
-                await _audioPlayer.play(UrlSource(_lastVoiceUrl!));
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Voice playback failed: $e')),
-                );
-              }
-            },
-            backgroundColor: AppColors.emerald.withOpacity(0.15),
-            borderColor: AppColors.emerald.withOpacity(0.3),
-            child: Text(
-              'Play Voice',
-              style: AppTextStyles.captionSmall.copyWith(
-                color: AppColors.emerald,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-        ],
+        // Removed standalone voice button; voice now on mentor bubbles
         ],
         
         // Input field
@@ -386,27 +350,52 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ],
           
           Flexible(
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: isUser
-                    ? AppColors.emerald.withOpacity(0.2)
-                    : AppColors.glassBackground,
-                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                border: Border.all(
-                  color: isUser
-                      ? AppColors.emerald.withOpacity(0.3)
-                      : AppColors.glassBorder,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: isUser
+                          ? AppColors.emerald.withOpacity(0.2)
+                          : AppColors.glassBackground,
+                      borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                      border: Border.all(
+                        color: isUser
+                            ? AppColors.emerald.withOpacity(0.3)
+                            : AppColors.glassBorder,
+                      ),
+                    ),
+                    child: Text(
+                      message.text,
+                      style: AppTextStyles.body.copyWith(
+                        color: isUser
+                            ? AppColors.emerald
+                            : AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              child: Text(
-                message.text,
-                style: AppTextStyles.body.copyWith(
-                  color: isUser
-                      ? AppColors.emerald
-                      : AppColors.textPrimary,
-                ),
-              ),
+                if (!isUser && _messageVoiceUrls.containsKey(message.id)) ...[
+                  const SizedBox(width: 6),
+                  IconButton(
+                    icon: const Icon(Icons.volume_up, size: 20, color: Colors.white70),
+                    onPressed: () async {
+                      final url = _messageVoiceUrls[message.id]!;
+                      try {
+                        await _audioPlayer.stop();
+                        await _audioPlayer.play(UrlSource(url));
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Voice playback failed: $e')),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ],
             ),
           ),
           
