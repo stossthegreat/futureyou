@@ -5,10 +5,11 @@ import 'tokens.dart';
 class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
+      useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.baseDark1,
-      
-      // Color scheme
+
+      // ----- Color scheme -----
       colorScheme: const ColorScheme.dark(
         primary: AppColors.emerald,
         secondary: AppColors.cyan,
@@ -19,8 +20,8 @@ class AppTheme {
         onSurface: AppColors.textPrimary,
         onError: Colors.white,
       ),
-      
-      // App bar theme
+
+      // ----- App bar -----
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -28,8 +29,8 @@ class AppTheme {
         titleTextStyle: AppTextStyles.h3,
         iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
-      
-      // Bottom navigation bar theme
+
+      // ----- Bottom nav -----
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -37,8 +38,8 @@ class AppTheme {
         unselectedItemColor: AppColors.textTertiary,
         type: BottomNavigationBarType.fixed,
       ),
-      
-      // Input decoration theme
+
+      // ----- Input fields -----
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.glassBackground,
@@ -60,8 +61,8 @@ class AppTheme {
         labelStyle: AppTextStyles.caption,
         contentPadding: const EdgeInsets.all(AppSpacing.md),
       ),
-      
-      // Elevated button theme
+
+      // ----- Elevated buttons -----
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.emerald,
@@ -77,8 +78,8 @@ class AppTheme {
           textStyle: AppTextStyles.bodySemiBold,
         ),
       ),
-      
-      // Text button theme
+
+      // ----- Text buttons -----
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.emerald,
@@ -92,34 +93,34 @@ class AppTheme {
           textStyle: AppTextStyles.bodyMedium,
         ),
       ),
-      
-      // Card theme
-      cardTheme: CardTheme(
+
+      // ----- Card theme (Material 3 fix) -----
+      cardTheme: const CardThemeData(
         color: AppColors.glassBackground,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
-          side: const BorderSide(color: AppColors.glassBorder),
+          borderRadius: BorderRadius.all(Radius.circular(AppBorderRadius.xxl)),
+          side: BorderSide(color: AppColors.glassBorder),
         ),
       ),
-      
-      // Switch theme
+
+      // ----- Switch theme (MaterialStateProperty fix) -----
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
+        thumbColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
             return Colors.white;
           }
           return Colors.white;
         }),
-        trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
+        trackColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
             return AppColors.emerald;
           }
           return AppColors.textQuaternary;
         }),
       ),
-      
-      // Text theme
+
+      // ----- Text theme -----
       textTheme: const TextTheme(
         displayLarge: AppTextStyles.h1,
         displayMedium: AppTextStyles.h2,
