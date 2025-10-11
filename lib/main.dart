@@ -80,10 +80,7 @@ Future<void> main() async {
 
   // Android-only alarm/notification bootstrap
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-    // Initialize local notifications + channels
     await AlarmService.initialize();
-
-    // Schedule daily maintenance check (streak reset, etc.)
     await AlarmService.scheduleDailyCheck();
   }
 
@@ -123,6 +120,7 @@ class AppRouter extends StatefulWidget {
 
 class _AppRouterState extends State<AppRouter> {
   bool _showOnboarding = true;
+  bool _isLoading = true; // 👈 Added flag for splash
 
   @override
   void initState() {
@@ -133,11 +131,11 @@ class _AppRouterState extends State<AppRouter> {
   Future<void> _checkOnboardingStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-    if (mounted) {
-      setState(() {
-        _showOnboarding = !hasSeenOnboarding;
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      _showOnboarding = !hasSeenOnboarding;
+      _isLoading = false; // 👈 done loading
+    });
   }
 
   void _completeOnboarding() {
@@ -151,9 +149,20 @@ class _AppRouterState extends State<AppRouter> {
 
   @override
   Widget build(BuildContext context) {
+    // 👇 Splash while checking prefs
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.greenAccent),
+        ),
+      );
+    }
+
     if (_showOnboarding) {
       return OnboardingScreen(onComplete: _completeOnboarding);
     }
+
     return const MainScreen();
   }
 }
