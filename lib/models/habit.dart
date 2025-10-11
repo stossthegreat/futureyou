@@ -56,7 +56,7 @@ class Habit extends HiveObject {
     required this.endDate,
     required this.repeatDays,
     this.done = false,
-    this.reminderOn = true,
+    this.reminderOn = false,
     required this.createdAt,
     this.completedAt,
     this.streak = 0,
