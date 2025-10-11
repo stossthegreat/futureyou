@@ -47,7 +47,7 @@ class AlarmService {
         await Permission.notification.request();
       }
 
-      // Exact Alarm (Android 12+ app-op; will be a no-op where unsupported)
+      // Exact Alarm (Android 12+ app-op; no-op where unsupported)
       final eStatus = await Permission.scheduleExactAlarm.status;
       if (eStatus.isDenied || eStatus.isRestricted) {
         await Permission.scheduleExactAlarm.request();
@@ -121,8 +121,8 @@ class AlarmService {
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
       playSound: true,
-      // IMPORTANT: Do not reference a non-existent raw sound.
-      sound: null, // ← use system default (prevents invalid_sound exceptions)
+      // Do NOT reference a missing raw sound to avoid PlatformException(invalid_sound).
+      sound: null, // ← use system default
       enableVibration: true,
       enableLights: true,
       audioAttributesUsage: AudioAttributesUsage.alarm,
@@ -132,7 +132,7 @@ class AlarmService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
-      // sound: 'default', // default iOS sound is fine
+      // sound: 'default',
     );
 
     final details = NotificationDetails(android: androidDetails, iOS: iOSDetails);
@@ -152,7 +152,11 @@ class AlarmService {
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       );
-      debugPrint('⏰ Scheduled "${habit.title}" on weekday=$day at ${habit.timeOfDay.format(const TimeOfDayFormat.H_colon_mm)} (id=$id, tz=$time)');
+
+      // Manual HH:mm formatting (no BuildContext needed)
+      final hh = habit.timeOfDay.hour.toString().padLeft(2, '0');
+      final mm = habit.timeOfDay.minute.toString().padLeft(2, '0');
+      debugPrint('⏰ Scheduled "${habit.title}" on weekday=$day at $hh:$mm (id=$id, tz=$time)');
     }
   }
 
@@ -197,13 +201,5 @@ class AlarmService {
     ];
     final i = DateTime.now().minute % q.length;
     return q[i];
-  }
-}
-
-extension on TimeOfDay {
-  String format(TimeOfDayFormat fmt) {
-    final h = hour.toString().padLeft(2, '0');
-    final m = minute.toString().padLeft(2, '0');
-    return '$h:$m';
   }
 }
