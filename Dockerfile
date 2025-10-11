@@ -3,13 +3,14 @@ WORKDIR /app
 
 # Install backend dependencies first (better layer caching)
 COPY backend/package*.json ./backend/
-RUN cd backend && npm ci
+# Install deps without running scripts (postinstall) before sources are present
+RUN cd backend && npm ci --ignore-scripts
 
-# Copy backend source
+# Copy backend source (including prisma/)
 COPY backend ./backend
 WORKDIR /app/backend
 
-# Build (runs prisma generate via script)
+# Build now that schema exists
 RUN npm run build
 
 ENV NODE_ENV=production
