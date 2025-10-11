@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/habit.dart';
 import '../services/local_storage.dart';
@@ -120,7 +118,6 @@ class HabitEngine extends ChangeNotifier {
   Future<void> _scheduleNext(Habit h) async {
     if (h.repeatDays.isEmpty) return;
     
-    final now = DateTime.now();
     final start = h.startDate;
     final next = _nextOccurrence(start, h.repeatDays, h.timeOfDay);
     
