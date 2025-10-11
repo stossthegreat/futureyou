@@ -29,17 +29,15 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   final _formKey = GlobalKey<FormState>();
   late TabController _tabController;
 
-  // NEW: habit color
   Color _selectedColor = AppColors.emerald;
-
   final List<bool> _repeatDays = List.generate(7, (index) => false);
   final List<String> _dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    // Initialize repeat days based on default type
+    // Start on Manage tab by default
+    _tabController = TabController(length: 2, vsync: this, initialIndex: 1);
     _onTypeChanged(_selectedType);
   }
 
@@ -58,9 +56,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       _selectedType = type;
       for (int i = 0; i < 7; i++) {
         if (type == 'habit') {
-          _repeatDays[i] = i >= 1 && i <= 5; // weekdays for habits
+          _repeatDays[i] = i >= 1 && i <= 5;
         } else {
-          _repeatDays[i] = i == DateTime.now().weekday % 7; // today only for tasks
+          _repeatDays[i] = i == DateTime.now().weekday % 7;
         }
       }
     });
@@ -140,7 +138,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         title: _titleController.text.trim(),
         type: _selectedType,
         time: _timeController.text,
-        startDate: DateTime.now(), // Always start from today
+        startDate: DateTime.now(),
         endDate: _endDate,
         repeatDays: _getRepeatDays(),
         color: _selectedColor,
@@ -152,6 +150,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         _frequency = 'daily';
         _selectedColor = AppColors.emerald;
       });
+
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Row(children:[
           const Icon(LucideIcons.check,color:Colors.white,size:16),
@@ -160,10 +159,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         ]),
         backgroundColor: AppColors.success,
       ));
-      // Switch to manage tab and ensure we're looking at today
-      setState(() {
-        _selectedDate = DateTime.now();
-      });
+
+      setState(() => _selectedDate = DateTime.now());
       _tabController.animateTo(1);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -181,33 +178,49 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
-        const SizedBox(height: AppSpacing.lg),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: AppColors.glassBackground,
-            borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-            border: Border.all(color: AppColors.glassBorder),
-          ),
-          child: TabBar(
-            controller: _tabController,
-            tabs: const [Tab(text:'Add New'),Tab(text:'Manage')],
-          ),
+        Column(
+          children: [
+            DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
+            const SizedBox(height: AppSpacing.lg),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.glassBackground,
+                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                border: Border.all(color: AppColors.glassBorder),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                tabs: const [Tab(text:'Add New'),Tab(text:'Manage')],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [_buildAddNewTab(), _buildManageTab()],
+              ),
+            )
+          ],
         ),
-        const SizedBox(height: AppSpacing.lg),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [_buildAddNewTab(), _buildManageTab()],
+
+        // Floating "Create" button only visible on Manage tab
+        if (_tabController.index == 1)
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: FloatingActionButton.extended(
+              onPressed: () => _tabController.animateTo(0),
+              backgroundColor: AppColors.emerald,
+              icon: const Icon(LucideIcons.plus, color: Colors.black),
+              label: const Text('Create', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+            ),
           ),
-        )
       ],
     );
   }
-
   Widget _buildAddNewTab() {
     return SingleChildScrollView(
       child: GlassCard(
@@ -218,21 +231,23 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             children: [
               _typeSelector(),
               const SizedBox(height: AppSpacing.lg),
-              _textField('Title',_titleController,
-                  icon: _selectedType=='habit'?LucideIcons.flame:LucideIcons.alarmCheck),
+              _textField('Title', _titleController,
+                  icon: _selectedType == 'habit'
+                      ? LucideIcons.flame
+                      : LucideIcons.alarmCheck),
               const SizedBox(height: AppSpacing.lg),
               _timeField(),
               const SizedBox(height: AppSpacing.lg),
-              _dateField('Start Date',_startDate,_selectStartDate),
+              _dateField('Start Date', _startDate, _selectStartDate),
               const SizedBox(height: AppSpacing.lg),
-              _dateField('End Date',_endDate,_selectEndDate),
+              _dateField('End Date', _endDate, _selectEndDate),
               const SizedBox(height: AppSpacing.lg),
               _frequencySelector(),
               const SizedBox(height: AppSpacing.lg),
               _colorPicker(),
               const SizedBox(height: AppSpacing.xl),
               _commitButton(),
-              const SizedBox(height:100),
+              const SizedBox(height: 100),
             ],
           ),
         ),
@@ -241,145 +256,174 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   }
 
   Widget _typeSelector() => Row(
-    children:[
-      Expanded(child:GlassButton(
-        onPressed:()=>_onTypeChanged('habit'),
-        backgroundColor:_selectedType=='habit'?AppColors.emerald:AppColors.glassBackground,
-        borderColor:_selectedType=='habit'?AppColors.emerald:AppColors.glassBorder,
-        child:Text('Habit',style:AppTextStyles.bodyMedium.copyWith(
-          color:_selectedType=='habit'?Colors.black:AppColors.textSecondary,
-        )),
-      )),
-      const SizedBox(width:AppSpacing.sm),
-      Expanded(child:GlassButton(
-        onPressed:()=>_onTypeChanged('task'),
-        backgroundColor:_selectedType=='task'?AppColors.cyan:AppColors.glassBackground,
-        borderColor:_selectedType=='task'?AppColors.cyan:AppColors.glassBorder,
-        child:Text('Task',style:AppTextStyles.bodyMedium.copyWith(
-          color:_selectedType=='task'?Colors.black:AppColors.textSecondary,
-        )),
-      )),
-    ],
-  );
-
-  Widget _textField(String label, TextEditingController c,{required IconData icon}) =>
-      TextFormField(
-        controller:c,
-        style:AppTextStyles.body,
-        decoration:InputDecoration(
-          hintText:'Add a $_selectedType title...',
-          prefixIcon:Icon(icon,color:AppColors.textTertiary),
-        ),
-        validator:(v)=>v==null||v.trim().isEmpty?'Enter a title':null,
+        children: [
+          Expanded(
+              child: GlassButton(
+            onPressed: () => _onTypeChanged('habit'),
+            backgroundColor: _selectedType == 'habit'
+                ? AppColors.emerald
+                : AppColors.glassBackground,
+            borderColor: _selectedType == 'habit'
+                ? AppColors.emerald
+                : AppColors.glassBorder,
+            child: Text('Habit',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: _selectedType == 'habit'
+                      ? Colors.black
+                      : AppColors.textSecondary,
+                )),
+          )),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+              child: GlassButton(
+            onPressed: () => _onTypeChanged('task'),
+            backgroundColor: _selectedType == 'task'
+                ? AppColors.cyan
+                : AppColors.glassBackground,
+            borderColor: _selectedType == 'task'
+                ? AppColors.cyan
+                : AppColors.glassBorder,
+            child: Text('Task',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: _selectedType == 'task'
+                      ? Colors.black
+                      : AppColors.textSecondary,
+                )),
+          )),
+        ],
       );
 
-  Widget _timeField()=>GestureDetector(
-    onTap:_selectTime,
-    child:AbsorbPointer(
-      child:TextFormField(
-        controller:_timeController,
-        style:AppTextStyles.body,
-        decoration:const InputDecoration(
-          prefixIcon:Icon(LucideIcons.clock,color:AppColors.textTertiary),
-          suffixIcon:Icon(LucideIcons.chevronDown,color:AppColors.textTertiary),
+  Widget _textField(String label, TextEditingController c,
+          {required IconData icon}) =>
+      TextFormField(
+        controller: c,
+        style: AppTextStyles.body,
+        decoration: InputDecoration(
+          hintText: 'Add a $_selectedType title...',
+          prefixIcon: Icon(icon, color: AppColors.textTertiary),
         ),
-      ),
-    ),
-  );
+        validator: (v) => v == null || v.trim().isEmpty ? 'Enter a title' : null,
+      );
 
-  Widget _dateField(String label,DateTime date,VoidCallback onTap)=>GestureDetector(
-    onTap:onTap,
-    child:Container(
-      width:double.infinity,
-      padding:const EdgeInsets.all(AppSpacing.md),
-      decoration:BoxDecoration(
-        color:AppColors.glassBackground,
-        border:Border.all(color:AppColors.glassBorder),
-        borderRadius:BorderRadius.circular(AppBorderRadius.md),
-      ),
-      child:Row(children:[
-        const Icon(LucideIcons.calendar,color:AppColors.textTertiary,size:16),
-        const SizedBox(width:AppSpacing.sm),
-        Text('${date.day}/${date.month}/${date.year}',style:AppTextStyles.body),
-      ]),
-    ),
-  );
-
-  Widget _frequencySelector()=>Wrap(
-    spacing:AppSpacing.sm,
-    runSpacing:AppSpacing.sm,
-    children:[
-      _FrequencyChip('Daily','daily', _frequency, _updateFrequency),
-      _FrequencyChip('Weekdays','weekdays', _frequency, _updateFrequency),
-      _FrequencyChip('Weekends','weekends', _frequency, _updateFrequency),
-      _FrequencyChip('Custom','custom', _frequency, _updateFrequency),
-    ],
-  );
-
-  Widget _colorPicker(){
-    final colors=[AppColors.emerald,AppColors.cyan,AppColors.warning,AppColors.purple,AppColors.rose];
-    return Column(
-      crossAxisAlignment:CrossAxisAlignment.start,
-      children:[
-        Text('Habit Color',style:AppTextStyles.captionSmall.copyWith(color:AppColors.textTertiary)),
-        const SizedBox(height:AppSpacing.sm),
-        Row(
-          children:colors.map((c)=>GestureDetector(
-            onTap:()=>setState(()=>_selectedColor=c),
-            child:Container(
-              margin:const EdgeInsets.only(right:8),
-              width:32,height:32,
-              decoration:BoxDecoration(
-                color:c,
-                shape:BoxShape.circle,
-                border:Border.all(
-                  color:_selectedColor==c?Colors.white:Colors.transparent,
-                  width:2),
-              ),
+  Widget _timeField() => GestureDetector(
+        onTap: _selectTime,
+        child: AbsorbPointer(
+          child: TextFormField(
+            controller: _timeController,
+            style: AppTextStyles.body,
+            decoration: const InputDecoration(
+              prefixIcon:
+                  Icon(LucideIcons.clock, color: AppColors.textTertiary),
+              suffixIcon: Icon(LucideIcons.chevronDown,
+                  color: AppColors.textTertiary),
             ),
-          )).toList(),
+          ),
+        ),
+      );
+
+  Widget _dateField(String label, DateTime date, VoidCallback onTap) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.glassBackground,
+            border: Border.all(color: AppColors.glassBorder),
+            borderRadius: BorderRadius.circular(AppBorderRadius.md),
+          ),
+          child: Row(children: [
+            const Icon(LucideIcons.calendar,
+                color: AppColors.textTertiary, size: 16),
+            const SizedBox(width: AppSpacing.sm),
+            Text('${date.day}/${date.month}/${date.year}',
+                style: AppTextStyles.body),
+          ]),
+        ),
+      );
+
+  Widget _frequencySelector() => Wrap(
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
+        children: [
+          _FrequencyChip('Daily', 'daily', _frequency, _updateFrequency),
+          _FrequencyChip('Weekdays', 'weekdays', _frequency, _updateFrequency),
+          _FrequencyChip('Weekends', 'weekends', _frequency, _updateFrequency),
+          _FrequencyChip('Custom', 'custom', _frequency, _updateFrequency),
+        ],
+      );
+
+  Widget _colorPicker() {
+    final colors = [
+      AppColors.emerald,
+      AppColors.cyan,
+      AppColors.warning,
+      AppColors.purple,
+      AppColors.rose
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Habit Color',
+            style: AppTextStyles.captionSmall
+                .copyWith(color: AppColors.textTertiary)),
+        const SizedBox(height: AppSpacing.sm),
+        Row(
+          children: colors
+              .map((c) => GestureDetector(
+                    onTap: () => setState(() => _selectedColor = c),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: c,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: _selectedColor == c
+                                ? Colors.white
+                                : Colors.transparent,
+                            width: 2),
+                      ),
+                    ),
+                  ))
+              .toList(),
         )
       ],
     );
   }
 
-  Widget _commitButton()=>SizedBox(
-    width:double.infinity,
-    child:Container(
-      height:48,
-      decoration:BoxDecoration(
-        gradient:AppColors.primaryGradient,
-        borderRadius:BorderRadius.circular(AppBorderRadius.md),
-      ),
-      child:Material(
-        color:Colors.transparent,
-        child:InkWell(
-          onTap:_submitForm,
-          borderRadius:BorderRadius.circular(AppBorderRadius.md),
-          child:Center(
-            child:Text('Commit ${_selectedType.capitalize()}',
-              style:AppTextStyles.bodySemiBold.copyWith(color:Colors.black)),
+  Widget _commitButton() => SizedBox(
+        width: double.infinity,
+        child: Container(
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: AppColors.primaryGradient,
+            borderRadius: BorderRadius.circular(AppBorderRadius.md),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _submitForm,
+              borderRadius: BorderRadius.circular(AppBorderRadius.md),
+              child: Center(
+                child: Text('Commit ${_selectedType.capitalize()}',
+                    style: AppTextStyles.bodySemiBold
+                        .copyWith(color: Colors.black)),
+              ),
+            ),
           ),
         ),
-      ),
-    ),
-  );
+      );
 
   // ---------------------------------------------------------
   // 🧠 MANAGE TAB (fixed + upgraded visuals)
   // ---------------------------------------------------------
   Widget _buildManageTab() {
     final habitEngine = ref.watch(habitEngineProvider);
-    // ✅ Filter habits by the calendar's selected date
-    print('🔍 Manage tab - Selected date: $_selectedDate');
-    print('🔍 Manage tab - Total habits: ${habitEngine.habits.length}');
     final filtered = habitEngine.habits
         .where((h) => h.isScheduledForDate(_selectedDate))
         .toList();
-    print('🔍 Manage tab - Filtered habits: ${filtered.length}');
-    for (final habit in filtered) {
-      print('  - ${habit.title} is scheduled for $_selectedDate');
-    }
 
     if (filtered.isEmpty) {
       return Center(
@@ -387,13 +431,16 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(LucideIcons.calendar, size: 48, color: AppColors.textQuaternary),
+              Icon(LucideIcons.calendar,
+                  size: 48, color: AppColors.textQuaternary),
               const SizedBox(height: AppSpacing.md),
               Text('No habits or tasks for this day',
-                  style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.textSecondary)),
+                  style: AppTextStyles.bodySemiBold
+                      .copyWith(color: AppColors.textSecondary)),
               const SizedBox(height: AppSpacing.sm),
               Text('Pick another date above or create a new one below.',
-                  style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+                  style: AppTextStyles.caption
+                      .copyWith(color: AppColors.textTertiary),
                   textAlign: TextAlign.center),
             ],
           ),
@@ -402,41 +449,30 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     }
 
     return RefreshIndicator(
-      onRefresh: () async {
-        await ref.read(habitEngineProvider).loadHabits();
-      },
+      onRefresh: () async => await ref.read(habitEngineProvider).loadHabits(),
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         itemCount: filtered.length,
-        itemBuilder: (context, i) {
-          final h = filtered[i];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: _buildHabitCard(h),
-          );
-        },
+        itemBuilder: (context, i) =>
+            Padding(padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: _buildHabitCard(filtered[i])),
       ),
     );
   }
 
   // ---------------------------------------------------------
-  // 🎨 UPGRADED HABIT CARD
+  // 🎨 HABIT CARD FIXED (color + thicker title)
   // ---------------------------------------------------------
   Widget _buildHabitCard(Habit habit) {
-    final accent = habit.type == 'habit'
-        ? AppColors.emerald
-        : AppColors.cyan;
+    final accent = habit.color ?? // use saved color
+        (habit.type == 'habit' ? AppColors.emerald : AppColors.cyan);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accent.withOpacity(0.08),
-            AppColors.glassBackground.withOpacity(0.8),
-          ],
+          colors: [accent.withOpacity(0.08),
+                   AppColors.glassBackground.withOpacity(0.8)],
         ),
         borderRadius: BorderRadius.circular(AppBorderRadius.lg),
         border: Border.all(color: accent.withOpacity(0.4), width: 1.2),
@@ -455,8 +491,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         children: [
           Row(children: [
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
               decoration: BoxDecoration(
                 color: accent.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(AppBorderRadius.full),
@@ -481,23 +517,19 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               itemBuilder: (context) => [
                 const PopupMenuItem(
                   value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(LucideIcons.edit, size: 16),
-                      SizedBox(width: 8),
-                      Text('Edit'),
-                    ],
-                  ),
+                  child: Row(children: [
+                    Icon(LucideIcons.edit, size: 16),
+                    SizedBox(width: 8),
+                    Text('Edit'),
+                  ]),
                 ),
                 const PopupMenuItem(
                   value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(LucideIcons.trash, size: 16, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
+                  child: Row(children: [
+                    Icon(LucideIcons.trash, size: 16, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Delete', style: TextStyle(color: Colors.red)),
+                  ]),
                 ),
               ],
             )
@@ -507,55 +539,46 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             habit.title,
             style: AppTextStyles.body.copyWith(
               color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
-              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              fontSize: 19,
+              letterSpacing: 0.3,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          Row(
-            children: [
-              Icon(LucideIcons.clock, color: accent.withOpacity(0.7), size: 15),
-              const SizedBox(width: 4),
-              Text(habit.time,
-                  style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600)),
-              const SizedBox(width: AppSpacing.md),
-              Icon(LucideIcons.calendar,
-                  color: accent.withOpacity(0.7), size: 15),
-              const SizedBox(width: 4),
-              Text(_getFrequencyText(habit.repeatDays),
-                  style: AppTextStyles.caption
-                      .copyWith(color: AppColors.textTertiary)),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              Icon(LucideIcons.flame,
-                  color: accent.withOpacity(0.8), size: 16),
-              const SizedBox(width: 4),
-              Text(
-                'Streak: ${habit.streak} days',
+          Row(children: [
+            Icon(LucideIcons.clock, color: accent.withOpacity(0.7), size: 15),
+            const SizedBox(width: 4),
+            Text(habit.time,
                 style: AppTextStyles.caption.copyWith(
-                    color: accent, fontWeight: FontWeight.w600),
-              ),
-              const Spacer(),
-              Text(
-                'Created: ${habit.startDate.day}/${habit.startDate.month}/${habit.startDate.year}',
-                style: AppTextStyles.captionSmall
-                    .copyWith(color: AppColors.textQuaternary),
-              ),
-            ],
-          ),
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600)),
+            const SizedBox(width: AppSpacing.md),
+            Icon(LucideIcons.calendar,
+                color: accent.withOpacity(0.7), size: 15),
+            const SizedBox(width: 4),
+            Text(_getFrequencyText(habit.repeatDays),
+                style: AppTextStyles.caption
+                    .copyWith(color: AppColors.textTertiary)),
+          ]),
+          const SizedBox(height: AppSpacing.sm),
+          Row(children: [
+            Icon(LucideIcons.flame, color: accent.withOpacity(0.8), size: 16),
+            const SizedBox(width: 4),
+            Text('Streak: ${habit.streak} days',
+                style: AppTextStyles.caption
+                    .copyWith(color: accent, fontWeight: FontWeight.w600)),
+            const Spacer(),
+            Text(
+              'Created: ${habit.startDate.day}/${habit.startDate.month}/${habit.startDate.year}',
+              style: AppTextStyles.captionSmall
+                  .copyWith(color: AppColors.textQuaternary),
+            ),
+          ]),
         ],
       ),
     );
   }
 
-  // ---------------------------------------------------------
-  // 🧭 SUPPORT FUNCTIONS (same as before)
-  // ---------------------------------------------------------
   String _getFrequencyText(List<int> days) {
     if (days.length == 7) return 'Daily';
     if (days.length == 5 && days.contains(1) && days.contains(5)) return 'Weekdays';
@@ -613,34 +636,40 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   }
 }
 
-class _FrequencyChip extends StatelessWidget{
+class _FrequencyChip extends StatelessWidget {
   final String label;
   final String value;
   final String currentFrequency;
   final Function(String) onSelected;
 
-  const _FrequencyChip(this.label, this.value, this.currentFrequency, this.onSelected, {super.key});
+  const _FrequencyChip(
+      this.label, this.value, this.currentFrequency, this.onSelected,
+      {super.key});
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     final sel = currentFrequency == value;
     return GestureDetector(
       onTap: () => onSelected(value),
-      child:Container(
-        padding:const EdgeInsets.symmetric(horizontal:12,vertical:6),
-        decoration:BoxDecoration(
-          color:sel?AppColors.emerald.withOpacity(0.2):AppColors.glassBackground,
-          border:Border.all(color:sel?AppColors.emerald:AppColors.glassBorder),
-          borderRadius:BorderRadius.circular(AppBorderRadius.full),
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color:
+              sel ? AppColors.emerald.withOpacity(0.2) : AppColors.glassBackground,
+          border:
+              Border.all(color: sel ? AppColors.emerald : AppColors.glassBorder),
+          borderRadius: BorderRadius.circular(AppBorderRadius.full),
         ),
-        child:Text(label,
-          style:AppTextStyles.captionSmall.copyWith(
-            color:sel?AppColors.emerald:AppColors.textTertiary)),
+        child: Text(label,
+            style: AppTextStyles.captionSmall
+                .copyWith(color: sel ? AppColors.emerald : AppColors.textTertiary)),
       ),
     );
   }
 }
 
 extension StringC on String {
-  String capitalize()=>isEmpty?this:'${this[0].toUpperCase()}${substring(1)}';
+  String capitalize() =>
+      isEmpty ? this : '${this[0].toUpperCase()}${substring(1)}';
 }
