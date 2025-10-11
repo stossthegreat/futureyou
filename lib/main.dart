@@ -8,6 +8,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart'; // ← ADDED
 
 // Timezone init
 import 'package:timezone/data/latest.dart' as tzdata;
@@ -31,6 +32,41 @@ Future<void> _initTimezone() async {
   } catch (e) {
     debugPrint('⚠️ Timezone fallback to UTC: $e');
     tz.setLocalLocation(tz.getLocation('UTC'));
+  }
+}
+
+/// Ask Android 13+ for notification permission and (where supported) the exact-alarm app-op.
+/// This does NOT show on older Androids; it’s a no-op there.
+Future<void> _requestRuntimePermissions() async {
+  if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+
+  // POST_NOTIFICATIONS (Android 13+)
+  try {
+    final notifStatus = await Permission.notification.status;
+    if (notifStatus.isDenied || notifStatus.isRestricted) {
+      final result = await Permission.notification.request();
+      debugPrint('🔔 Notification permission: $result');
+    } else {
+      debugPrint('🔔 Notification permission already granted.');
+    }
+  } catch (e) {
+    debugPrint('🔔 Notification permission check failed: $e');
+  }
+
+  // SCHEDULE_EXACT_ALARM (special app-op; may auto-grant on some OEMs)
+  try {
+    // `permission_handler` handles API gating internally
+    final exactStatus = await Permission.scheduleExactAlarm.status;
+    if (exactStatus.isDenied || exactStatus.isRestricted) {
+      final res = await Permission.scheduleExactAlarm.request();
+      debugPrint('⏰ Exact alarm permission: $res');
+      // If still not granted, consider guiding user to settings:
+      // if (!res.isGranted) await openAppSettings();
+    } else {
+      debugPrint('⏰ Exact alarm permission already granted.');
+    }
+  } catch (e) {
+    debugPrint('⏰ Exact alarm permission check failed: $e');
   }
 }
 
@@ -82,6 +118,9 @@ Future<void> main() async {
     } catch (e) {
       debugPrint('⚠️ Notifications failed: $e');
     }
+
+    // 👉 Request runtime permissions right before showing UI
+    await _requestRuntimePermissions(); // ← ADDED
 
     // Hive setup
     try {
