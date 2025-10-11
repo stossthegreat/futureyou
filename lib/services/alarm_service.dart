@@ -3,17 +3,23 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
+
 import '../models/habit.dart';
 
 class AlarmService {
-  static final FlutterLocalNotificationsPlugin _notifications =
-      FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
+  static bool _initialized = false;
 
   static const String _channelId = 'habit_reminders';
   static const String _channelName = 'Habit Reminders';
   static const String _channelDescription = 'Notifications for habit reminders';
 
+  /// Call once from main() after WidgetsFlutterBinding.ensureInitialized().
   static Future<void> initialize() async {
+    if (_initialized) return;
+    _initialized = true;
+
+    // Ask runtime permissions where required (Android 13+)
     await _requestPermissions();
 
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -22,8 +28,7 @@ class AlarmService {
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
-    const initSettings =
-        InitializationSettings(android: android, iOS: ios);
+    const initSettings = InitializationSettings(android: android, iOS: ios);
 
     await _notifications.initialize(
       initSettings,
@@ -31,12 +36,24 @@ class AlarmService {
     );
 
     await _createNotificationChannel();
+    debugPrint('✅ AlarmService initialized');
   }
 
   static Future<void> _requestPermissions() async {
-    await Permission.notification.request();
-    if (await Permission.scheduleExactAlarm.isDenied) {
-      await Permission.scheduleExactAlarm.request();
+    try {
+      // Notifications
+      final nStatus = await Permission.notification.status;
+      if (nStatus.isDenied || nStatus.isRestricted) {
+        await Permission.notification.request();
+      }
+
+      // Exact Alarm (Android 12+ app-op; no-op where unsupported)
+      final eStatus = await Permission.scheduleExactAlarm.status;
+      if (eStatus.isDenied || eStatus.isRestricted) {
+        await Permission.scheduleExactAlarm.request();
+      }
+    } catch (e) {
+      debugPrint('⚠️ Permission request failed: $e');
     }
   }
 
@@ -51,65 +68,78 @@ class AlarmService {
       enableLights: true,
     );
     await _notifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(androidChannel);
   }
 
   static void _onNotificationTapped(NotificationResponse response) {
     debugPrint('🔔 Notification tapped: ${response.payload}');
+    // TODO: handle deep-link / navigation if desired
   }
 
-  // --------------- DAILY MAINTENANCE CHECK ---------------
+  // ---------------- DAILY MAINTENANCE CHECK ----------------
   static Future<void> scheduleDailyCheck() async {
-    final now = DateTime.now();
-    var start = DateTime(now.year, now.month, now.day, 5, 0);
-    if (start.isBefore(now)) start = start.add(const Duration(days: 1));
-    await AndroidAlarmManager.oneShotAt(
-      start,
-      9000001,
-      _dailyCheckCallback,
-      wakeup: true,
-      allowWhileIdle: true,
-      rescheduleOnReboot: true,
-    );
+    try {
+      final now = DateTime.now();
+      var start = DateTime(now.year, now.month, now.day, 5, 0);
+      if (start.isBefore(now)) start = start.add(const Duration(days: 1));
+
+      await AndroidAlarmManager.oneShotAt(
+        start,
+        9000001,
+        _dailyCheckCallback,
+        wakeup: true,
+        allowWhileIdle: true,
+        rescheduleOnReboot: true,
+      );
+      debugPrint('🕔 Daily check scheduled for $start');
+    } catch (e) {
+      debugPrint('⚠️ scheduleDailyCheck failed: $e');
+    }
   }
 
   @pragma('vm:entry-point')
   static Future<void> _dailyCheckCallback() async {
     debugPrint('🕔 Daily check triggered.');
+    // TODO: put streak reset / maintenance here if needed
   }
 
-  // --------------- HABIT ALARMS ----------------
-
+  // ---------------- HABIT ALARMS ----------------
+  /// Schedule weekly notifications for a habit. **Only** if habit.reminderOn == true.
   static Future<void> scheduleAlarm(Habit habit) async {
-    if (!habit.reminderOn) return;
+    if (!habit.reminderOn) {
+      debugPrint('⏰ scheduleAlarm skipped: reminder OFF for "${habit.title}"');
+      return;
+    }
     await cancelAlarm(habit.id);
+
+    final androidDetails = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDescription,
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      playSound: true,
+      // Do NOT reference a missing raw sound to avoid PlatformException(invalid_sound).
+      sound: null, // ← use system default
+      enableVibration: true,
+      enableLights: true,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+    );
+
+    const iOSDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      // sound: 'default',
+    );
+
+    final details = NotificationDetails(android: androidDetails, iOS: iOSDetails);
 
     for (final day in habit.repeatDays) {
       final time = _nextWeeklyInstance(day, habit.timeOfDay);
       final id = _notifId(habit.id, day);
-
-      const details = NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          channelDescription: _channelDescription,
-          importance: Importance.max,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
-          playSound: true,
-          enableVibration: true,
-          enableLights: true,
-          audioAttributesUsage: AudioAttributesUsage.alarm,
-        ),
-        iOS: DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-          sound: 'default',
-        ),
-      );
 
       await _notifications.zonedSchedule(
         id,
@@ -119,10 +149,14 @@ class AlarmService {
         details,
         payload: habit.id,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       );
+
+      // Manual HH:mm formatting (no BuildContext needed)
+      final hh = habit.timeOfDay.hour.toString().padLeft(2, '0');
+      final mm = habit.timeOfDay.minute.toString().padLeft(2, '0');
+      debugPrint('⏰ Scheduled "${habit.title}" on weekday=$day at $hh:$mm (id=$id, tz=$time)');
     }
   }
 
@@ -130,10 +164,12 @@ class AlarmService {
     for (int d = 0; d < 7; d++) {
       await _notifications.cancel(_notifId(habitId, d));
     }
+    debugPrint('🧹 Cancelled alarms for $habitId');
   }
 
   static Future<void> cancelAll() async => _notifications.cancelAll();
 
+  /// weekday0Sun6Sat maps to tz week (Mon=1..Sun=7). We map 0→7.
   static tz.TZDateTime _nextWeeklyInstance(int weekday0Sun6Sat, TimeOfDay time) {
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(
