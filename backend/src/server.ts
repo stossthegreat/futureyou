@@ -17,6 +17,7 @@ import { tasksController } from "./controllers/tasks.controller";
 import voiceController from "./controllers/voice.controller";
 import aiController from "./controllers/ai.controller";
 import { userController } from "./controllers/user.controller";
+import coachController from "./modules/coach/coach.controller";
 
 dotenv.config();
 
@@ -58,6 +59,7 @@ const buildServer = () => {
   fastify.register(voiceController);
   fastify.register(aiController);
   fastify.register(userController);
+  fastify.register(coachController);
 
   return fastify;
 };

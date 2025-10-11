@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import '../models/habit.dart';
 
 class ApiClient {
-  // Drillos Backend Integration
-  static const String _baseUrl = 'https://your-drillos-backend.railway.app'; // Update with your Railway URL
-  static const String _localUrl = 'http://localhost:3000'; // For local development
+  // Future-You OS Backend Integration
+  static const String _baseUrl = 'https://your-futureyouos-backend.railway.app'; // Update with your Railway URL
+  static const String _localUrl = 'http://localhost:8080'; // For local development
   static const Duration _timeout = Duration(seconds: 30);
   
   // Use demo user for now (from Drillos backend)
@@ -246,6 +246,51 @@ class ApiClient {
       return ApiResponse.error('Network error: $e');
     }
   }
+
+  // Coach API endpoints - Future-You OS Brain Layer
+  static Future<ApiResponse<void>> syncCoachData(List<Habit> habits, List<HabitCompletion> completions) async {
+    try {
+      final data = {
+        'habits': habits.map((h) => h.toJson()).toList(),
+        'completions': completions.map((c) => c.toJson()).toList(),
+      };
+      
+      final response = await _post('/api/v1/coach/sync', data);
+      
+      if (response.statusCode == 200) {
+        return ApiResponse.success(null);
+      } else {
+        return ApiResponse.error('Failed to sync coach data: ${response.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+
+  static Future<ApiResponse<List<CoachMessage>>> getCoachMessages() async {
+    try {
+      final response = await _get('/api/v1/coach/messages');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final messages = (data['messages'] as List)
+            .map((json) => CoachMessage.fromJson(json))
+            .toList();
+        return ApiResponse.success(messages);
+      } else {
+        return ApiResponse.error('Failed to fetch coach messages: ${response.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+
+  // Helper method to update base URL after Railway deployment
+  static void updateBaseUrl(String newBaseUrl) {
+    // This would require making _baseUrl non-final and adding a setter
+    // For now, users should update the _baseUrl constant directly
+    debugPrint('Update _baseUrl constant to: $newBaseUrl');
+  }
 }
 
 // Response wrapper class
@@ -385,5 +430,91 @@ class AnalyticsData {
       longestStreak: json['longestStreak'],
       weeklyTrends: Map<String, double>.from(json['weeklyTrends']),
     );
+  }
+}
+
+// Coach related models - Future-You OS Brain Layer
+class HabitCompletion {
+  final String habitId;
+  final DateTime date;
+  final bool done;
+  final DateTime? completedAt;
+  
+  HabitCompletion({
+    required this.habitId,
+    required this.date,
+    required this.done,
+    this.completedAt,
+  });
+  
+  factory HabitCompletion.fromJson(Map<String, dynamic> json) {
+    return HabitCompletion(
+      habitId: json['habitId'],
+      date: DateTime.parse(json['date']),
+      done: json['done'],
+      completedAt: json['completedAt'] != null ? DateTime.parse(json['completedAt']) : null,
+    );
+  }
+  
+  Map<String, dynamic> toJson() {
+    return {
+      'habitId': habitId,
+      'date': date.toIso8601String(),
+      'done': done,
+      'completedAt': completedAt?.toIso8601String(),
+    };
+  }
+}
+
+enum CoachMessageKind { nudge, brief, mirror, letter }
+
+class CoachMessage {
+  final String id;
+  final String userId;
+  final CoachMessageKind kind;
+  final String title;
+  final String body;
+  final Map<String, dynamic>? meta;
+  final DateTime createdAt;
+  final DateTime? readAt;
+  
+  CoachMessage({
+    required this.id,
+    required this.userId,
+    required this.kind,
+    required this.title,
+    required this.body,
+    this.meta,
+    required this.createdAt,
+    this.readAt,
+  });
+  
+  factory CoachMessage.fromJson(Map<String, dynamic> json) {
+    return CoachMessage(
+      id: json['id'],
+      userId: json['userId'],
+      kind: CoachMessageKind.values.firstWhere(
+        (e) => e.name == json['kind'],
+        orElse: () => CoachMessageKind.nudge,
+      ),
+      title: json['title'],
+      body: json['body'],
+      meta: json['meta'],
+      createdAt: DateTime.parse(json['createdAt']),
+      readAt: json['readAt'] != null ? DateTime.parse(json['readAt']) : null,
+    );
+  }
+  
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'kind': kind.name,
+      'title': title,
+      'body': body,
+      'meta': meta,
+      'createdAt': createdAt.toIso8601String(),
+      'readAt': readAt?.toIso8601String(),
+    };
   }
 }

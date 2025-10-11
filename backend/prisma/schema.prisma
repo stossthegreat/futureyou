@@ -161,4 +161,43 @@ model VoiceCache {
   @@index([createdAt])
 }
 
+model HabitSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  at        DateTime @default(now())
+  data      Json
+  @@index([userId])
+}
+
+model Completion {
+  id          String   @id @default(cuid())
+  userId      String
+  habitId     String
+  date        DateTime
+  done        Boolean  @default(false)
+  completedAt DateTime?
+  @@unique([userId, habitId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+enum CoachMessageKind {
+  nudge
+  brief
+  mirror
+  letter
+}
+
+model CoachMessage {
+  id        String            @id @default(cuid())
+  userId    String
+  kind      CoachMessageKind
+  title     String
+  body      String
+  meta      Json?
+  createdAt DateTime          @default(now())
+  readAt    DateTime?
+  @@index([userId])
+}
+
 

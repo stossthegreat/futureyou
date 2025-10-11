@@ -100,6 +100,40 @@ async function autoNudgesHourly() {
   return { ok: true, pushed };
 }
 
+async function coachAnalyze(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return;
+
+  const completions = await prisma.completion.findMany({
+    where: { userId, date: { gte: new Date(Date.now() - 7 * 864e5) } },
+  });
+
+  const ratio = completions.length
+    ? completions.filter((c) => c.done).length / completions.length
+    : 0;
+
+  const mentor = user.mentorId || "marcus";
+  const prompt =
+    ratio > 0.8
+      ? "Praise them for consistency. Write in mentor tone. End with one challenge."
+      : ratio > 0.5
+      ? "Encourage them, but point out their weaknesses and give a clear next action."
+      : "Rebuke gently but firmly. Urge immediate correction and commitment.";
+
+  const body = await aiService.generateMentorReply(userId, mentor as any, prompt);
+  await prisma.coachMessage.create({
+    data: { userId, kind: "nudge", title: "From Future You", body },
+  });
+
+  await notificationsService.send(
+    userId,
+    "From Future You",
+    body.length > 180 ? body.slice(0, 177) + "…" : body
+  );
+
+  return { ok: true };
+}
+
 new Worker(QUEUE, async (job) => {
   switch (job.name) {
     case "ensure-daily-briefs": return ensureDailyBriefJobs();
@@ -107,6 +141,7 @@ new Worker(QUEUE, async (job) => {
     case "ensure-evening-debriefs": return ensureEveningDebriefJobs();
     case "evening-debrief":     return runEveningDebrief(job.data.userId);
     case "auto-nudges-hourly":  return autoNudgesHourly();
+    case "coach-analyze":       return coachAnalyze(job.data.userId);
     default: return;
   }
 }, { connection: redis });
