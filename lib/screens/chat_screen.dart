@@ -66,22 +66,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     
     _scrollToBottom();
     
-    // Generate AI response (mock for now)
-    await Future.delayed(const Duration(seconds: 1));
-    
-    final futureResponse = _generateFutureYouResponse(message);
-    final responseMessage = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      role: 'future',
-      text: futureResponse.message,
-      timestamp: DateTime.now(),
-    );
-    
-    setState(() {
-      _messages.add(responseMessage);
-      _quickCommits = futureResponse.quickCommits ?? [];
-      _isLoading = false;
-    });
+    // Call backend AI chat with optional voice
+    try {
+      final result = await ApiClient.chatWithVoice(message, mode: 'balanced', includeVoice: true);
+      if (result.success && result.data != null) {
+        final responseMessage = ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          role: 'future',
+          text: result.data!.reply,
+          timestamp: DateTime.now(),
+        );
+        setState(() {
+          _messages.add(responseMessage);
+          _quickCommits = [];
+          _isLoading = false;
+        });
+        // If voice URL provided, you can handle playback here (future enhancement)
+      } else {
+        setState(() { _isLoading = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.error ?? 'Chat failed')),
+        );
+      }
+    } catch (e) {
+      setState(() { _isLoading = false; });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Network error: $e')),
+      );
+    }
     
     _scrollToBottom();
     

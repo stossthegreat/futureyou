@@ -291,6 +291,28 @@ class ApiClient {
     // For now, users should update the _baseUrl constant directly
     debugPrint('Update _baseUrl constant to: $newBaseUrl');
   }
+
+  // AI chat with optional voice (backend: POST /v1/chat)
+  static Future<ApiResponse<AiChatResult>> chatWithVoice(String message, { String mode = 'balanced', bool includeVoice = true }) async {
+    try {
+      final body = {
+        'message': message,
+        'mode': mode,
+        'includeVoice': includeVoice,
+      };
+      final resp = await _post('/v1/chat', body);
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        final reply = (data['reply'] ?? '').toString();
+        final voiceUrl = (data['voice'] != null && data['voice']['url'] != null) ? data['voice']['url'] as String : null;
+        return ApiResponse.success(AiChatResult(reply: reply, voiceUrl: voiceUrl));
+      } else {
+        return ApiResponse.error('Chat failed: ${resp.statusCode}');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
 }
 
 // Response wrapper class
@@ -431,6 +453,13 @@ class AnalyticsData {
       weeklyTrends: Map<String, double>.from(json['weeklyTrends']),
     );
   }
+}
+
+// AI chat response with optional voice
+class AiChatResult {
+  final String reply;
+  final String? voiceUrl;
+  AiChatResult({ required this.reply, this.voiceUrl });
 }
 
 // Coach related models - Future-You OS Brain Layer
