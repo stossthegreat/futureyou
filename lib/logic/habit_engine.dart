@@ -76,9 +76,7 @@ class HabitEngine extends ChangeNotifier {
         enableVibration: true,
         enableLights: true,
         // ❌ Removed custom RawResourceAndroidNotificationSound
-        sound: null,
-        audioAttributesUsage: AudioAttributesUsage.alarm,
-      ),
+        sound: RawResourceAndroidNotificationSound('default'),
       iOS: DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
