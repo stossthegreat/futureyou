@@ -5,7 +5,7 @@ import '../models/habit.dart';
 
 class ApiClient {
   // Future-You OS Backend Integration
-  static const String _baseUrl = 'https://your-futureyouos-backend.railway.app'; // Update with your Railway URL
+  static const String _baseUrl = 'https://futureyou-production.up.railway.app'; // Railway URL
   static const String _localUrl = 'http://localhost:8080'; // For local development
   static const Duration _timeout = Duration(seconds: 30);
   
