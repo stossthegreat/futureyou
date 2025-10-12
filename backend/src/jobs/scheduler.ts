@@ -1,3 +1,4 @@
+// src/jobs/scheduler.ts
 // ✅ OS brain-only scheduler: briefs, debriefs, and nudges (no habit CRUD, no device alarms)
 import { Queue, Worker, JobsOptions } from 'bullmq';
 import { redis } from '../utils/redis';
@@ -100,8 +101,9 @@ async function runEveningDebrief(userId: string) {
     take: 100,
   });
 
-  const kept = recent.filter(e => e.type === 'habit_action' && e.payload?.completed === true).length;
-  const missed = recent.filter(e => e.type === 'habit_action' && e.payload?.completed === false).length;
+  // cast payload as any for TS safety when reading .completed
+  const kept = recent.filter(e => e.type === 'habit_action' && (e.payload as any)?.completed === true).length;
+  const missed = recent.filter(e => e.type === 'habit_action' && (e.payload as any)?.completed === false).length;
 
   const mentor = (user as any)?.mentorId || 'marcus';
   const prompt = `Evening debrief. Kept=${kept}, Missed=${missed}. Reflect briefly and give 1 order for tomorrow.`;
@@ -130,8 +132,8 @@ async function runAutoNudges() {
     });
 
     const actions = recent.filter(e => e.type === 'habit_action');
-    const done = actions.filter(a => a.payload?.completed === true).length;
-    const notDone = actions.filter(a => a.payload?.completed === false).length;
+    const done = actions.filter(a => (a.payload as any)?.completed === true).length;
+    const notDone = actions.filter(a => (a.payload as any)?.completed === false).length;
 
     // Simple observer rule: if there were misses in the last 6h and no keepers, nudge.
     if (notDone > 0 && done === 0) {
@@ -160,4 +162,4 @@ async function nudgeUser(userId: string) {
 
 function truncate(s: string, n: number) {
   return s.length > n ? s.slice(0, n - 1) + '…' : s;
-                                                     }
+      }
