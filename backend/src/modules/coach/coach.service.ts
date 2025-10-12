@@ -4,8 +4,17 @@ import { aiService } from "../../services/ai.service";
 import { notificationsService } from "../../services/notifications.service";
 
 export class CoachService {
-  async sync(userId: string, habits: any[], completions: { habitId: string; date: string; done: boolean }[]) {
+  /**
+   * 🔁 Sync habit + completion data (observer mode)
+   * Logs habit completions as events for the AI brain to interpret.
+   */
+  async sync(
+    userId: string,
+    habits: any[],
+    completions: { habitId: string; date: string; done: boolean }[]
+  ) {
     if (!userId) throw new Error("Missing userId");
+
     if (Array.isArray(completions) && completions.length > 0) {
       const writes = completions.map((c) =>
         prisma.event.create({
@@ -18,11 +27,16 @@ export class CoachService {
       );
       await Promise.allSettled(writes);
     }
+
     return { ok: true, logged: completions?.length ?? 0 };
   }
 
+  /**
+   * 🧠 Retrieve the most recent coach messages (briefs, letters, nudges, etc.)
+   */
   async getMessages(userId: string) {
     if (!userId) throw new Error("Missing userId");
+
     const events = await prisma.event.findMany({
       where: {
         userId,
@@ -44,9 +58,13 @@ export class CoachService {
     }));
   }
 
+  /**
+   * 💌 Generate a reflective "Letter from Future You"
+   */
   async generateLetter(userId: string, topic: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error("User not found");
+
     const mentor = (user as any)?.mentorId || "marcus";
     const prompt = `Write a reflective, concise letter from Future You about "${topic}". Encourage growth and self-alignment.`;
 
@@ -58,15 +76,23 @@ export class CoachService {
     const event = await prisma.event.create({
       data: {
         userId,
-        type: "coach",
+        type: "coach", // ✅ valid Prisma enum
         payload: { text, topic },
       },
     });
 
-    await notificationsService.send(userId, "Letter from Future You", this.truncate(text, 180));
+    await notificationsService.send(
+      userId,
+      "Letter from Future You",
+      this.truncate(text, 180)
+    );
+
     return { ok: true, message: text, id: event.id };
   }
 
+  /**
+   * 📊 Optional — analyzes user’s habit patterns
+   */
   async analyzePatterns(userId: string) {
     const recent = await prisma.event.findMany({
       where: { userId },
@@ -74,8 +100,12 @@ export class CoachService {
       take: 200,
     });
 
-    const keeps = recent.filter((e) => e.type === "habit_action" && (e.payload as any)?.completed === true).length;
-    const misses = recent.filter((e) => e.type === "habit_action" && (e.payload as any)?.completed === false).length;
+    const keeps = recent.filter(
+      (e) => e.type === "habit_action" && (e.payload as any)?.completed === true
+    ).length;
+    const misses = recent.filter(
+      (e) => e.type === "habit_action" && (e.payload as any)?.completed === false
+    ).length;
     const ratio = keeps + misses > 0 ? keeps / (keeps + misses) : 0;
 
     return {
