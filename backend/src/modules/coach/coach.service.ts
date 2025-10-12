@@ -4,44 +4,29 @@ import { aiService } from "../../services/ai.service";
 import { notificationsService } from "../../services/notifications.service";
 
 export class CoachService {
-  /**
-   * 🔁 Sync habit + completion data from the frontend (observer-mode)
-   * Logs completions to events table. The scheduler & nudge engine later interpret these.
-   */
   async sync(userId: string, habits: any[], completions: { habitId: string; date: string; done: boolean }[]) {
     if (!userId) throw new Error("Missing userId");
-
     if (Array.isArray(completions) && completions.length > 0) {
       const writes = completions.map((c) =>
         prisma.event.create({
           data: {
             userId,
             type: "habit_action",
-            payload: {
-              habitId: c.habitId,
-              date: c.date,
-              completed: c.done,
-            },
+            payload: { habitId: c.habitId, date: c.date, completed: c.done },
           },
         })
       );
       await Promise.allSettled(writes);
     }
-
     return { ok: true, logged: completions?.length ?? 0 };
   }
 
-  /**
-   * 🧠 Retrieve the most recent OS brain messages.
-   * This is what powers the “Daily Briefs”, “Letters”, and “Nudges” tabs on the Home screen.
-   */
   async getMessages(userId: string) {
     if (!userId) throw new Error("Missing userId");
-
     const events = await prisma.event.findMany({
       where: {
         userId,
-        type: { in: ["morning_brief", "evening_debrief", "nudge", "letter", "mirror"] },
+        type: { in: ["morning_brief", "evening_debrief", "nudge", "coach", "mirror"] },
       },
       orderBy: { ts: "desc" },
       take: 30,
@@ -52,21 +37,16 @@ export class CoachService {
       userId,
       kind: this.mapEventTypeToKind(e.type),
       title: this.titleForKind(e.type),
-      body: e.payload?.text ?? "",
+      body: (e.payload as any)?.text ?? "",
       meta: e.payload,
       createdAt: e.ts,
       readAt: null,
     }));
   }
 
-  /**
-   * 🪞 Reflective “Letter from Future You”
-   * Generates a one-off AI reflection using current user state.
-   */
   async generateLetter(userId: string, topic: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error("User not found");
-
     const mentor = (user as any)?.mentorId || "marcus";
     const prompt = `Write a reflective, concise letter from Future You about "${topic}". Encourage growth and self-alignment.`;
 
@@ -78,7 +58,7 @@ export class CoachService {
     const event = await prisma.event.create({
       data: {
         userId,
-        type: "letter",
+        type: "coach",
         payload: { text, topic },
       },
     });
@@ -87,9 +67,6 @@ export class CoachService {
     return { ok: true, message: text, id: event.id };
   }
 
-  /**
-   * 🩺 Analyze patterns (optional for analytics or dashboard)
-   */
   async analyzePatterns(userId: string) {
     const recent = await prisma.event.findMany({
       where: { userId },
@@ -99,7 +76,6 @@ export class CoachService {
 
     const keeps = recent.filter((e) => e.type === "habit_action" && (e.payload as any)?.completed === true).length;
     const misses = recent.filter((e) => e.type === "habit_action" && (e.payload as any)?.completed === false).length;
-
     const ratio = keeps + misses > 0 ? keeps / (keeps + misses) : 0;
 
     return {
@@ -111,13 +87,12 @@ export class CoachService {
     };
   }
 
-  // Helpers
   private mapEventTypeToKind(type: string): string {
     switch (type) {
       case "morning_brief": return "brief";
       case "evening_debrief": return "brief";
       case "nudge": return "nudge";
-      case "letter": return "letter";
+      case "coach": return "letter";
       case "mirror": return "mirror";
       default: return "nudge";
     }
@@ -128,7 +103,7 @@ export class CoachService {
       case "morning_brief": return "Morning Brief";
       case "evening_debrief": return "Evening Debrief";
       case "nudge": return "Nudge";
-      case "letter": return "Letter from Future You";
+      case "coach": return "Letter from Future You";
       case "mirror": return "Mirror Reflection";
       default: return "Message";
     }
@@ -139,5 +114,4 @@ export class CoachService {
   }
 }
 
-// Singleton export
 export const coachService = new CoachService();
