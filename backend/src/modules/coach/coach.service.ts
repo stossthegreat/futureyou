@@ -1,6 +1,7 @@
-import { prisma } from "../utils/db";
-import { aiService } from "./ai.service";
-import { notificationsService } from "./notifications.service";
+// src/modules/coach/coach.service.ts
+import { prisma } from "../../utils/db";
+import { aiService } from "../../services/ai.service";
+import { notificationsService } from "../../services/notifications.service";
 
 export class CoachService {
   /**
@@ -96,8 +97,8 @@ export class CoachService {
       take: 200,
     });
 
-    const keeps = recent.filter((e) => e.type === "habit_action" && e.payload?.completed === true).length;
-    const misses = recent.filter((e) => e.type === "habit_action" && e.payload?.completed === false).length;
+    const keeps = recent.filter((e) => e.type === "habit_action" && (e.payload as any)?.completed === true).length;
+    const misses = recent.filter((e) => e.type === "habit_action" && (e.payload as any)?.completed === false).length;
 
     const ratio = keeps + misses > 0 ? keeps / (keeps + misses) : 0;
 
