@@ -15,7 +15,9 @@ function getUserIdOr401(req: any): string {
 }
 
 export default async function coachController(fastify: FastifyInstance) {
-
+  /**
+   * 🔁 Observer sync: log completions to events
+   */
   fastify.post("/api/v1/coach/sync", async (req: any, reply) => {
     try {
       const userId = getUserIdOr401(req);
@@ -39,6 +41,7 @@ export default async function coachController(fastify: FastifyInstance) {
         );
         await Promise.allSettled(writes);
       }
+
       return { ok: true, logged: completions?.length ?? 0 };
     } catch (err: any) {
       const code = err.statusCode || 500;
@@ -46,6 +49,9 @@ export default async function coachController(fastify: FastifyInstance) {
     }
   });
 
+  /**
+   * 🧠 Fetch coach messages (nudges, briefs, letters)
+   */
   fastify.get("/api/v1/coach/messages", async (req: any, reply) => {
     try {
       const userId = getUserIdOr401(req);
@@ -76,10 +82,14 @@ export default async function coachController(fastify: FastifyInstance) {
     }
   });
 
+  /**
+   * 💌 Generate one-off reflective letter (AI)
+   */
   fastify.post("/api/v1/coach/reflect", async (req: any, reply) => {
     try {
       const userId = getUserIdOr401(req);
       const { topic } = req.body as { topic: string };
+
       const user = await prisma.user.findUnique({ where: { id: userId } });
       const mentor = (user as any)?.mentorId || "marcus";
 
@@ -92,12 +102,17 @@ export default async function coachController(fastify: FastifyInstance) {
       const event = await prisma.event.create({
         data: {
           userId,
-          type: "coach",
+          type: "coach", // ✅ matches Prisma enum
           payload: { text, topic },
         },
       });
 
-      await notificationsService.send(userId, "Letter from Future You", text.slice(0, 180));
+      await notificationsService.send(
+        userId,
+        "Letter from Future You",
+        text.slice(0, 180)
+      );
+
       return { ok: true, message: text, id: event.id };
     } catch (err: any) {
       const code = err.statusCode || 500;
@@ -106,6 +121,7 @@ export default async function coachController(fastify: FastifyInstance) {
   });
 }
 
+/** Helper mappers */
 function mapEventTypeToKind(type: string): string {
   switch (type) {
     case "morning_brief": return "brief";
