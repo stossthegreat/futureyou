@@ -1,7 +1,8 @@
+// src/modules/coach/coach.controller.ts
 import { FastifyInstance } from "fastify";
-import { prisma } from "../utils/db";
-import { aiService } from "../services/ai.service";
-import { notificationsService } from "../services/notifications.service";
+import { prisma } from "../../utils/db";
+import { aiService } from "../../services/ai.service";
+import { notificationsService } from "../../services/notifications.service";
 
 function getUserIdOr401(req: any): string {
   const uid = req?.user?.id || req.headers["x-user-id"];
