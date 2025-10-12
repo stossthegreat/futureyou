@@ -58,8 +58,9 @@ export default async function briefRoutes(fastify: FastifyInstance, _opts: Fasti
               id: sel.task.id,
               name: sel.task.title,
               type: 'task',
-              completed: sel.task.completed,
-              priority: sel.task.priority,
+              // NOTE: sel.task may be JsonValue — cast to any to satisfy TS
+              completed: (sel.task as any).completed,
+              priority: (sel.task as any).priority,
             };
           }
           return null;
@@ -97,8 +98,9 @@ export default async function briefRoutes(fastify: FastifyInstance, _opts: Fasti
         take: 100,
       });
 
-      const keptToday = events.filter(e => e.type === 'habit_action' && e.payload?.completed === true);
-      const missedToday = events.filter(e => e.type === 'habit_action' && e.payload?.completed === false);
+      // Cast payload checks to any to satisfy TypeScript for JsonValue
+      const keptToday = events.filter(e => e.type === 'habit_action' && (e.payload as any)?.completed === true);
+      const missedToday = events.filter(e => e.type === 'habit_action' && (e.payload as any)?.completed === false);
 
       return {
         stats: {
@@ -172,4 +174,4 @@ export default async function briefRoutes(fastify: FastifyInstance, _opts: Fasti
       return reply.code(400).send({ error: e.message });
     }
   });
-        }
+  }
