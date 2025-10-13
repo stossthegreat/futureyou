@@ -12,7 +12,8 @@ import { nudgesController } from "./controllers/nudges.controller";
 import coachController from "./modules/coach/coach.controller";
 // optional: keep for uptime monitoring
 import { systemController } from "./controllers/system.controller";
-
+import { chatController } from "./controllers/chat.controller";
+fastify.register(chatController);
 dotenv.config();
 
 function validateEnv() {
