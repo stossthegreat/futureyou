@@ -135,3 +135,30 @@ RecentEvents: ${JSON.stringify(ctx.recentEvents.slice(0, 30))}`,
 }
 
 export const aiService = new AIService();
+async generateFutureYouReply(userId: string, userMessage: string, opts: GenerateOptions = {}) {
+    const openai = getOpenAIClient();
+    if (!openai) return "Future You is silent for now.";
+
+    const [profile, ctx] = await Promise.all([
+      memoryService.getProfileForMentor(userId),
+      memoryService.getUserContext(userId),
+    ]);
+
+    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      {
+        role: "system",
+        content: `You are Future You — wise, grounded, brutally honest but compassionate.
+Context: ${JSON.stringify({ profile, ctx })}`,
+      },
+      { role: "user", content: userMessage },
+    ];
+
+    const completion = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      max_tokens: opts.maxChars ? Math.floor(opts.maxChars / 4) : LLM_MAX_TOKENS,
+      temperature: opts.temperature ?? 0.5,
+      messages,
+    });
+
+    return completion.choices[0]?.message?.content?.trim() || "Keep going.";
+}
