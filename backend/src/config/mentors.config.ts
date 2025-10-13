@@ -1,4 +1,5 @@
 export const MENTORS = {
+  export type MentorId = keyof typeof MENTORS;
   marcus: { tone: "balanced", voice: "ELEVENLABS_VOICE_MARCUS" },
   drill: { tone: "strict", voice: "ELEVENLABS_VOICE_DRILL" },
   buddha: { tone: "light", voice: "ELEVENLABS_VOICE_BUDDHA" },
