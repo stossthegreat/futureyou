@@ -2,8 +2,8 @@
 import OpenAI from "openai";
 import { prisma } from "../utils/db";
 import { memoryService } from "./memory.service";
-import { StreaksService } from "./streaks.service";
-import { EventsService } from "./events.service";
+const events: any[] = [];
+const streaks: any = {};
 import { VoiceService } from "./voice.service";
 import { MENTORS, type MentorId } from "../config/mentors.config";
 
