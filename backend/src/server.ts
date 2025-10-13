@@ -7,13 +7,11 @@ import { prisma } from "./utils/db";
 import { getRedis } from "./utils/redis";
 import { bootstrapSchedulers } from "./jobs/scheduler";
 
-// ✅ Keep only these core controllers
 import { nudgesController } from "./controllers/nudges.controller";
 import coachController from "./modules/coach/coach.controller";
-// optional: keep for uptime monitoring
 import { systemController } from "./controllers/system.controller";
 import { chatController } from "./controllers/chat.controller";
-fastify.register(chatController);
+
 dotenv.config();
 
 function validateEnv() {
@@ -23,7 +21,6 @@ function validateEnv() {
 const buildServer = () => {
   const fastify = Fastify({ logger: true });
 
-  // --- CORS ---
   fastify.register(cors, {
     origin: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -31,7 +28,6 @@ const buildServer = () => {
     credentials: true,
   });
 
-  // --- Swagger ---
   fastify.register(swagger, {
     openapi: {
       openapi: "3.0.0",
@@ -41,25 +37,22 @@ const buildServer = () => {
   });
   fastify.register(swaggerUI, { routePrefix: "/docs", uiConfig: { docExpansion: "full" } });
 
-  // --- Base routes ---
   fastify.get("/", async () => ({
-    message: "Future You OS Brain is running",
+    message: "Future You OS Brain running",
     docs: "/docs",
     health: "/health",
     status: "ok",
   }));
   fastify.get("/health", async () => ({
     ok: true,
-    status: "healthy",
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   }));
-  fastify.get("/healthz", async () => ({ status: "ok" }));
 
-  // --- Controllers (only the brain) ---
+  fastify.register(chatController);
   fastify.register(nudgesController);
   fastify.register(coachController);
-  fastify.register(systemController); // optional
+  fastify.register(systemController);
 
   return fastify;
 };
@@ -77,13 +70,13 @@ const start = async () => {
     console.log("📖 Docs: /docs | 🩺 Health: /health | ⏰ Schedulers active");
     await bootstrapSchedulers();
   } catch (err) {
-    console.error("❌ Server startup failed:", err);
+    console.error("❌ Startup failed:", err);
     process.exit(1);
   }
 };
 
 process.on("SIGINT", async () => {
-  console.log("⏹️ Shutting down gracefully...");
+  console.log("⏹️ Graceful shutdown…");
   await prisma.$disconnect();
   await getRedis().quit();
   process.exit(0);
