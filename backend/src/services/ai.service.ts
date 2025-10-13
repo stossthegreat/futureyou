@@ -1,4 +1,3 @@
-// src/services/ai.service.ts
 import OpenAI from "openai";
 import { prisma } from "../utils/db";
 import { memoryService } from "./memory.service";
@@ -25,12 +24,7 @@ type GenerateOptions = {
 };
 
 export class AIService {
-  /** 🔥 Unified brain: Future-You core + compatibility for old mentor calls */
-  async generateFutureYouReply(
-    userId: string,
-    userMessage: string,
-    opts: GenerateOptions = {}
-  ) {
+  async generateFutureYouReply(userId: string, userMessage: string, opts: GenerateOptions = {}) {
     const openai = getOpenAIClient();
     if (!openai) return "Future You is silent right now — try again later.";
 
@@ -42,7 +36,7 @@ export class AIService {
     const guidelines = this.buildGuidelines(opts.purpose || "coach", profile);
 
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: MENTOR.systemPrompt || "You are Future You — wise, calm, uncompromising." },
+      { role: "system", content: MENTOR.systemPrompt },
       { role: "system", content: guidelines },
       {
         role: "system",
@@ -72,33 +66,24 @@ export class AIService {
     return text;
   }
 
-  /** 🌅 Morning Brief */
   async generateMorningBrief(userId: string) {
-    const prompt = "Write a short, powerful morning brief. 2-3 clear actions, one imperative closing line.";
+    const prompt = "Write a short, powerful morning brief. 2–3 clear actions and one imperative closing line.";
     return this.generateFutureYouReply(userId, prompt, { purpose: "brief", temperature: 0.4, maxChars: 400 });
   }
 
-  /** 🌇 Evening Debrief */
   async generateEveningDebrief(userId: string) {
     await memoryService.summarizeDay(userId);
-    const prompt = "Write a concise evening reflection. Mention progress, lessons, one focus for tomorrow.";
+    const prompt = "Write a concise evening reflection. Mention progress, lessons, and one focus for tomorrow.";
     return this.generateFutureYouReply(userId, prompt, { purpose: "debrief", temperature: 0.3, maxChars: 400 });
   }
 
-  /** ⚡ Nudge */
   async generateNudge(userId: string, reason: string) {
     const prompt = `Generate a one-sentence motivational nudge because: ${reason}`;
     return this.generateFutureYouReply(userId, prompt, { purpose: "nudge", temperature: 0.5, maxChars: 200 });
   }
 
-  /** 🧩 Compatibility shim for legacy calls (keeps everything compiling) */
-  async generateMentorReply(
-    userId: string,
-    _mentorId: string,
-    userMessage: string,
-    opts: GenerateOptions = {}
-  ) {
-    // ignore mentorId now, keep interface intact
+  /** Legacy alias so old modules still compile */
+  async generateMentorReply(userId: string, _mentorId: string, userMessage: string, opts: GenerateOptions = {}) {
     return this.generateFutureYouReply(userId, userMessage, opts);
   }
 
@@ -106,14 +91,14 @@ export class AIService {
     const base = [
       `You are Future You — wise, calm, but uncompromising.`,
       `Match tone=${profile.tone}, intensity=${profile.intensity}.`,
-      `Be concise, human, and actionable.`,
+      `Be concise, human, actionable.`,
     ];
     const byPurpose: Record<string, string[]> = {
       brief: ["Morning brief: 2-3 short orders, end with drive."],
       debrief: ["Evening debrief: 3 lines, reflection + next step."],
-      nudge: ["Nudge: 1 line, directive, motivational."],
-      coach: ["Coach: call out avoidance, give one next move."],
-      letter: ["Letter: reflective, emotional clarity, self-alignment."],
+      nudge: ["Nudge: 1 sentence, directive, motivational."],
+      coach: ["Coach: call out avoidance, give one clear move."],
+      letter: ["Letter: reflective, clarifying, self-honest."],
     };
     return [...base, ...(byPurpose[purpose] || [])].join("\n");
   }
