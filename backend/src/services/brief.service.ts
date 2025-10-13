@@ -1,10 +1,9 @@
 import { prisma } from "../utils/db";
 import OpenAI from "openai";
 import { VoiceService } from "./voice.service";
-import { habitsService } from "./habits.service";
-import { tasksService } from "./tasks.service";
-
-// Lazy OpenAI initialization - only when actually needed
+const habits: any[] = [];
+const tasks: any[] = [];
+initialization - only when actually needed
 function getOpenAIClient() {
   if (process.env.NODE_ENV === 'build' || process.env.RAILWAY_ENVIRONMENT === 'build') {
     return null;
