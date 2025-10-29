@@ -3,6 +3,7 @@ import { FastifyInstance } from 'fastify';
 import { prisma } from '../utils/db';
 import { aiService } from '../services/ai.service';
 import { notificationsService } from '../services/notifications.service';
+import { schedulerQueue } from '../jobs/scheduler';
 
 function getUserIdOr401(req: any): string {
   const uid = req?.user?.id || req.headers['x-user-id'];
@@ -15,6 +16,34 @@ function getUserIdOr401(req: any): string {
 }
 
 export async function testController(fastify: FastifyInstance) {
+  /**
+   * 🔍 Check if schedulers are running
+   */
+  fastify.get('/api/v1/test/scheduler-status', async (req: any, reply) => {
+    try {
+      const jobs = await schedulerQueue.getJobs(['waiting', 'active', 'completed', 'failed', 'delayed', 'repeat']);
+      const repeatJobs = await schedulerQueue.getRepeatableJobs();
+      
+      return {
+        ok: true,
+        totalJobs: jobs.length,
+        repeatableJobs: repeatJobs.length,
+        repeatable: repeatJobs.map(j => ({
+          name: j.name,
+          pattern: j.pattern,
+          next: j.next,
+        })),
+        recentJobs: jobs.slice(0, 5).map(j => ({
+          name: j.name,
+          state: j.finishedOn ? 'completed' : 'pending',
+          data: j.data,
+        })),
+      };
+    } catch (err: any) {
+      return reply.code(500).send({ error: err.message });
+    }
+  });
+
   /**
    * 🧪 TEST: Generate morning brief NOW
    */
