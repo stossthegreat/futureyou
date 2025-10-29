@@ -1,0 +1,127 @@
+// Test controller for manually triggering coach messages
+import { FastifyInstance } from 'fastify';
+import { prisma } from '../utils/db';
+import { aiService } from '../services/ai.service';
+import { notificationsService } from '../services/notifications.service';
+
+function getUserIdOr401(req: any): string {
+  const uid = req?.user?.id || req.headers['x-user-id'];
+  if (!uid || typeof uid !== 'string') {
+    const err: any = new Error('Unauthorized: missing user id');
+    err.statusCode = 401;
+    throw err;
+  }
+  return uid;
+}
+
+export async function testController(fastify: FastifyInstance) {
+  /**
+   * 🧪 TEST: Generate morning brief NOW
+   */
+  fastify.post('/api/v1/test/brief', async (req: any, reply) => {
+    try {
+      const userId = getUserIdOr401(req);
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+
+      const habits = await prisma.habit.findMany({ where: { userId } });
+      const recent = await prisma.event.findMany({
+        where: { userId },
+        orderBy: { ts: 'desc' },
+        take: 50,
+      });
+
+      const mentor = (user as any)?.mentorId || 'marcus';
+      const prompt = `Morning brief. Facts only, no fluff. Use recent patterns (${recent
+        .map(e => e.type).slice(0, 12).join(', ')}) to set 2–3 crisp orders.`;
+
+      const text = await aiService.generateMentorReply(userId, mentor as any, prompt, { 
+        purpose: 'brief', 
+        maxChars: 500 
+      });
+
+      const event = await prisma.event.create({
+        data: { userId, type: 'morning_brief', payload: { text } },
+      });
+
+      console.log(`✅ Test morning brief generated for ${userId}`);
+      return { ok: true, message: text, id: event.id };
+    } catch (err: any) {
+      const code = err.statusCode || 500;
+      return reply.code(code).send({ error: err.message });
+    }
+  });
+
+  /**
+   * 🧪 TEST: Generate evening debrief NOW
+   */
+  fastify.post('/api/v1/test/debrief', async (req: any, reply) => {
+    try {
+      const userId = getUserIdOr401(req);
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+
+      const recent = await prisma.event.findMany({
+        where: { userId },
+        orderBy: { ts: 'desc' },
+        take: 100,
+      });
+
+      const kept = recent.filter(e => e.type === 'habit_action' && (e.payload as any)?.completed === true).length;
+      const missed = recent.filter(e => e.type === 'habit_action' && (e.payload as any)?.completed === false).length;
+
+      const mentor = (user as any)?.mentorId || 'marcus';
+      const prompt = `Evening debrief. Kept=${kept}, Missed=${missed}. Reflect briefly and give 1 order for tomorrow.`;
+
+      const text = await aiService.generateMentorReply(userId, mentor as any, prompt, { 
+        purpose: 'debrief', 
+        maxChars: 500 
+      });
+
+      const event = await prisma.event.create({
+        data: { userId, type: 'evening_debrief', payload: { text } },
+      });
+
+      console.log(`✅ Test evening debrief generated for ${userId}`);
+      return { ok: true, message: text, id: event.id, kept, missed };
+    } catch (err: any) {
+      const code = err.statusCode || 500;
+      return reply.code(code).send({ error: err.message });
+    }
+  });
+
+  /**
+   * 🧪 TEST: Generate nudge NOW
+   */
+  fastify.post('/api/v1/test/nudge', async (req: any, reply) => {
+    try {
+      const userId = getUserIdOr401(req);
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+
+      const mentor = (user as any)?.mentorId || 'marcus';
+      const reason = req.body?.reason || 'testing nudge system';
+      const text = await aiService.generateMentorReply(userId, mentor as any, `Nudge user because ${reason}.`, {
+        purpose: 'nudge',
+        maxChars: 220,
+      });
+
+      const event = await prisma.event.create({ 
+        data: { userId, type: 'nudge', payload: { text, reason } } 
+      });
+
+      console.log(`✅ Test nudge generated for ${userId}`);
+      return { ok: true, message: text, id: event.id };
+    } catch (err: any) {
+      const code = err.statusCode || 500;
+      return reply.code(code).send({ error: err.message });
+    }
+  });
+}
+
