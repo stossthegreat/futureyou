@@ -4,7 +4,10 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/glass_card.dart' as glass;
+import '../widgets/top_bar.dart';
 import '../services/local_storage.dart';
+import '../services/messages_service.dart';
+import '../models/coach_message.dart';
 
 class MirrorScreen extends ConsumerStatefulWidget {
   const MirrorScreen({super.key});
@@ -69,7 +72,15 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     final todayHabits = LocalStorageService.getTodayHabits();
     final completedToday = todayHabits.where((h) => h.done).length;
     
-    return SingleChildScrollView(
+    // Check for evening debrief (after 8pm)
+    final now = DateTime.now();
+    final isEvening = now.hour >= 20;
+    final latestDebrief = messagesService.getLatestDebrief();
+    
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: const TopBar(title: 'Mirror'),
+      body: SingleChildScrollView(
       child: Column(
         children: [
           // Main mirror card
@@ -292,9 +303,94 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             ),
           ),
           
+          // Evening Debrief Section
+          if (isEvening && latestDebrief != null)
+            _buildDebriefSection(latestDebrief, completedToday, todayHabits.length),
+          
           // Bottom padding for navigation
           const SizedBox(height: 100),
         ],
+      ),
+      ),
+    );
+  }
+  
+  Widget _buildDebriefSection(CoachMessage debrief, int completed, int total) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: GlassCard(
+        borderColor: const Color(0xFF8B5CF6).withOpacity(0.5),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Text('🌙', style: TextStyle(fontSize: 24)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'EVENING REFLECTION',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                            color: const Color(0xFF8B5CF6),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Today: $completed/$total completed',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text(
+                debrief.body,
+                style: const TextStyle(
+                  fontSize: 16,
+                  height: 1.6,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await messagesService.markAsRead(debrief.id);
+                        setState(() {});
+                      },
+                      child: const Text('Got it'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

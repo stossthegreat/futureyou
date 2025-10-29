@@ -8,7 +8,6 @@ import 'home_screen.dart';
 import 'planner_screen.dart';
 import 'chat_screen.dart';
 import 'mirror_screen.dart';
-import 'settings_screen.dart';
 import 'streak_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -41,19 +40,14 @@ class _MainScreenState extends State<MainScreen>
       screen: const ChatScreen(),
     ),
     TabItem(
-      icon: LucideIcons.flame,
-      label: 'Streak',
-      screen: const StreakScreen(),
-    ),
-    TabItem(
       icon: LucideIcons.user,
       label: 'Mirror',
       screen: const MirrorScreen(),
     ),
     TabItem(
-      icon: LucideIcons.settings,
-      label: 'Settings',
-      screen: const SettingsScreen(),
+      icon: LucideIcons.flame,
+      label: 'Streak',
+      screen: const StreakScreen(),
     ),
   ];
   

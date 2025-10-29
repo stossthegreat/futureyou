@@ -11,6 +11,7 @@ import { nudgesController } from "./controllers/nudges.controller";
 import coachController from "./modules/coach/coach.controller";
 import { systemController } from "./controllers/system.controller";
 import { chatController } from "./controllers/chat.controller";
+import { userController } from "./controllers/user.controller";
 
 dotenv.config();
 
@@ -53,6 +54,7 @@ const buildServer = () => {
   fastify.register(nudgesController);
   fastify.register(coachController);
   fastify.register(systemController);
+  fastify.register(userController);
 
   return fastify;
 };

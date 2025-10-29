@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/habit.dart';
@@ -9,14 +11,23 @@ class ApiClient {
   static const String _localUrl = 'http://localhost:8080'; // For local development
   static const Duration _timeout = Duration(seconds: 30);
   
-  // Use demo user for now (from Drillos backend)
-  static const String _demoUserId = 'demo-user-123';
+  // Generate persistent user ID on first launch
+  static String _userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
   
   static final Map<String, String> _defaultHeaders = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'x-user-id': _demoUserId, // Drillos backend uses this header
+    'x-user-id': _userId, // Backend uses this header for user identification
   };
+  
+  // Set custom user ID (for testing or if user signs in)
+  static void setUserId(String userId) {
+    _userId = userId;
+    _defaultHeaders['x-user-id'] = userId;
+    debugPrint('✓ User ID set to: $userId');
+  }
+  
+  static String get userId => _userId;
   
   // Authentication token (to be set after login)
   static String? _authToken;
@@ -309,6 +320,36 @@ class ApiClient {
       } else {
         return ApiResponse.error('Chat failed: ${resp.statusCode}');
       }
+    } catch (e) {
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+
+  // Messages API - Get all coach messages (briefs, nudges, debriefs)
+  static Future<http.Response> getMessages(String userId) async {
+    return await _get('/api/v1/coach/messages');
+  }
+
+  // Mark message as read
+  static Future<http.Response> markMessageAsRead(String messageId) async {
+    return await _post('/api/v1/coach/messages/$messageId/read', {});
+  }
+
+  // Chat with Future You (enhanced endpoint) - Returns properly parsed response
+  static Future<ApiResponse<Map<String, dynamic>>> sendChatMessageV2(String message) async {
+    try {
+      final response = await _post('/api/v1/chat', {'message': message});
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      } else {
+        return ApiResponse.error('Chat failed: ${response.statusCode}');
+      }
+    } on TimeoutException {
+      return ApiResponse.error('Request timed out. Please try again.');
+    } on SocketException {
+      return ApiResponse.error('No internet connection.');
     } catch (e) {
       return ApiResponse.error('Network error: $e');
     }

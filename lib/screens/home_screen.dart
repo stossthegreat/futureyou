@@ -5,8 +5,11 @@ import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/date_strip.dart';
 import '../widgets/habit_card.dart';
+import '../widgets/top_bar.dart';
+import '../widgets/nudge_banner.dart';
+import '../widgets/morning_brief_modal.dart';
 import '../providers/habit_provider.dart';
-import '../models/habit.dart';
+import '../services/messages_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +20,30 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   DateTime _selectedDate = DateTime.now();
+  bool _hasShownBrief = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _checkForMorningBrief();
+  }
+
+  void _checkForMorningBrief() {
+    // Check if it's morning (6am - 10am) and if we haven't shown brief yet today
+    final now = DateTime.now();
+    if (now.hour >= 6 && now.hour < 10 && !_hasShownBrief) {
+      final brief = messagesService.getTodaysBrief();
+      if (brief != null && !brief.isRead) {
+        // Show brief after build completes
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            showMorningBrief(context, brief);
+            _hasShownBrief = true;
+          }
+        });
+      }
+    }
+  }
   
   void _onDateSelected(DateTime date) {
     setState(() {
@@ -40,17 +67,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final fulfillmentPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0.0;
     final driftPercentage = 100.0 - fulfillmentPercentage;
     
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Date strip
-          DateStrip(
-            selectedDate: _selectedDate,
-            onDateSelected: _onDateSelected,
-          ),
-          
-          const SizedBox(height: AppSpacing.xl),
+    // Check for active nudge
+    final activeNudge = messagesService.getActiveNudge();
+    final isToday = _selectedDate.year == DateTime.now().year &&
+        _selectedDate.month == DateTime.now().month &&
+        _selectedDate.day == DateTime.now().day;
+    
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: const TopBar(title: 'Home'),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date strip
+            DateStrip(
+              selectedDate: _selectedDate,
+              onDateSelected: _onDateSelected,
+            ),
+            
+            // Nudge Banner (only for today)
+            if (activeNudge != null && isToday)
+              NudgeBanner(
+                nudge: activeNudge,
+                onDismiss: () => setState(() {}),
+                onDoIt: () {
+                  // Scroll to first undone habit
+                  // TODO: Implement scroll to first undone
+                },
+              ),
+            
+            const SizedBox(height: AppSpacing.xl),
           
           // Fulfillment overview card
           GlassCard(
@@ -194,6 +241,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // Bottom padding for navigation
           const SizedBox(height: 100),
         ],
+      ),
       ),
     );
   }

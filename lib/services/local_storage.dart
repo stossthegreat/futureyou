@@ -57,6 +57,11 @@ class LocalStorageService {
   static Future<void> clearAllSettings() async =>
       _settingsBox?.clear();
 
+  static Future<void> clearAll() async {
+    await clearAllHabits();
+    await clearAllSettings();
+  }
+
   // -------------------  STREAK & ANALYTICS (date-aware)  -------------------
 
   static int calculateCurrentStreak() {

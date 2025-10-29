@@ -5,6 +5,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import '../models/habit.dart';
 import '../services/local_storage.dart';
+import '../services/sync_service.dart';
+import '../services/api_client.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -169,6 +171,27 @@ class HabitEngine extends ChangeNotifier {
     if (idx != -1) {
       _habits[idx] = updated;
       notifyListeners();
+    }
+
+    // Sync completion to backend (observer pattern)
+    _syncCompletionToBackend(habitId, nowDone, today);
+  }
+
+  /// Sync habit completion to backend as observer event
+  void _syncCompletionToBackend(String habitId, bool done, DateTime date) {
+    try {
+      final completion = HabitCompletion(
+        habitId: habitId,
+        date: date,
+        done: done,
+        completedAt: done ? DateTime.now() : null,
+      );
+
+      // Queue for sync service to handle
+      syncService.queueCompletion(completion);
+      debugPrint('📤 Queued completion for sync: $habitId (${done ? "done" : "undone"})');
+    } catch (e) {
+      debugPrint('❌ Failed to queue completion: $e');
     }
   }
 

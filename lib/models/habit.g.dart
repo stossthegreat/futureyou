@@ -30,13 +30,14 @@ class HabitAdapter extends TypeAdapter<Habit> {
       completedAt: fields[10] as DateTime?,
       streak: fields[11] as int,
       xp: fields[12] as int,
+      colorValue: fields[13] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, Habit obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -62,7 +63,9 @@ class HabitAdapter extends TypeAdapter<Habit> {
       ..writeByte(11)
       ..write(obj.streak)
       ..writeByte(12)
-      ..write(obj.xp);
+      ..write(obj.xp)
+      ..writeByte(13)
+      ..write(obj.colorValue);
   }
 
   @override

@@ -5,6 +5,7 @@ import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/date_strip.dart';
+import '../widgets/top_bar.dart';
 import '../providers/habit_provider.dart';
 import '../models/habit.dart';
 
@@ -178,11 +179,14 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Column(
-          children: [
-            DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: const TopBar(title: 'Planner'),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
             const SizedBox(height: AppSpacing.lg),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -218,7 +222,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               label: const Text('Create', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
   Widget _buildAddNewTab() {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/top_bar.dart';
 import '../services/streak_service.dart';
 
 class StreakScreen extends ConsumerWidget {
@@ -17,14 +18,17 @@ class StreakScreen extends ConsumerWidget {
     final totalXP = streakData.totalXP;
     final intensity = (current / 30).clamp(0.0, 1.0);
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await ref.read(streakServiceProvider.notifier).refreshStreaks();
-      },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: const TopBar(title: 'Streak'),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(streakServiceProvider.notifier).refreshStreaks();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // 🔥 Streak Header
@@ -121,6 +125,7 @@ class StreakScreen extends ConsumerWidget {
 
             const SizedBox(height: 100),
           ],
+        ),
         ),
       ),
     );

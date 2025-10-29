@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/glass_button.dart';
+import '../widgets/top_bar.dart';
 // Removed DateStrip from chat per new UI
 import '../providers/habit_provider.dart';
 import '../services/api_client.dart';
@@ -66,42 +67,57 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     
     _scrollToBottom();
     
-    // Call backend AI chat with optional voice
+    // Call real backend chat API (/api/v1/chat)
     try {
-      final result = await ApiClient.chatWithVoice(message, mode: 'balanced', includeVoice: true);
+      final result = await ApiClient.sendChatMessageV2(message);
+      
       if (result.success && result.data != null) {
+        final phase = result.data!['phase'] as String?;
+        final aiMessage = result.data!['message'] as String;
+        
         final responseMessage = ChatMessage(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
           role: 'future',
-          text: result.data!.reply,
+          text: aiMessage,
           timestamp: DateTime.now(),
         );
+        
         setState(() {
           _messages.add(responseMessage);
-          _quickCommits = [];
-          if (result.data!.voiceUrl != null) {
-            _messageVoiceUrls[responseMessage.id] = result.data!.voiceUrl!;
-          }
+          _quickCommits = []; // Backend doesn't send quick commits for phase-based chat
           _isLoading = false;
         });
-        // If voice URL provided, you can handle playback here (future enhancement)
+        
+        debugPrint('✅ Chat response received (phase: $phase)');
       } else {
         setState(() { _isLoading = false; });
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.error ?? 'Chat failed')),
+          SnackBar(
+            content: Text(result.error ?? 'Chat failed'),
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: () => _sendMessage(),
+            ),
+          ),
         );
       }
     } catch (e) {
       setState(() { _isLoading = false; });
+      debugPrint('❌ Chat error: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Network error: $e')),
+        SnackBar(
+          content: Text('Failed to send message'),
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: () => _sendMessage(),
+          ),
+        ),
       );
     }
     
     _scrollToBottom();
-    
-    // TODO: Replace with actual API call
-    // final response = await ApiClient.sendChatMessage(message);
   }
   
   ChatResponse _generateFutureYouResponse(String userMessage) {
@@ -185,11 +201,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Full-screen chat messages
-        Expanded(
-          child: GlassCard(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: const TopBar(title: 'Future You Chat'),
+      body: Column(
+        children: [
+          // Purpose-finding prompt chips
+          if (_messages.length <= 2)
+            _buildQuickPrompts(),
+          
+          // Full-screen chat messages
+          Expanded(
+            child: GlassCard(
             child: Column(
               children: [
                 Expanded(
@@ -320,6 +343,73 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         // Bottom padding for navigation
         const SizedBox(height: 100),
       ],
+      ),
+    );
+  }
+  
+  Widget _buildQuickPrompts() {
+    final prompts = [
+      {'icon': '🎯', 'text': 'Find my purpose'},
+      {'icon': '💪', 'text': 'Build a routine'},
+      {'icon': '🔥', 'text': 'Break a bad habit'},
+      {'icon': '🧘', 'text': 'Daily reflection'},
+    ];
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Quick Start',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppColors.emerald,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: prompts.map((prompt) {
+              return GestureDetector(
+                onTap: () {
+                  _messageController.text = prompt['text']!;
+                  _sendMessage();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.emerald.withOpacity(0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(prompt['icon']!, style: const TextStyle(fontSize: 16)),
+                      const SizedBox(width: 8),
+                      Text(
+                        prompt['text']!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
   
