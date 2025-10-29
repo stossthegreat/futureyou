@@ -21,26 +21,25 @@ export async function testController(fastify: FastifyInstance) {
    */
   fastify.get('/api/v1/test/scheduler-status', async (req: any, reply) => {
     try {
-      const jobs = await schedulerQueue.getJobs(['waiting', 'active', 'completed', 'failed', 'delayed', 'repeat']);
       const repeatJobs = await schedulerQueue.getRepeatableJobs();
+      const waitingJobs = await schedulerQueue.getWaiting();
+      const activeJobs = await schedulerQueue.getActive();
       
       return {
         ok: true,
-        totalJobs: jobs.length,
+        schedulersActive: repeatJobs.length > 0,
         repeatableJobs: repeatJobs.length,
+        waitingJobs: waitingJobs.length,
+        activeJobs: activeJobs.length,
         repeatable: repeatJobs.map(j => ({
+          key: j.key,
           name: j.name,
           pattern: j.pattern,
           next: j.next,
         })),
-        recentJobs: jobs.slice(0, 5).map(j => ({
-          name: j.name,
-          state: j.finishedOn ? 'completed' : 'pending',
-          data: j.data,
-        })),
       };
     } catch (err: any) {
-      return reply.code(500).send({ error: err.message });
+      return reply.code(500).send({ error: err.message, stack: err.stack });
     }
   });
 
