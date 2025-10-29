@@ -12,7 +12,8 @@ function getOpenAIClient() {
     console.warn("⚠️ OpenAI API key not available — nudges disabled");
     return null;
   }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const apiKey = process.env.OPENAI_API_KEY.trim();
+  return new OpenAI({ apiKey });
 }
 
 export class NudgesService {

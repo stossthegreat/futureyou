@@ -14,7 +14,9 @@ function getOpenAIClient() {
     console.warn("⚠️ OPENAI_API_KEY missing — AI disabled");
     return null;
   }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: LLM_TIMEOUT_MS });
+  // Trim whitespace/newlines from API key (Railway env var issue)
+  const apiKey = process.env.OPENAI_API_KEY.trim();
+  return new OpenAI({ apiKey, timeout: LLM_TIMEOUT_MS });
 }
 
 type GenerateOptions = {

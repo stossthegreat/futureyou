@@ -11,7 +11,8 @@ function getOpenAIClient() {
     console.warn("⚠️ Missing OpenAI API key — AI features disabled");
     return null;
   }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const apiKey = process.env.OPENAI_API_KEY.trim();
+  return new OpenAI({ apiKey });
 }
 
 const voiceService = new VoiceService();

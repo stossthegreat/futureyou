@@ -14,7 +14,8 @@ function getOpenAIClient() {
     console.warn("⚠️ OpenAI API key not available, AI features will be disabled");
     return null;
   }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: LLM_TIMEOUT_MS });
+  const apiKey = process.env.OPENAI_API_KEY.trim();
+  return new OpenAI({ apiKey, timeout: LLM_TIMEOUT_MS });
 }
 
 type FactsPatch = Record<string, any>;
