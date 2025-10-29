@@ -61,7 +61,8 @@ class SyncService {
           'Content-Type': 'application/json',
           'x-user-id': _userId,
         },
-      );
+        body: jsonEncode({}), // Send empty JSON body (Fastify requirement)
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -72,7 +73,7 @@ class SyncService {
           debugPrint('✓ User already exists: $_userId');
         }
       } else {
-        debugPrint('⚠️ Failed to ensure user exists: ${response.statusCode}');
+        debugPrint('⚠️ Failed to ensure user exists: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
       debugPrint('⚠️ User creation check failed: $e (will retry later)');
