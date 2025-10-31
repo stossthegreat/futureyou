@@ -184,6 +184,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final timeFormatter = DateFormat('HH:mm');
     final time = timeFormatter.format(DateTime.parse('2025-01-01 ${habit.time}:00'));
     
+    // Use the habit's chosen color
+    final habitColor = habit.color;
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: GestureDetector(
@@ -192,12 +195,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: isDone 
-                ? AppColors.emerald.withOpacity(0.05)
+                ? habitColor.withOpacity(0.05)
                 : Colors.white.withOpacity(0.05),
             borderRadius: BorderRadius.circular(AppBorderRadius.xl),
             border: Border.all(
               color: isDone
-                  ? AppColors.emerald.withOpacity(0.3)
+                  ? habitColor.withOpacity(0.3)
                   : Colors.white.withOpacity(0.1),
               width: 1,
             ),
@@ -225,13 +228,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: AppColors.emerald.withOpacity(0.2),
+                        color: habitColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.flame,
                         size: 20,
-                        color: AppColors.emerald,
+                        color: habitColor,
                       ),
                     ),
                   const SizedBox(width: AppSpacing.md),
@@ -247,7 +250,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.cyan,
+                                color: habitColor,
                                 fontFamily: 'monospace',
                                 letterSpacing: 1,
                               ),
@@ -261,14 +264,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: isDone
-                                    ? AppColors.emerald.withOpacity(0.15)
-                                    : AppColors.cyan.withOpacity(0.15),
+                                color: habitColor.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: isDone
-                                      ? AppColors.emerald.withOpacity(0.3)
-                                      : AppColors.cyan.withOpacity(0.3),
+                                  color: habitColor.withOpacity(0.3),
                                 ),
                               ),
                               child: Text(
@@ -276,9 +275,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w900,
-                                  color: isDone
-                                      ? AppColors.emeraldLight
-                                      : AppColors.cyan,
+                                  color: habitColor,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -303,7 +300,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     isDone ? LucideIcons.checkCircle2 : LucideIcons.circle,
                     size: 28,
                     color: isDone
-                        ? AppColors.emerald
+                        ? habitColor
                         : Colors.white.withOpacity(0.3),
                   ),
                 ],
@@ -324,11 +321,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         widthFactor: isDone ? 1.0 : 0.56,
                         child: Container(
                           decoration: BoxDecoration(
-                            gradient: isDone
-                                ? AppColors.emeraldGradient
-                                : LinearGradient(
-                                    colors: [AppColors.cyan, AppColors.emerald],
-                                  ),
+                            gradient: LinearGradient(
+                              colors: [
+                                habitColor.withOpacity(0.8),
+                                habitColor,
+                              ],
+                            ),
                             borderRadius: BorderRadius.circular(AppBorderRadius.full),
                           ),
                         ),

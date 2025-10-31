@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 
@@ -33,19 +32,21 @@ class ScrollableHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              // Content - centered vertically
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    left: AppSpacing.lg,
-                    right: 80, // Extra space on right to avoid settings icon
-                  ),
+              // Content - centered vertically, full width from left to right
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.md,
+                  right: 70, // Space for settings icon
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Logo
+                      // Logo - smaller to fit text
                       Container(
-                        width: 48,
-                        height: 48,
+                        width: 42,
+                        height: 42,
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.25),
                           borderRadius: BorderRadius.circular(AppBorderRadius.md),
@@ -61,7 +62,7 @@ class ScrollableHeader extends StatelessWidget {
                           child: Text(
                             'ƒ',
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: 24,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
                               shadows: [
@@ -74,25 +75,21 @@ class ScrollableHeader extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.lg),
-                      // Text - flexible to shrink on small screens
-                      Flexible(
-                        child: Text(
-                          'FUTURE-YOU OS',
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 1.8,
-                            shadows: [
-                              Shadow(
-                                color: Colors.white.withOpacity(0.6),
-                                blurRadius: 16,
-                              ),
-                            ],
-                          ),
+                      const SizedBox(width: AppSpacing.md),
+                      // Text - adjusted size to fit fully
+                      Text(
+                        'FUTURE-YOU OS',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                          shadows: [
+                            Shadow(
+                              color: Colors.white.withOpacity(0.6),
+                              blurRadius: 16,
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -103,16 +100,16 @@ class ScrollableHeader extends StatelessWidget {
           ),
         ),
         
-        // Settings icon (centered vertically, bigger and black)
+        // Settings icon (centered vertically, smaller ring)
         Positioned(
-          top: 36,
-          right: 20,
+          top: 38,
+          right: 16,
           child: GestureDetector(
             onTap: () {
               Navigator.pushNamed(context, '/settings');
             },
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -126,7 +123,7 @@ class ScrollableHeader extends StatelessWidget {
               ),
               child: const Icon(
                 LucideIcons.settings,
-                size: 28,
+                size: 24,
                 color: Colors.black,
               ),
             ),
