@@ -28,13 +28,19 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
 
   Future<void> _loadMessages() async {
     // Sync from backend first
-    await messagesService.syncMessages('test-user-felix');
+    debugPrint('🔄 Syncing messages from backend...');
+    final success = await messagesService.syncMessages('test-user-felix');
+    debugPrint('📊 Sync result: $success');
     
     setState(() {
       if (_filter == null) {
         _messages = messagesService.getAllMessages();
       } else {
         _messages = messagesService.getMessagesByKind(_filter!);
+      }
+      debugPrint('📨 Loaded ${_messages.length} messages from local storage');
+      if (_messages.isNotEmpty) {
+        debugPrint('   First message: ${_messages.first.title}');
       }
     });
   }
@@ -59,6 +65,31 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
           children: [
             // Scrollable header
             const ScrollableHeader(),
+            
+            const SizedBox(height: AppSpacing.lg),
+            
+            // Debug: Sync button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Syncing messages...')),
+                  );
+                  await _loadMessages();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Loaded ${_messages.length} messages')),
+                  );
+                },
+                icon: const Icon(LucideIcons.refreshCw),
+                label: Text('Sync Messages (${_messages.length} loaded)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.emerald,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
             
             const SizedBox(height: AppSpacing.lg),
             
