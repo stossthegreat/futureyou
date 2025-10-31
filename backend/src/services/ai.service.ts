@@ -84,6 +84,58 @@ export class AIService {
     return this.generateFutureYouReply(userId, prompt, { purpose: "nudge", temperature: 0.5, maxChars: 200 });
   }
 
+  /**
+   * 🧠 Extract habit suggestion from conversation
+   */
+  async extractHabitFromConversation(userId: string, userInput: string, aiResponse: string) {
+    const openai = getOpenAIClient();
+    if (!openai) return null;
+
+    const extractionPrompt = `
+CONTEXT:
+User said: "${userInput}"
+AI replied: "${aiResponse}"
+
+TASK:
+Extract ONE concrete habit or task from this conversation.
+Return ONLY valid JSON (no markdown):
+{
+  "title": "Clear action (e.g., 'Morning Meditation')",
+  "type": "habit or task",
+  "time": "HH:MM format (e.g., '06:30')",
+  "emoji": "single emoji",
+  "importance": 1-5 (1=low, 5=critical),
+  "reasoning": "Why this habit matters (1 sentence)"
+}
+
+If no clear habit/task, return: {"none": true}
+`;
+
+    const completion = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      temperature: 0.2,
+      max_tokens: 200,
+      messages: [
+        { role: "system", content: "You extract actionable habits from conversations. Output only JSON." },
+        { role: "user", content: extractionPrompt },
+      ],
+    });
+
+    try {
+      const raw = completion.choices[0]?.message?.content?.trim() || "{}";
+      const cleaned = raw.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+      
+      if (parsed.none) return null;
+      if (!parsed.title || !parsed.time) return null;
+      
+      return parsed;
+    } catch (err) {
+      console.warn("Failed to parse habit extraction:", err);
+      return null;
+    }
+  }
+
   /** Legacy alias so old modules still compile */
   async generateMentorReply(userId: string, _mentorId: string, userMessage: string, opts: GenerateOptions = {}) {
     return this.generateFutureYouReply(userId, userMessage, opts);

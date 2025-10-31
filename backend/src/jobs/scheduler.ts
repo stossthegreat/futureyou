@@ -17,6 +17,13 @@ export async function bootstrapSchedulers() {
 
   // Evaluate nudges hourly (decide to send or skip); strictly observer-driven
   await schedulerQueue.add('auto-nudges-hourly', {}, repeatHourly());
+
+  // 📅 Weekly memory consolidation (Sundays at midnight)
+  await schedulerQueue.add('weekly-consolidation', {}, {
+    repeat: { pattern: '0 0 * * 0' }, // Every Sunday at midnight
+    removeOnComplete: true,
+    removeOnFail: true,
+  });
 }
 
 new Worker('scheduler', async (job) => {
@@ -24,9 +31,10 @@ new Worker('scheduler', async (job) => {
     case 'ensure-daily-briefs':       return ensureDailyBriefJobs();
     case 'ensure-evening-debriefs':   return ensureEveningDebriefJobs();
     case 'auto-nudges-hourly':        return runAutoNudges();
+    case 'weekly-consolidation':      return runWeeklyConsolidation();
     case 'daily-brief':               return runDailyBrief(job.data.userId);
     case 'evening-debrief':           return runEveningDebrief(job.data.userId);
-    case 'nudge-user':                return nudgeUser(job.data.userId);
+    case 'nudge-user':                return nudgeUser(job.data.userId, job.data.trigger);
     default: return;
   }
 }, { connection: redis });
@@ -119,47 +127,66 @@ async function runEveningDebrief(userId: string) {
 }
 
 async function runAutoNudges() {
-  const users = await prisma.user.findMany({ select: { id: true, nudgesEnabled: true, mentorId: true } });
-  const now = new Date();
+  const users = await prisma.user.findMany({ select: { id: true, nudgesEnabled: true } });
 
   for (const u of users) {
     if (u.nudgesEnabled === false) continue;
 
-    const recent = await prisma.event.findMany({
-      where: { userId: u.id, ts: { gte: new Date(now.getTime() - 6 * 60 * 60 * 1000) } }, // 6h window
-      orderBy: { ts: 'desc' },
-      take: 50,
-    });
-
-    const actions = recent.filter(e => e.type === 'habit_action');
-    const done = actions.filter(a => (a.payload as any)?.completed === true).length;
-    const notDone = actions.filter(a => (a.payload as any)?.completed === false).length;
-
-    // Simple observer rule: if there were misses in the last 6h and no keepers, nudge.
-    if (notDone > 0 && done === 0) {
-      await schedulerQueue.add('nudge-user', { userId: u.id }, { removeOnComplete: true, removeOnFail: true });
+    // 🚀 Use new smart nudge detection
+    const { nudgesService } = await import('../services/nudges.service');
+    const trigger = await nudgesService.shouldNudge(u.id);
+    
+    if (trigger) {
+      await schedulerQueue.add(
+        'nudge-user',
+        { userId: u.id, trigger },
+        { removeOnComplete: true, removeOnFail: true }
+      );
     }
   }
 
   return { ok: true };
 }
 
-async function nudgeUser(userId: string) {
+async function nudgeUser(userId: string, trigger?: any) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return;
 
-  const mentor = (user as any)?.mentorId || 'marcus';
-  const reason = 'recent drift detected in the last 6 hours';
-  const text = await aiService.generateMentorReply(userId, mentor as any, `Nudge user because ${reason}.`, {
-    purpose: 'nudge',
-    maxChars: 220,
-  });
-
-  await prisma.event.create({ data: { userId, type: 'nudge', payload: { text } } });
-  await notificationsService.send(userId, 'Nudge', truncate(text, 180));
+  // 🚀 Use new smart nudge generation with context
+  const { nudgesService } = await import('../services/nudges.service');
+  const result = await nudgesService.generateNudges(userId, trigger);
+  
+  if (result.success && result.nudges.length > 0) {
+    const text = result.nudges[0].message;
+    await notificationsService.send(userId, '⚡ Nudge from Future You', truncate(text, 180));
+  }
+  
   return { ok: true };
+}
+
+async function runWeeklyConsolidation() {
+  const users = await prisma.user.findMany({ select: { id: true } });
+  console.log(`📅 Running weekly consolidation for ${users.length} users...`);
+  
+  for (const u of users) {
+    try {
+      const { insightsService } = await import('../services/insights.service');
+      const result = await insightsService.weeklyConsolidation(u.id);
+      if (result.ok && result.reflection) {
+        await notificationsService.send(
+          u.id,
+          '📊 Weekly Insights',
+          truncate(result.reflection, 180)
+        );
+      }
+    } catch (err) {
+      console.error(`Failed weekly consolidation for ${u.id}:`, err);
+    }
+  }
+  
+  return { ok: true, processed: users.length };
 }
 
 function truncate(s: string, n: number) {
   return s.length > n ? s.slice(0, n - 1) + '…' : s;
-      }
+}
