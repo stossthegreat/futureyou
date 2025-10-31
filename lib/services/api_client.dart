@@ -12,7 +12,8 @@ class ApiClient {
   static const Duration _timeout = Duration(seconds: 30);
   
   // Generate persistent user ID on first launch
-  static String _userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
+  // TODO: Replace with real auth system later
+  static String _userId = 'test-user-felix'; // Fixed for testing, change after auth is added
   
   static final Map<String, String> _defaultHeaders = {
     'Content-Type': 'application/json',
