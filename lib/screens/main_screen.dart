@@ -249,7 +249,7 @@ class _MainScreenState extends State<MainScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.xs,
-              vertical: AppSpacing.sm,
+              vertical: AppSpacing.md,
             ),
             decoration: BoxDecoration(
               color: AppColors.glassBackground,
@@ -273,7 +273,7 @@ class _MainScreenState extends State<MainScreen>
                       left: _currentIndex * tabWidth,
                       child: Container(
                         width: tabWidth,
-                        height: 64,
+                        height: 72,
                         padding: const EdgeInsets.all(4),
                         child: Container(
                           decoration: BoxDecoration(
@@ -322,23 +322,23 @@ class _MainScreenState extends State<MainScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 2,
-              vertical: AppSpacing.sm,
+              vertical: AppSpacing.md,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   tab.icon,
-                  size: 22,
+                  size: 24,
                   color: isActive 
                       ? AppColors.emeraldLight 
                       : AppColors.textSecondary.withOpacity(0.7),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   tab.label,
                   style: AppTextStyles.label.copyWith(
-                    fontSize: 10,
+                    fontSize: 11,
                     color: isActive 
                         ? AppColors.emeraldLight 
                         : AppColors.textSecondary.withOpacity(0.7),

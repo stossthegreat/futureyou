@@ -36,69 +36,63 @@ class ScrollableHeader extends StatelessWidget {
               // Content - centered vertically
               Center(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  padding: const EdgeInsets.only(
+                    left: AppSpacing.lg,
+                    right: 80, // Extra space on right to avoid settings icon
+                  ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Logo + Text
-                      Flexible(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // ƒ Logo
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.25),
-                                borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.cyan.withOpacity(0.4),
-                                    blurRadius: 16,
-                                    spreadRadius: 0,
-                                  ),
-                                ],
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'ƒ',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.white.withOpacity(0.6),
-                                        blurRadius: 16,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.md),
-                            // Text - flexible to shrink on small screens
-                            Flexible(
-                              child: Text(
-                                'FUTURE-YOU OS',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: 1.8,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.white.withOpacity(0.6),
-                                      blurRadius: 16,
-                                    ),
-                                  ],
-                                ),
-                              ),
+                      // Logo
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.cyan.withOpacity(0.4),
+                              blurRadius: 16,
+                              spreadRadius: 0,
                             ),
                           ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'ƒ',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.white.withOpacity(0.6),
+                                  blurRadius: 16,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.lg),
+                      // Text - flexible to shrink on small screens
+                      Flexible(
+                        child: Text(
+                          'FUTURE-YOU OS',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 1.8,
+                            shadows: [
+                              Shadow(
+                                color: Colors.white.withOpacity(0.6),
+                                blurRadius: 16,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
