@@ -26,7 +26,10 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
     _loadMessages();
   }
 
-  void _loadMessages() {
+  Future<void> _loadMessages() async {
+    // Sync from backend first
+    await messagesService.syncMessages('test-user-felix');
+    
     setState(() {
       if (_filter == null) {
         _messages = messagesService.getAllMessages();
@@ -47,8 +50,11 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: _loadMessages,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Scrollable header
@@ -124,8 +130,9 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                   ),
                 ),
           
-          const SizedBox(height: 120), // Bottom padding for nav
-        ],
+            const SizedBox(height: 120), // Bottom padding for nav
+          ],
+          ),
         ),
       ),
     );
