@@ -33,7 +33,7 @@ export class InsightsService {
     if (cached) return JSON.parse(cached);
 
     const [habits, recentEvents, context] = await Promise.all([
-      prisma.habit.findMany({ where: { userId, active: true } }),
+      prisma.habit.findMany({ where: { userId } }),
       prisma.event.findMany({
         where: { userId, ts: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
         orderBy: { ts: "desc" },
@@ -78,7 +78,7 @@ export class InsightsService {
     }
 
     // 4️⃣ Low-engagement habits (created but never done)
-    const deadHabits = habits.filter((h) => h.streak === 0 && h.xp === 0);
+    const deadHabits = habits.filter((h) => h.streak === 0 && !h.lastTick);
     if (deadHabits.length > 0) {
       insights.push({
         type: "warning",

@@ -37,7 +37,7 @@ export class NudgesService {
     if (hour >= 23 || hour < 6) return null;
 
     const [habits, recentEvents] = await Promise.all([
-      prisma.habit.findMany({ where: { userId, active: true } }),
+      prisma.habit.findMany({ where: { userId } }),
       prisma.event.findMany({
         where: { userId, ts: { gte: new Date(now.getTime() - 6 * 60 * 60 * 1000) } },
         orderBy: { ts: "desc" },
@@ -46,7 +46,10 @@ export class NudgesService {
     ]);
 
     // 1️⃣ Check for high-importance habit misses
-    const highImpHabits = habits.filter((h: any) => h.importance >= 4);
+    const highImpHabits = habits.filter((h: any) => {
+      const ctx = h.context as any;
+      return ctx?.importance >= 4;
+    });
     if (highImpHabits.length > 0) {
       const todayString = now.toISOString().split("T")[0];
       const habitsCheckedToday = new Set(
@@ -97,7 +100,10 @@ export class NudgesService {
 
     // 4️⃣ Check for time-sensitive habits (scheduled for current hour)
     const currentHour = `${hour.toString().padStart(2, "0")}:`;
-    const thisHourHabits = habits.filter((h) => h.time.startsWith(currentHour));
+    const thisHourHabits = habits.filter((h) => {
+      const schedule = h.schedule as any;
+      return schedule?.time?.startsWith(currentHour);
+    });
     if (thisHourHabits.length > 0) {
       const completedThisHour = recentEvents
         .filter((e) => e.type === "habit_action" && (e.payload as any)?.completed === true)

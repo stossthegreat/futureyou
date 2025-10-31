@@ -165,7 +165,6 @@ export async function testController(fastify: FastifyInstance) {
           data: {
             id: userId,
             email: `${userId}@test.com`,
-            name: 'Test User',
           },
         });
         console.log(`✅ Created test user: ${userId}`);

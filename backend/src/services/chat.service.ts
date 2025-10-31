@@ -77,15 +77,18 @@ export class ChatService {
       data: {
         userId,
         title: suggestion.title,
-        type: suggestion.type,
-        time: suggestion.time,
-        emoji: suggestion.emoji || "⭐",
-        importance: suggestion.importance,
-        repeatDays: [0, 1, 2, 3, 4, 5, 6], // Daily by default
-        active: true,
+        schedule: {
+          type: suggestion.type,
+          time: suggestion.time,
+          repeatDays: [0, 1, 2, 3, 4, 5, 6], // Daily by default
+        },
+        context: {
+          emoji: suggestion.emoji || "⭐",
+          importance: suggestion.importance,
+          reasoning: suggestion.reasoning,
+          source: "ai_chat",
+        },
         streak: 0,
-        bestStreak: 0,
-        xp: 0,
       },
     });
 
