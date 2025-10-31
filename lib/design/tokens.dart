@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Base colors - dark gradient background
-  static const Color baseDark1 = Color(0xFF00140F);
-  static const Color baseDark2 = Color(0xFF04151B);
-  static const Color baseDark3 = Color(0xFF070B12);
+  // Base colors - React parity near-black background
+  static const Color baseDark1 = Color(0xFF0A0A0A); // React: #0a0a0a
+  static const Color baseDark2 = Color(0xFF0B0B0B); // Slightly varied
+  static const Color baseDark3 = Color(0xFF0A0A0A); // Keep consistent
   
-  // Accent colors - emerald and cyan
+  // Accent colors - emerald and cyan (Emerald Edition)
   static const Color emerald = Color(0xFF10B981);
   static const Color emeraldLight = Color(0xFF34D399);
   static const Color emeraldDark = Color(0xFF059669);
@@ -38,6 +38,13 @@ class AppColors {
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [emerald, cyan],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
+  // Emerald Edition: Main gradient for headers, CTAs
+  static const LinearGradient emeraldGradient = LinearGradient(
+    colors: [emeraldLight, emerald, emeraldDark],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

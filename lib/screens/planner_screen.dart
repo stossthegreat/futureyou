@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/date_strip.dart';
-import '../widgets/top_bar.dart';
+import '../widgets/scrollable_header.dart';
 import '../providers/habit_provider.dart';
 import '../models/habit.dart';
 
@@ -31,6 +32,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   late TabController _tabController;
 
   Color _selectedColor = AppColors.emerald;
+  String? _selectedEmoji;
   final List<bool> _repeatDays = List.generate(7, (index) => false);
   final List<String> _dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -120,6 +122,48 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     }
   }
 
+  Future<void> _pickEmoji() async {
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        height: 300,
+        decoration: const BoxDecoration(
+          color: AppColors.baseDark2,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppBorderRadius.xl)),
+        ),
+        child: EmojiPicker(
+          onEmojiSelected: (category, emoji) {
+            setState(() {
+              _selectedEmoji = emoji.emoji;
+            });
+            Navigator.pop(context);
+          },
+          config: Config(
+            height: 256,
+            checkPlatformCompatibility: true,
+            emojiViewConfig: EmojiViewConfig(
+              emojiSizeMax: 28,
+              backgroundColor: AppColors.baseDark2,
+              columns: 7,
+              buttonMode: ButtonMode.MATERIAL,
+            ),
+            skinToneConfig: const SkinToneConfig(),
+            categoryViewConfig: const CategoryViewConfig(
+              backgroundColor: AppColors.baseDark2,
+              iconColorSelected: AppColors.emerald,
+              indicatorColor: AppColors.emerald,
+            ),
+            bottomActionBarConfig: const BottomActionBarConfig(
+              backgroundColor: AppColors.baseDark2,
+              buttonColor: AppColors.baseDark3,
+              buttonIconColor: AppColors.emerald,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   List<int> _getRepeatDays() {
     switch (_frequency) {
       case 'daily': return [0,1,2,3,4,5,6];
@@ -143,6 +187,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         endDate: _endDate,
         repeatDays: _getRepeatDays(),
         color: _selectedColor,
+        emoji: _selectedEmoji,
       );
 
       _titleController.clear();
@@ -150,6 +195,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       setState(() {
         _frequency = 'daily';
         _selectedColor = AppColors.emerald;
+        _selectedEmoji = null;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -181,47 +227,47 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: const TopBar(title: 'Planner'),
       body: Stack(
         children: [
           Column(
             children: [
+              const ScrollableHeader(),
               DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
-            const SizedBox(height: AppSpacing.lg),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: AppColors.glassBackground,
-                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                border: Border.all(color: AppColors.glassBorder),
+              const SizedBox(height: AppSpacing.lg),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.glassBackground,
+                  borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  tabs: const [Tab(text:'Add New'),Tab(text:'Manage')],
+                ),
               ),
-              child: TabBar(
-                controller: _tabController,
-                tabs: const [Tab(text:'Add New'),Tab(text:'Manage')],
+              const SizedBox(height: AppSpacing.lg),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [_buildAddNewTab(), _buildManageTab()],
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [_buildAddNewTab(), _buildManageTab()],
-              ),
-            )
-          ],
-        ),
-
-        // Floating "Create" button only visible on Manage tab
-        if (_tabController.index == 1)
-          Positioned(
-            bottom: 24,
-            right: 24,
-            child: FloatingActionButton.extended(
-              onPressed: () => _tabController.animateTo(0),
-              backgroundColor: AppColors.emerald,
-              icon: const Icon(LucideIcons.plus, color: Colors.black),
-              label: const Text('Create', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
-            ),
+            ],
           ),
+
+          // Floating "Create" button only visible on Manage tab
+          if (_tabController.index == 1)
+            Positioned(
+              bottom: 24,
+              right: 24,
+              child: FloatingActionButton.extended(
+                onPressed: () => _tabController.animateTo(0),
+                backgroundColor: AppColors.emerald,
+                icon: const Icon(LucideIcons.plus, color: Colors.black),
+                label: const Text('Create', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+              ),
+            ),
         ],
       ),
     );
@@ -240,6 +286,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                   icon: _selectedType == 'habit'
                       ? LucideIcons.flame
                       : LucideIcons.alarmCheck),
+              const SizedBox(height: AppSpacing.lg),
+              _emojiField(),
               const SizedBox(height: AppSpacing.lg),
               _timeField(),
               const SizedBox(height: AppSpacing.lg),
@@ -308,6 +356,43 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           prefixIcon: Icon(icon, color: AppColors.textTertiary),
         ),
         validator: (v) => v == null || v.trim().isEmpty ? 'Enter a title' : null,
+      );
+
+  Widget _emojiField() => GestureDetector(
+        onTap: _pickEmoji,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.glassBackground,
+            border: Border.all(color: AppColors.glassBorder),
+            borderRadius: BorderRadius.circular(AppBorderRadius.md),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                LucideIcons.smile,
+                color: AppColors.textTertiary,
+                size: 20,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                _selectedEmoji ?? 'Pick an emoji (optional)',
+                style: AppTextStyles.body.copyWith(
+                  color: _selectedEmoji != null
+                      ? AppColors.textPrimary
+                      : AppColors.textQuaternary,
+                  fontSize: _selectedEmoji != null ? 24 : 16,
+                ),
+              ),
+              const Spacer(),
+              Icon(
+                LucideIcons.chevronDown,
+                color: AppColors.textTertiary,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
       );
 
   Widget _timeField() => GestureDetector(
@@ -466,119 +551,235 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   }
 
   // ---------------------------------------------------------
-  // 🎨 HABIT CARD FIXED (color + thicker title)
+  // 🎨 PROFESSIONAL HABIT CARD (matches reference image style)
   // ---------------------------------------------------------
   Widget _buildHabitCard(Habit habit) {
     final accent = habit.color ?? // use saved color
         (habit.type == 'habit' ? AppColors.emerald : AppColors.cyan);
+    
+    // Calculate progress percentage based on current streak
+    final progressPercent = habit.streak > 0 ? (habit.streak % 10) / 10 : 0.0;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [accent.withOpacity(0.08),
-                   AppColors.glassBackground.withOpacity(0.8)],
+        color: AppColors.baseDark2,
+        borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1,
         ),
-        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-        border: Border.all(color: accent.withOpacity(0.4), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: accent.withOpacity(0.15),
+            color: Colors.black.withOpacity(0.3),
             blurRadius: 12,
-            spreadRadius: -1,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
-              decoration: BoxDecoration(
-                color: accent.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(AppBorderRadius.full),
-                border: Border.all(color: accent.withOpacity(0.4)),
-              ),
-              child: Text(
-                habit.type.toUpperCase(),
-                style: AppTextStyles.captionSmall.copyWith(
-                    color: accent, fontWeight: FontWeight.w700),
-              ),
-            ),
-            const Spacer(),
-            PopupMenuButton<String>(
-              icon: const Icon(LucideIcons.moreVertical, size: 18),
-              onSelected: (value) async {
-                if (value == 'edit') {
-                  _editHabit(habit);
-                } else if (value == 'delete') {
-                  _deleteHabit(habit);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(children: [
-                    Icon(LucideIcons.edit, size: 16),
-                    SizedBox(width: 8),
-                    Text('Edit'),
-                  ]),
+          // Main content
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Emoji or icon on left
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: accent.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                        border: Border.all(
+                          color: accent.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: habit.emoji != null
+                          ? Center(
+                              child: Text(
+                                habit.emoji!,
+                                style: const TextStyle(fontSize: 32),
+                              ),
+                            )
+                          : Icon(
+                              habit.type == 'habit' 
+                                  ? LucideIcons.flame 
+                                  : LucideIcons.checkCircle,
+                              color: accent,
+                              size: 28,
+                            ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    // Title and metadata
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Title
+                          Text(
+                            habit.title,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 17,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          // Type and intensity
+                          Row(
+                            children: [
+                              Text(
+                                habit.type.toUpperCase(),
+                                style: AppTextStyles.captionSmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              Text(
+                                ' • ',
+                                style: TextStyle(
+                                  color: AppColors.textTertiary,
+                                ),
+                              ),
+                              Text(
+                                _getFrequencyText(habit.repeatDays),
+                                style: AppTextStyles.captionSmall.copyWith(
+                                  color: AppColors.textTertiary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Settings menu icon
+                    PopupMenuButton<String>(
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                        ),
+                        child: Icon(
+                          LucideIcons.settings,
+                          size: 18,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      onSelected: (value) async {
+                        if (value == 'edit') {
+                          _editHabit(habit);
+                        } else if (value == 'delete') {
+                          _deleteHabit(habit);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(children: [
+                            Icon(LucideIcons.edit, size: 16),
+                            SizedBox(width: 8),
+                            Text('Edit'),
+                          ]),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(children: [
+                            Icon(LucideIcons.trash, size: 16, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ]),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(children: [
-                    Icon(LucideIcons.trash, size: 16, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Delete', style: TextStyle(color: Colors.red)),
-                  ]),
+                const SizedBox(height: AppSpacing.md),
+                // Time display
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: accent.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                        border: Border.all(
+                          color: accent.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            LucideIcons.clock,
+                            size: 14,
+                            color: accent,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            habit.time,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: accent,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    // Streak indicator
+                    Icon(
+                      LucideIcons.flame,
+                      size: 16,
+                      color: AppColors.textTertiary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${habit.streak}d',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            )
-          ]),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            habit.title,
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w800,
-              fontSize: 19,
-              letterSpacing: 0.3,
             ),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Row(children: [
-            Icon(LucideIcons.clock, color: accent.withOpacity(0.7), size: 15),
-            const SizedBox(width: 4),
-            Text(habit.time,
-                style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600)),
-            const SizedBox(width: AppSpacing.md),
-            Icon(LucideIcons.calendar,
-                color: accent.withOpacity(0.7), size: 15),
-            const SizedBox(width: 4),
-            Text(_getFrequencyText(habit.repeatDays),
-                style: AppTextStyles.caption
-                    .copyWith(color: AppColors.textTertiary)),
-          ]),
-          const SizedBox(height: AppSpacing.sm),
-          Row(children: [
-            Icon(LucideIcons.flame, color: accent.withOpacity(0.8), size: 16),
-            const SizedBox(width: 4),
-            Text('Streak: ${habit.streak} days',
-                style: AppTextStyles.caption
-                    .copyWith(color: accent, fontWeight: FontWeight.w600)),
-            const Spacer(),
-            Text(
-              'Created: ${habit.startDate.day}/${habit.startDate.month}/${habit.startDate.year}',
-              style: AppTextStyles.captionSmall
-                  .copyWith(color: AppColors.textQuaternary),
+          // Progress bar at bottom
+          Container(
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(AppBorderRadius.xl),
+                bottomRight: Radius.circular(AppBorderRadius.xl),
+              ),
             ),
-          ]),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(AppBorderRadius.xl),
+                bottomRight: Radius.circular(AppBorderRadius.xl),
+              ),
+              child: LinearProgressIndicator(
+                value: progressPercent > 0 ? progressPercent : 0.15,
+                backgroundColor: Colors.transparent,
+                valueColor: AlwaysStoppedAnimation<Color>(accent),
+              ),
+            ),
+          ),
         ],
       ),
     );

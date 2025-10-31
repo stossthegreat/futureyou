@@ -4,7 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/glass_card.dart' as glass;
-import '../widgets/top_bar.dart';
+import '../widgets/scrollable_header.dart';
 import '../services/local_storage.dart';
 import '../services/messages_service.dart';
 import '../models/coach_message.dart';
@@ -79,10 +79,12 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: const TopBar(title: 'Mirror'),
       body: SingleChildScrollView(
-      child: Column(
-        children: [
+        child: Column(
+          children: [
+            const ScrollableHeader(),
+            
+            const SizedBox(height: AppSpacing.lg),
           // Main mirror card
           GlassCard(
             child: Column(
@@ -126,22 +128,22 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                               Colors.transparent,
                             ],
                           ),
-                          border: Border.all(
-                            color: AppColors.emerald.withOpacity(0.4 + (glowIntensity * 0.4)),
-                            width: 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.emerald.withOpacity(0.2 + (glowIntensity * 0.3)),
-                              blurRadius: 12 + (glowIntensity * 40),
-                              spreadRadius: 0,
+                            border: Border.all(
+                              color: AppColors.emeraldLight.withOpacity(0.4 + (glowIntensity * 0.4)),
+                              width: 2,
                             ),
-                            BoxShadow(
-                              color: AppColors.emerald.withOpacity(0.1 + (glowIntensity * 0.2)),
-                              blurRadius: 24 + (glowIntensity * 60),
-                              spreadRadius: 2,
-                            ),
-                          ],
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.emeraldLight.withOpacity(0.2 + (glowIntensity * 0.3)),
+                                blurRadius: 12 + (glowIntensity * 40),
+                                spreadRadius: 0,
+                              ),
+                              BoxShadow(
+                                color: AppColors.emerald.withOpacity(0.1 + (glowIntensity * 0.2)),
+                                blurRadius: 24 + (glowIntensity * 60),
+                                spreadRadius: 2,
+                              ),
+                            ],
                         ),
                         child: Stack(
                           alignment: Alignment.center,
@@ -154,8 +156,8 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
+                                    AppColors.emeraldLight.withOpacity(0.1 + (glowIntensity * 0.15)),
                                     AppColors.emerald.withOpacity(0.1 + (glowIntensity * 0.15)),
-                                    AppColors.cyan.withOpacity(0.1 + (glowIntensity * 0.15)),
                                   ],
                                 ),
                               ),
@@ -165,7 +167,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                             Icon(
                               LucideIcons.user,
                               size: 64,
-                              color: AppColors.emerald.withOpacity(0.6 + (glowIntensity * 0.4)),
+                              color: AppColors.emeraldLight.withOpacity(0.6 + (glowIntensity * 0.4)),
                             ),
                             
                             // Fulfillment overlay
@@ -183,7 +185,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                                 child: Text(
                                   '${fulfillmentPercentage.toInt()}%',
                                   style: AppTextStyles.captionSmall.copyWith(
-                                    color: AppColors.emerald,
+                                    color: AppColors.emeraldLight,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -270,7 +272,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
+                        gradient: AppColors.emeraldGradient,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(

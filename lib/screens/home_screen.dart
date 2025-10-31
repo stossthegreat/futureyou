@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/date_strip.dart';
-import '../widgets/habit_card.dart';
-import '../widgets/top_bar.dart';
+import '../widgets/scrollable_header.dart';
 import '../widgets/nudge_banner.dart';
 import '../widgets/morning_brief_modal.dart';
 import '../providers/habit_provider.dart';
@@ -63,9 +64,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     
     // ✅ Date-aware completion
     final completedCount = dayHabits.where((h) => h.isDoneOn(_selectedDate)).length;
-    final totalCount = dayHabits.length;
-    final fulfillmentPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0.0;
-    final driftPercentage = 100.0 - fulfillmentPercentage;
     
     // Check for active nudge
     final activeNudge = messagesService.getActiveNudge();
@@ -73,13 +71,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _selectedDate.month == DateTime.now().month &&
         _selectedDate.day == DateTime.now().day;
     
+    // Format date like React: "Thursday, Oct 30, 2025"
+    final dateFormatter = DateFormat('EEEE, MMM d, yyyy');
+    final formattedDate = dateFormatter.format(_selectedDate);
+    
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: const TopBar(title: 'Home'),
       body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Scrollable header
+            const ScrollableHeader(),
+            
             // Date strip
             DateStrip(
               selectedDate: _selectedDate,
@@ -88,72 +92,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             
             // Nudge Banner (only for today)
             if (activeNudge != null && isToday)
-              NudgeBanner(
-                nudge: activeNudge,
-                onDismiss: () => setState(() {}),
-                onDoIt: () {
-                  // Scroll to first undone habit
-                  // TODO: Implement scroll to first undone
-                },
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: NudgeBanner(
+                  nudge: activeNudge,
+                  onDismiss: () => setState(() {}),
+                  onDoIt: () {
+                    // Scroll to first undone habit
+                  },
+                ),
               ),
             
-            const SizedBox(height: AppSpacing.xl),
-          
-          // Fulfillment overview card
-          GlassCard(
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Fulfillment for Selected Day',
-                          style: AppTextStyles.captionSmall.copyWith(
-                            color: AppColors.textQuaternary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$completedCount/$totalCount kept',
-                          style: AppTextStyles.h2.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+            const SizedBox(height: AppSpacing.lg),
+            
+            // Simple date subtitle
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Text(
+                formattedDate,
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.textTertiary,
                 ),
-                
-                const SizedBox(height: AppSpacing.lg),
-                
-                // Progress bars
-                Column(
-                  children: [
-                    _buildProgressBar(
-                      progress: fulfillmentPercentage,
-                      label: 'Fulfillment Index',
-                      color: AppColors.emerald,
-                      description: 'Measures promises kept today across all scheduled items.',
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    _buildProgressBar(
-                      progress: driftPercentage,
-                      label: 'Drift Load (Unfulfilled)',
-                      color: AppColors.warning,
-                      description: 'How much you promised but didn\'t deliver (today).',
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
-          ),
-          
-          const SizedBox(height: AppSpacing.xl),
-          
-          // Habits list
+            
+            const SizedBox(height: AppSpacing.lg),
+            
+            // Habit cards (React style)
           if (dayHabits.isEmpty)
             GlassCard(
               child: Column(
@@ -182,68 +147,203 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             )
           else
-            Column(
-              children: dayHabits.map((habit) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: HabitCard(
-                    key: ValueKey(habit.id),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Column(
+                children: dayHabits.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final habit = entry.value;
+                  final isDone = habit.isDoneOn(_selectedDate);
+                  
+                  return _buildReactHabitCard(
                     habit: habit,
+                    isDone: isDone,
+                    index: index,
                     onToggle: () async {
                       await ref.read(habitEngineProvider).toggleHabitCompletion(habit.id);
                     },
-                    onDelete: () async {
-                      await ref.read(habitEngineProvider).deleteHabit(habit.id);
-                    },
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           
-          const SizedBox(height: AppSpacing.xl),
-          
-          // Integrity footer
-          GlassCard(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Icon(
-                        LucideIcons.gauge,
-                        size: 16,
+          // Bottom padding for nav bar
+          const SizedBox(height: 120),
+        ],
+      ),
+    ),
+    );
+  }
+  
+  Widget _buildReactHabitCard({
+    required dynamic habit,
+    required bool isDone,
+    required int index,
+    required VoidCallback onToggle,
+  }) {
+    final timeFormatter = DateFormat('HH:mm');
+    final time = timeFormatter.format(DateTime.parse('2025-01-01 ${habit.time}:00'));
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: GestureDetector(
+        onTap: onToggle,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: isDone 
+                ? AppColors.emerald.withOpacity(0.05)
+                : Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+            border: Border.all(
+              color: isDone
+                  ? AppColors.emerald.withOpacity(0.3)
+                  : Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  // Emoji or icon
+                  if (habit.emoji != null)
+                    Text(
+                      habit.emoji!,
+                      style: const TextStyle(fontSize: 32),
+                    )
+                  else
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.emerald.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        LucideIcons.flame,
+                        size: 20,
                         color: AppColors.emerald,
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Flexible(
-                        child: Text(
-                          'Integrity = Promises Kept / Promises Made',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.textSecondary,
+                    ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Time + Status chip
+                        Row(
+                          children: [
+                            Text(
+                              time,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.cyan,
+                                fontFamily: 'monospace',
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Text('•', style: TextStyle(color: Colors.white38)),
+                            const SizedBox(width: AppSpacing.sm),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDone
+                                    ? AppColors.emerald.withOpacity(0.15)
+                                    : AppColors.cyan.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isDone
+                                      ? AppColors.emerald.withOpacity(0.3)
+                                      : AppColors.cyan.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Text(
+                                isDone ? 'done' : 'planned',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDone
+                                      ? AppColors.emeraldLight
+                                      : AppColors.cyan,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        // Title
+                        Text(
+                          habit.title,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 17,
+                            color: Colors.white.withOpacity(0.95),
                           ),
-                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Checkmark icon
+                  Icon(
+                    isDone ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                    size: 28,
+                    color: isDone
+                        ? AppColors.emerald
+                        : Colors.white.withOpacity(0.3),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              // Progress bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppBorderRadius.full),
+                child: Container(
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppBorderRadius.full),
+                  ),
+                  child: Stack(
+                    children: [
+                      FractionallySizedBox(
+                        widthFactor: isDone ? 1.0 : 0.56,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: isDone
+                                ? AppColors.emeraldGradient
+                                : LinearGradient(
+                                    colors: [AppColors.cyan, AppColors.emerald],
+                                  ),
+                            borderRadius: BorderRadius.circular(AppBorderRadius.full),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                Text(
-                  'Trend engine hooks in backend',
-                  style: AppTextStyles.captionSmall.copyWith(
-                    color: AppColors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          
-          // Bottom padding for navigation
-          const SizedBox(height: 100),
-        ],
+        ),
       ),
-      ),
-    );
+    ).animate(delay: (index * 30).ms)
+      .fadeIn(duration: 260.ms)
+      .scale(begin: const Offset(0.98, 0.98), end: const Offset(1, 1));
   }
   
   Widget _buildProgressBar({
@@ -301,7 +401,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Container(
                     height: double.infinity,
                     decoration: BoxDecoration(
-                      color: color,
+                      gradient: label.contains('Fulfillment') 
+                          ? AppColors.emeraldGradient 
+                          : LinearGradient(
+                              colors: [color, color.withOpacity(0.8)],
+                            ),
                       borderRadius: BorderRadius.circular(AppBorderRadius.full),
                     ),
                   ),

@@ -177,11 +177,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final habitEngine = ref.watch(habitEngineProvider);
     
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          // Account section
-          GlassCard(
+    return Scaffold(
+      backgroundColor: AppColors.baseDark1,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Settings',
+          style: AppTextStyles.h2.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          children: [
+            // Account section
+            GlassCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -499,6 +516,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           // Bottom padding for navigation
           const SizedBox(height: 100),
         ],
+      ),
       ),
     );
   }

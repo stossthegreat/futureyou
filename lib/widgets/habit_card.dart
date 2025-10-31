@@ -80,7 +80,7 @@ class _HabitCardState extends State<HabitCard>
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
         children: [
-          // Icon container
+          // Icon or Emoji container
           Container(
             width: 48,
             height: 48,
@@ -99,11 +99,18 @@ class _HabitCardState extends State<HabitCard>
                 width: 1,
               ),
             ),
-            child: Icon(
-              _habitIcon,
-              color: _iconColor,
-              size: 20,
-            ),
+            child: widget.habit.emoji != null
+                ? Center(
+                    child: Text(
+                      widget.habit.emoji!,
+                      style: const TextStyle(fontSize: 28),
+                    ),
+                  )
+                : Icon(
+                    _habitIcon,
+                    color: _iconColor,
+                    size: 20,
+                  ),
           ),
           
           const SizedBox(width: AppSpacing.md),

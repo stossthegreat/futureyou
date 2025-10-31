@@ -135,6 +135,7 @@ class HabitEngine extends ChangeNotifier {
     DateTime? endDate,
     List<int>? repeatDays,
     Color? color,
+    String? emoji,
     bool reminderOn = false, // default OFF
   }) async {
     final habit = Habit(
@@ -147,6 +148,7 @@ class HabitEngine extends ChangeNotifier {
       repeatDays: repeatDays ?? _getDefaultRepeatDays(type),
       createdAt: DateTime.now(),
       colorValue: color?.value ?? 0xFF10B981,
+      emoji: emoji,
       reminderOn: reminderOn,
     );
 

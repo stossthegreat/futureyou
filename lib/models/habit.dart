@@ -47,6 +47,9 @@ class Habit extends HiveObject {
   @HiveField(13)
   int colorValue;
 
+  @HiveField(14)
+  String? emoji;
+
   Habit({
     required this.id,
     required this.title,
@@ -62,6 +65,7 @@ class Habit extends HiveObject {
     this.streak = 0,
     this.xp = 0,
     this.colorValue = 0xFF10B981, // Default emerald color
+    this.emoji,
   });
 
   TimeOfDay get timeOfDay {
@@ -111,6 +115,7 @@ class Habit extends HiveObject {
     int? streak,
     int? xp,
     int? colorValue,
+    String? emoji,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -127,6 +132,7 @@ class Habit extends HiveObject {
       streak: streak ?? this.streak,
       xp: xp ?? this.xp,
       colorValue: colorValue ?? this.colorValue,
+      emoji: emoji ?? this.emoji,
     );
   }
 
@@ -145,6 +151,7 @@ class Habit extends HiveObject {
         'streak': streak,
         'xp': xp,
         'colorValue': colorValue,
+        'emoji': emoji,
       };
 
   factory Habit.fromJson(Map<String, dynamic> json) => Habit(
@@ -164,5 +171,6 @@ class Habit extends HiveObject {
         streak: json['streak'] ?? 0,
         xp: json['xp'] ?? 0,
         colorValue: json['colorValue'] ?? 0xFF10B981,
+        emoji: json['emoji'],
       );
 }

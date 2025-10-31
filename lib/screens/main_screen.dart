@@ -7,8 +7,8 @@ import '../design/tokens.dart';
 import 'home_screen.dart';
 import 'planner_screen.dart';
 import 'chat_screen.dart';
+import 'reflections_screen.dart';
 import 'mirror_screen.dart';
-import 'streak_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -25,12 +25,12 @@ class _MainScreenState extends State<MainScreen>
   
   final List<TabItem> _tabs = [
     TabItem(
-      icon: LucideIcons.activity,
+      icon: LucideIcons.flame,
       label: 'Home',
       screen: const HomeScreen(),
     ),
     TabItem(
-      icon: LucideIcons.plus,
+      icon: LucideIcons.clipboard,
       label: 'Planner',
       screen: const PlannerScreen(),
     ),
@@ -40,14 +40,14 @@ class _MainScreenState extends State<MainScreen>
       screen: const ChatScreen(),
     ),
     TabItem(
-      icon: LucideIcons.user,
-      label: 'Mirror',
-      screen: const MirrorScreen(),
+      icon: LucideIcons.bookOpen,
+      label: 'Reflections',
+      screen: const ReflectionsScreen(),
     ),
     TabItem(
-      icon: LucideIcons.flame,
-      label: 'Streak',
-      screen: const StreakScreen(),
+      icon: LucideIcons.sparkles,
+      label: 'Mirror',
+      screen: const MirrorScreen(),
     ),
   ];
   
@@ -56,9 +56,9 @@ class _MainScreenState extends State<MainScreen>
     super.initState();
     _pageController = PageController();
     _tabAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(seconds: 3),
       vsync: this,
-    );
+    )..repeat(reverse: true);
   }
   
   @override
@@ -90,45 +90,36 @@ class _MainScreenState extends State<MainScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      extendBodyBehindAppBar: true,
       body: Container(
         decoration: const BoxDecoration(
           gradient: AppColors.backgroundGradient,
         ),
         child: SafeArea(
           bottom: false,
-          child: Column(
+          child: Stack(
             children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: _buildHeader(),
-              ),
-              
               // Content
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentIndex = index;
-                    });
-                  },
-                  itemCount: _tabs.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                      ),
-                      child: _tabs[index].screen,
-                    );
-                  },
-                ),
+              PageView.builder(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                },
+                itemCount: _tabs.length,
+                itemBuilder: (context, index) {
+                  return _tabs[index].screen;
+                },
               ),
               
-              // Bottom navigation
-              _buildBottomNavigation(),
+              // Bottom navigation (always visible)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _buildBottomNavigation(),
+              ),
             ],
           ),
         ),
@@ -137,58 +128,177 @@ class _MainScreenState extends State<MainScreen>
   }
   
   Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Future U OS',
-              style: AppTextStyles.captionSmall.copyWith(
-                color: AppColors.textQuaternary,
+    return Container(
+      height: 112,
+      decoration: BoxDecoration(
+        gradient: AppColors.emeraldGradient,
+        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.emerald.withOpacity(0.3),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Glass overlay
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
               ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              'Unicorn Habit System',
-              style: AppTextStyles.h3.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+          ),
+          
+          // Content
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Logo + Text
+                Row(
+                  children: [
+                    // ƒ Logo
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.cyan.withOpacity(0.4),
+                            blurRadius: 16,
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'ƒ',
+                          style: TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.white.withOpacity(0.6),
+                                blurRadius: 16,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.lg),
+                    // Text
+                    Text(
+                      'FUTURE-YOU OS',
+                      softWrap: false,
+                      overflow: TextOverflow.fade,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 2.4,
+                        shadows: [
+                          Shadow(
+                            color: Colors.white.withOpacity(0.6),
+                            blurRadius: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                // Pulsing sparkles
+                AnimatedBuilder(
+                  animation: _tabAnimationController,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: 0.8 + (_tabAnimationController.value * 0.2),
+                      child: Icon(
+                        LucideIcons.sparkles,
+                        size: 40,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
-      ],
-    );
+          ),
+        ],
+      ),
+    ).animate(onPlay: (controller) => controller.repeat(reverse: true))
+      .shimmer(duration: 3600.ms, color: Colors.white.withOpacity(0.1));
   }
   
   Widget _buildBottomNavigation() {
     return Container(
-      margin: const EdgeInsets.all(AppSpacing.md),
+      margin: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.lg),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+        borderRadius: BorderRadius.circular(AppBorderRadius.xl),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.md,
+            ),
             decoration: BoxDecoration(
               color: AppColors.glassBackground,
-              borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+              borderRadius: BorderRadius.circular(AppBorderRadius.xl),
               border: Border.all(
                 color: AppColors.glassBorder,
                 width: 1,
               ),
               boxShadow: AppShadows.glass,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: _tabs.asMap().entries.map((entry) {
-                final index = entry.key;
-                final tab = entry.value;
-                final isActive = index == _currentIndex;
+            child: Stack(
+              children: [
+                // Sliding pill indicator
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  left: (_currentIndex / _tabs.length) * MediaQuery.of(context).size.width * 0.85,
+                  child: Container(
+                    width: (MediaQuery.of(context).size.width * 0.85) / _tabs.length,
+                    height: 64,
+                    padding: const EdgeInsets.all(4),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.emeraldLight.withOpacity(0.2),
+                            AppColors.emerald.withOpacity(0.15),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                      ),
+                    ),
+                  ),
+                ),
                 
-                return _buildTabButton(tab, index, isActive);
-              }).toList(),
+                // Tab buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: _tabs.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final tab = entry.value;
+                    final isActive = index == _currentIndex;
+                    
+                    return _buildTabButton(tab, index, isActive);
+                  }).toList(),
+                ),
+              ],
             ),
           ),
         ),
@@ -200,57 +310,38 @@ class _MainScreenState extends State<MainScreen>
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
         onTap: () => _onTabTapped(index),
-        child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: isActive 
-              ? AppColors.emerald.withOpacity(0.2) 
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppBorderRadius.md),
-          boxShadow: isActive ? AppShadows.glow : null,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
                 tab.icon,
-                size: 20,
+                size: 26,
                 color: isActive 
-                    ? AppColors.emerald 
-                    : AppColors.textTertiary,
+                    ? AppColors.emeraldLight 
+                    : AppColors.textSecondary.withOpacity(0.7),
               ),
-            ).animate(target: isActive ? 1 : 0)
-              .scale(
-                begin: const Offset(1, 1),
-                end: const Offset(1.1, 1.1),
-                duration: 200.ms,
-              )
-              .shimmer(
-                duration: 1000.ms,
-                color: AppColors.emerald.withOpacity(0.3),
+              const SizedBox(height: 6),
+              Text(
+                tab.label,
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 12,
+                  color: isActive 
+                      ? AppColors.emeraldLight 
+                      : AppColors.textSecondary.withOpacity(0.7),
+                  fontWeight: isActive 
+                      ? FontWeight.w700 
+                      : FontWeight.w400,
+                ),
               ),
-            const SizedBox(height: 2),
-            Text(
-              tab.label,
-              style: AppTextStyles.label.copyWith(
-                color: isActive 
-                    ? AppColors.emerald 
-                    : AppColors.textTertiary,
-                fontWeight: isActive 
-                    ? FontWeight.w600 
-                    : FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );

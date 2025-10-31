@@ -23,6 +23,7 @@ import 'services/sync_service.dart';
 import 'services/offline_queue.dart'; // QueuedRequest Hive adapter is in .g.dart part file
 import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/settings_screen.dart';
 import 'design/theme.dart';
 import 'logic/habit_engine.dart';
 
@@ -175,6 +176,9 @@ class FutureYouApp extends StatelessWidget {
       theme: _getSafeTheme(),
       home: const AppRouter(),
       debugShowCheckedModeBanner: false,
+      routes: {
+        '/settings': (context) => const SettingsScreen(),
+      },
     );
   }
 
