@@ -151,5 +151,76 @@ export async function testController(fastify: FastifyInstance) {
       return reply.code(code).send({ error: err.message });
     }
   });
+
+  /**
+   * 🧪 TEST: Generate ALL messages (brief + debrief + nudge)
+   */
+  fastify.post('/api/v1/test/generate-all', async (req: any, reply) => {
+    try {
+      const userId = getUserIdOr401(req);
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        // Create user if doesn't exist
+        await prisma.user.create({
+          data: {
+            id: userId,
+            email: `${userId}@test.com`,
+            name: 'Test User',
+          },
+        });
+        console.log(`✅ Created test user: ${userId}`);
+      }
+
+      const { nudgesService } = await import('../services/nudges.service');
+      const { insightsService } = await import('../services/insights.service');
+
+      // 1. Generate morning brief
+      const habits = await prisma.habit.findMany({ where: { userId } });
+      const recent = await prisma.event.findMany({
+        where: { userId },
+        orderBy: { ts: 'desc' },
+        take: 50,
+      });
+
+      const briefPrompt = `Morning brief. Set 2–3 actionable orders for today.`;
+      const briefText = await aiService.generateFutureYouReply(userId, briefPrompt, { 
+        purpose: 'brief', 
+        maxChars: 500 
+      });
+      await prisma.event.create({
+        data: { userId, type: 'morning_brief', payload: { text: briefText } },
+      });
+
+      // 2. Generate evening debrief
+      const kept = recent.filter(e => e.type === 'habit_action' && (e.payload as any)?.completed === true).length;
+      const missed = recent.filter(e => e.type === 'habit_action' && (e.payload as any)?.completed === false).length;
+      const debriefPrompt = `Evening debrief. Kept=${kept}, Missed=${missed}. Reflect and give 1 order for tomorrow.`;
+      const debriefText = await aiService.generateFutureYouReply(userId, debriefPrompt, { 
+        purpose: 'debrief', 
+        maxChars: 500 
+      });
+      await prisma.event.create({
+        data: { userId, type: 'evening_debrief', payload: { text: debriefText } },
+      });
+
+      // 3. Generate smart nudge
+      const nudgeResult = await nudgesService.generateNudges(userId);
+
+      // 4. Generate insights
+      const insights = await insightsService.analyzePatterns(userId);
+
+      console.log(`✅ Generated ALL messages for ${userId}`);
+      return { 
+        ok: true, 
+        brief: briefText,
+        debrief: debriefText,
+        nudge: nudgeResult,
+        insightsCount: insights.length,
+      };
+    } catch (err: any) {
+      const code = err.statusCode || 500;
+      return reply.code(code).send({ error: err.message, stack: err.stack });
+    }
+  });
 }
 
