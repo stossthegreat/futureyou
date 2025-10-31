@@ -2,12 +2,19 @@ import 'package:hive/hive.dart';
 
 part 'coach_message.g.dart';
 
+@HiveType(typeId: 5)
 enum MessageKind {
+  @HiveField(0)
   nudge,
+  @HiveField(1)
   brief,
+  @HiveField(2)
   debrief,
+  @HiveField(3)
   mirror,
+  @HiveField(4)
   letter,
+  @HiveField(5)
   chat,
 }
 

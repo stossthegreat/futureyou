@@ -60,3 +60,62 @@ class CoachMessageAdapter extends TypeAdapter<CoachMessage> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+class MessageKindAdapter extends TypeAdapter<MessageKind> {
+  @override
+  final int typeId = 5;
+
+  @override
+  MessageKind read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return MessageKind.nudge;
+      case 1:
+        return MessageKind.brief;
+      case 2:
+        return MessageKind.debrief;
+      case 3:
+        return MessageKind.mirror;
+      case 4:
+        return MessageKind.letter;
+      case 5:
+        return MessageKind.chat;
+      default:
+        return MessageKind.nudge;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, MessageKind obj) {
+    switch (obj) {
+      case MessageKind.nudge:
+        writer.writeByte(0);
+        break;
+      case MessageKind.brief:
+        writer.writeByte(1);
+        break;
+      case MessageKind.debrief:
+        writer.writeByte(2);
+        break;
+      case MessageKind.mirror:
+        writer.writeByte(3);
+        break;
+      case MessageKind.letter:
+        writer.writeByte(4);
+        break;
+      case MessageKind.chat:
+        writer.writeByte(5);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MessageKindAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}

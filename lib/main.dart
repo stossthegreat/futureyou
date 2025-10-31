@@ -138,6 +138,9 @@ Future<void> main() async {
       if (!Hive.isAdapterRegistered(4)) {
         Hive.registerAdapter(QueuedRequestAdapter());
       }
+      if (!Hive.isAdapterRegistered(5)) {
+        Hive.registerAdapter(MessageKindAdapter());
+      }
       await LocalStorageService.initialize();
       await messagesService.init();
       debugPrint('✅ Hive initialized');
