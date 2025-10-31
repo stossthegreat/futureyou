@@ -12,7 +12,8 @@ echo ""
 echo "⏳ Generating morning brief, evening debrief, nudge, and insights..."
 RESPONSE=$(curl -s -X POST "$BACKEND_URL/api/v1/test/generate-all" \
   -H "x-user-id: $USER_ID" \
-  -H "Content-Type: application/json")
+  -H "Content-Type: application/json" \
+  -d '{}')
 
 if echo "$RESPONSE" | grep -q "ok.*true"; then
   echo "✅ Messages generated successfully!"
