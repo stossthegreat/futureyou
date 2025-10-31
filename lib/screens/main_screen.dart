@@ -248,8 +248,8 @@ class _MainScreenState extends State<MainScreen>
           filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.md,
+              horizontal: AppSpacing.xs,
+              vertical: AppSpacing.sm,
             ),
             decoration: BoxDecoration(
               color: AppColors.glassBackground,
@@ -260,45 +260,51 @@ class _MainScreenState extends State<MainScreen>
               ),
               boxShadow: AppShadows.glass,
             ),
-            child: Stack(
-              children: [
-                // Sliding pill indicator
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutCubic,
-                  left: (_currentIndex / _tabs.length) * MediaQuery.of(context).size.width * 0.85,
-                  child: Container(
-                    width: (MediaQuery.of(context).size.width * 0.85) / _tabs.length,
-                    height: 64,
-                    padding: const EdgeInsets.all(4),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.emeraldLight.withOpacity(0.2),
-                            AppColors.emerald.withOpacity(0.15),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final tabWidth = constraints.maxWidth / _tabs.length;
+                
+                return Stack(
+                  children: [
+                    // Sliding pill indicator
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutCubic,
+                      left: _currentIndex * tabWidth,
+                      child: Container(
+                        width: tabWidth,
+                        height: 64,
+                        padding: const EdgeInsets.all(4),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.emeraldLight.withOpacity(0.2),
+                                AppColors.emerald.withOpacity(0.15),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
                       ),
                     ),
-                  ),
-                ),
-                
-                // Tab buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: _tabs.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final tab = entry.value;
-                    final isActive = index == _currentIndex;
                     
-                    return _buildTabButton(tab, index, isActive);
-                  }).toList(),
-                ),
-              ],
+                    // Tab buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: _tabs.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final tab = entry.value;
+                        final isActive = index == _currentIndex;
+                        
+                        return _buildTabButton(tab, index, isActive);
+                      }).toList(),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -307,40 +313,45 @@ class _MainScreenState extends State<MainScreen>
   }
   
   Widget _buildTabButton(TabItem tab, int index, bool isActive) {
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-        onTap: () => _onTabTapped(index),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                tab.icon,
-                size: 26,
-                color: isActive 
-                    ? AppColors.emeraldLight 
-                    : AppColors.textSecondary.withOpacity(0.7),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                tab.label,
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 12,
+    return Expanded(
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+          onTap: () => _onTabTapped(index),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 2,
+              vertical: AppSpacing.sm,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  tab.icon,
+                  size: 22,
                   color: isActive 
                       ? AppColors.emeraldLight 
                       : AppColors.textSecondary.withOpacity(0.7),
-                  fontWeight: isActive 
-                      ? FontWeight.w700 
-                      : FontWeight.w400,
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  tab.label,
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 10,
+                    color: isActive 
+                        ? AppColors.emeraldLight 
+                        : AppColors.textSecondary.withOpacity(0.7),
+                    fontWeight: isActive 
+                        ? FontWeight.w700 
+                        : FontWeight.w400,
+                  ),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -167,8 +167,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           
-          // Bottom padding for nav bar
-          const SizedBox(height: 120),
+          // Bottom padding for nav bar (extra space for breathing room)
+          const SizedBox(height: 150),
         ],
       ),
     ),

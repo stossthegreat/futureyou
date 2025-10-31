@@ -229,25 +229,36 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          Column(
-            children: [
-              const ScrollableHeader(),
-              DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
-              const SizedBox(height: AppSpacing.lg),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                decoration: BoxDecoration(
-                  color: AppColors.glassBackground,
-                  borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                  border: Border.all(color: AppColors.glassBorder),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  tabs: const [Tab(text:'Add New'),Tab(text:'Manage')],
+          CustomScrollView(
+            slivers: [
+              // Scrollable header at the very top
+              const SliverToBoxAdapter(
+                child: ScrollableHeader(),
+              ),
+              // Date strip
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
+                    const SizedBox(height: AppSpacing.sm),
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: AppColors.glassBackground,
+                        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                        border: Border.all(color: AppColors.glassBorder),
+                      ),
+                      child: TabBar(
+                        controller: _tabController,
+                        tabs: const [Tab(text:'Add New'),Tab(text:'Manage')],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
-              Expanded(
+              // Tab content
+              SliverFillRemaining(
                 child: TabBarView(
                   controller: _tabController,
                   children: [_buildAddNewTab(), _buildManageTab()],
@@ -300,7 +311,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               _colorPicker(),
               const SizedBox(height: AppSpacing.xl),
               _commitButton(),
-              const SizedBox(height: 100),
+              const SizedBox(height: 150),
             ],
           ),
         ),
@@ -541,11 +552,17 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     return RefreshIndicator(
       onRefresh: () async => await ref.read(habitEngineProvider).loadHabits(),
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg, 
+          0, 
+          AppSpacing.lg, 
+          150, // Extra bottom padding for breathing room
+        ),
         itemCount: filtered.length,
-        itemBuilder: (context, i) =>
-            Padding(padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: _buildHabitCard(filtered[i])),
+        itemBuilder: (context, i) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: _buildHabitCard(filtered[i]),
+        ),
       ),
     );
   }

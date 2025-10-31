@@ -41,30 +41,54 @@ class ScrollableHeader extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Logo + Text
-                      Row(
-                        children: [
-                          // ƒ Logo
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.25),
-                              borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.cyan.withOpacity(0.4),
-                                  blurRadius: 16,
-                                  spreadRadius: 0,
+                      Flexible(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // ƒ Logo
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.25),
+                                borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.cyan.withOpacity(0.4),
+                                    blurRadius: 16,
+                                    spreadRadius: 0,
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'ƒ',
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.white.withOpacity(0.6),
+                                        blurRadius: 16,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ],
+                              ),
                             ),
-                            child: Center(
+                            const SizedBox(width: AppSpacing.md),
+                            // Text - flexible to shrink on small screens
+                            Flexible(
                               child: Text(
-                                'ƒ',
+                                'FUTURE-YOU OS',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                                 style: TextStyle(
-                                  fontSize: 36,
+                                  fontSize: 22,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
+                                  letterSpacing: 1.8,
                                   shadows: [
                                     Shadow(
                                       color: Colors.white.withOpacity(0.6),
@@ -74,27 +98,8 @@ class ScrollableHeader extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: AppSpacing.lg),
-                          // Text
-                          Text(
-                            'FUTURE-YOU OS',
-                            softWrap: false,
-                            overflow: TextOverflow.fade,
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 2.4,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.white.withOpacity(0.6),
-                                  blurRadius: 16,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),

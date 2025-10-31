@@ -369,37 +369,43 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       backgroundColor: Colors.transparent,
       body: Column(
         children: [
-          // Scrollable header
-          const ScrollableHeader(),
-          
-          // Purpose-finding prompt chips (REMOVE THIS - old UI)
-          // if (_messages.length <= 2)
-          //   _buildQuickPrompts(),
-          
           // Full-screen chat messages
           Expanded(
             child: GlassCard(
             child: Column(
               children: [
                 Expanded(
-                  child: ListView.builder(
+                  child: CustomScrollView(
                     controller: _scrollController,
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final message = _messages[index];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildMessageBubble(message),
-                          // Show insights after AI messages
-                          if (message.role == 'future' && 
-                              _messageInsights.containsKey(message.id))
-                            ..._messageInsights[message.id]!.map((insight) => 
-                              _buildInsightCard(insight)),
-                        ],
-                      );
-                    },
+                    slivers: [
+                      // Header as first item
+                      const SliverToBoxAdapter(
+                        child: ScrollableHeader(),
+                      ),
+                      // Messages list
+                      SliverPadding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final message = _messages[index];
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildMessageBubble(message),
+                                  // Show insights after AI messages
+                                  if (message.role == 'future' && 
+                                      _messageInsights.containsKey(message.id))
+                                    ..._messageInsights[message.id]!.map((insight) => 
+                                      _buildInsightCard(insight)),
+                                ],
+                              );
+                            },
+                            childCount: _messages.length,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 if (_isLoading)
