@@ -163,7 +163,7 @@ class Habit extends HiveObject {
         endDate: DateTime.parse(json['endDate']),
         repeatDays: List<int>.from(json['repeatDays']),
         done: json['done'] ?? false,
-        reminderOn: json['reminderOn'] ?? true,
+        reminderOn: json['reminderOn'] ?? false, // Default OFF - user must enable
         createdAt: DateTime.parse(json['createdAt']),
         completedAt: json['completedAt'] != null
             ? DateTime.parse(json['completedAt'])

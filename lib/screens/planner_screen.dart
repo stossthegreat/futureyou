@@ -33,6 +33,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
 
   Color _selectedColor = AppColors.emerald;
   String? _selectedEmoji;
+  bool _reminderOn = false; // Alarm toggle - defaults OFF
   final List<bool> _repeatDays = List.generate(7, (index) => false);
   final List<String> _dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -188,6 +189,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         repeatDays: _getRepeatDays(),
         color: _selectedColor,
         emoji: _selectedEmoji,
+        reminderOn: _reminderOn, // Pass the alarm toggle state
       );
 
       _titleController.clear();
@@ -196,6 +198,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         _frequency = 'daily';
         _selectedColor = AppColors.emerald;
         _selectedEmoji = null;
+        _reminderOn = false; // Reset alarm toggle
       });
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -300,6 +303,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               const SizedBox(height: AppSpacing.lg),
               _emojiField(),
               const SizedBox(height: AppSpacing.lg),
+              _alarmToggle(),
+              const SizedBox(height: AppSpacing.lg),
               _timeField(),
               const SizedBox(height: AppSpacing.lg),
               _dateField('Start Date', _startDate, _selectStartDate),
@@ -403,6 +408,56 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               ),
             ],
           ),
+        ),
+      );
+
+  Widget _alarmToggle() => Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.glassBackground,
+          border: Border.all(color: AppColors.glassBorder),
+          borderRadius: BorderRadius.circular(AppBorderRadius.md),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _reminderOn ? LucideIcons.bell : LucideIcons.bellOff,
+              color: _reminderOn ? AppColors.emerald : AppColors.textTertiary,
+              size: 20,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Reminder Alarm',
+                    style: AppTextStyles.bodySemiBold.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _reminderOn ? 'Alarm enabled for this habit' : 'Tap to enable alarm notifications',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textTertiary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              value: _reminderOn,
+              onChanged: (value) {
+                setState(() {
+                  _reminderOn = value;
+                });
+              },
+              activeColor: AppColors.emerald,
+              activeTrackColor: AppColors.emerald.withOpacity(0.3),
+            ),
+          ],
         ),
       );
 

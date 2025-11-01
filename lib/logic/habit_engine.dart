@@ -76,7 +76,7 @@ class HabitEngine extends ChangeNotifier {
       playSound: true,
       enableVibration: true,
       enableLights: true,
-      sound: RawResourceAndroidNotificationSound('default'),
+      sound: null, // Use system default sound
     );
 
     const iosDetails = DarwinNotificationDetails(
