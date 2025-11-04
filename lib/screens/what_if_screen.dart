@@ -946,7 +946,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
               AppSpacing.lg,
               AppSpacing.lg,
               AppSpacing.lg,
-              100, // Extra space above nav tabs
+              140, // Extra space above nav tabs
             ),
             decoration: BoxDecoration(
               color: const Color(0xFF18181B),
