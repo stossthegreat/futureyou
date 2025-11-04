@@ -6,7 +6,8 @@ import 'dart:ui';
 import '../design/tokens.dart';
 import 'home_screen.dart';
 import 'planner_screen.dart';
-import 'chat_screen.dart';
+import 'future_you_screen.dart';
+import 'what_if_screen.dart';
 import 'reflections_screen.dart';
 import 'mirror_screen.dart';
 
@@ -35,9 +36,14 @@ class _MainScreenState extends State<MainScreen>
       screen: const PlannerScreen(),
     ),
     TabItem(
-      icon: LucideIcons.messageSquare,
-      label: 'Chat',
-      screen: const ChatScreen(),
+      icon: LucideIcons.brain,
+      label: 'Future-You',
+      screen: const FutureYouScreen(),
+    ),
+    TabItem(
+      icon: LucideIcons.sparkles,
+      label: 'What-If',
+      screen: const WhatIfScreen(),
     ),
     TabItem(
       icon: LucideIcons.bookOpen,
@@ -45,7 +51,7 @@ class _MainScreenState extends State<MainScreen>
       screen: const ReflectionsScreen(),
     ),
     TabItem(
-      icon: LucideIcons.sparkles,
+      icon: LucideIcons.star,
       label: 'Mirror',
       screen: const MirrorScreen(),
     ),

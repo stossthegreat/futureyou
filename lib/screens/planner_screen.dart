@@ -6,7 +6,7 @@ import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/date_strip.dart';
-import '../widgets/scrollable_header.dart';
+import '../widgets/simple_header.dart';
 import '../providers/habit_provider.dart';
 import '../models/habit.dart';
 
@@ -232,13 +232,13 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          CustomScrollView(
-            slivers: [
-              // Scrollable header at the very top
-              const SliverToBoxAdapter(
-                child: ScrollableHeader(),
-              ),
-              // Date strip
+          Column(
+            children: [
+              const SimpleHeader(),
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    // Date strip
               SliverToBoxAdapter(
                 child: Column(
                   children: [
@@ -269,21 +269,23 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               ),
             ],
           ),
-
-          // Floating "Create" button only visible on Manage tab
-          if (_tabController.index == 1)
-            Positioned(
-              bottom: 24,
-              right: 24,
-              child: FloatingActionButton.extended(
-                onPressed: () => _tabController.animateTo(0),
-                backgroundColor: AppColors.emerald,
-                icon: const Icon(LucideIcons.plus, color: Colors.black),
-                label: const Text('Create', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
-              ),
-            ),
-        ],
+        ),
+      ],
+    ),
+    // Floating "Create" button only visible on Manage tab
+    if (_tabController.index == 1)
+      Positioned(
+        bottom: 24,
+        right: 24,
+        child: FloatingActionButton.extended(
+          onPressed: () => _tabController.animateTo(0),
+          backgroundColor: AppColors.emerald,
+          icon: const Icon(LucideIcons.plus, color: Colors.black),
+          label: const Text('Create', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+        ),
       ),
+  ],
+),
     );
   }
   Widget _buildAddNewTab() {

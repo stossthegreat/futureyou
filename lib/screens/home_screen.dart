@@ -11,6 +11,8 @@ import '../widgets/nudge_banner.dart';
 import '../widgets/morning_brief_modal.dart';
 import '../providers/habit_provider.dart';
 import '../services/messages_service.dart';
+import '../services/weekly_stats_service.dart';
+import '../widgets/week_overview_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -166,6 +168,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 }).toList(),
               ),
             ),
+          
+          const SizedBox(height: AppSpacing.xl),
+          
+          // Week Overview Card
+          WeekOverviewCard(
+            stats: WeeklyStatsService.calculateCurrentWeekStats(),
+          ),
           
           // Bottom padding for nav bar (extra space for breathing room)
           const SizedBox(height: 150),

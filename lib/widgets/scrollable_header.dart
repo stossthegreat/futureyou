@@ -35,7 +35,7 @@ class ScrollableHeader extends StatelessWidget {
               // Content - centered vertically, full width from left to right
               Padding(
                 padding: const EdgeInsets.only(
-                  left: AppSpacing.md,
+                  left: 12, // Pushed more to the left
                   right: 70, // Space for settings icon
                 ),
                 child: Align(
@@ -43,10 +43,10 @@ class ScrollableHeader extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Logo - smaller to fit text
+                      // Logo - bigger
                       Container(
-                        width: 42,
-                        height: 42,
+                        width: 52,
+                        height: 52,
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.25),
                           borderRadius: BorderRadius.circular(AppBorderRadius.md),
@@ -62,7 +62,7 @@ class ScrollableHeader extends StatelessWidget {
                           child: Text(
                             'ƒ',
                             style: TextStyle(
-                              fontSize: 24,
+                              fontSize: 32,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
                               shadows: [
@@ -75,15 +75,15 @@ class ScrollableHeader extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
-                      // Text - adjusted size to fit fully
+                      const SizedBox(width: 14),
+                      // Text - WAY BIGGER
                       Text(
                         'FUTURE-YOU OS',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 28, // Way bigger!
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
-                          letterSpacing: 1.0,
+                          letterSpacing: 1.2,
                           shadows: [
                             Shadow(
                               color: Colors.white.withOpacity(0.6),

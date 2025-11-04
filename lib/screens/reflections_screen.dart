@@ -7,7 +7,7 @@ import '../design/tokens.dart';
 import '../models/coach_message.dart';
 import '../services/messages_service.dart';
 import '../widgets/glass_card.dart';
-import '../widgets/scrollable_header.dart';
+import '../widgets/simple_header.dart';
 
 class ReflectionsScreen extends StatefulWidget {
   const ReflectionsScreen({super.key});
@@ -56,44 +56,20 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: RefreshIndicator(
-        onRefresh: _loadMessages,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Scrollable header
-            const ScrollableHeader(),
+      body: Column(
+        children: [
+          const SimpleHeader(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadMessages,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: AppSpacing.lg),
             
-            const SizedBox(height: AppSpacing.lg),
-            
-            // Debug: Sync button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Syncing messages...')),
-                  );
-                  await _loadMessages();
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Loaded ${_messages.length} messages')),
-                  );
-                },
-                icon: const Icon(LucideIcons.refreshCw),
-                label: Text('Sync Messages (${_messages.length} loaded)'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.emerald,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: AppSpacing.lg),
-            
-            // Filters
+                    // Filters
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: SingleChildScrollView(
@@ -161,10 +137,13 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                   ),
                 ),
           
-            const SizedBox(height: 120), // Bottom padding for nav
-          ],
+                    const SizedBox(height: 120), // Bottom padding for nav
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
