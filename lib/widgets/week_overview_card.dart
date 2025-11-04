@@ -156,61 +156,68 @@ class _WeekOverviewCardState extends State<WeekOverviewCard>
   }
 
   Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: AppColors.emeraldGradient,
-                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.emerald.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                LucideIcons.award,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Row(
               children: [
-                ShaderMask(
-                  shaderCallback: (bounds) => AppColors.emeraldGradient
-                      .createShader(bounds),
-                  child: const Text(
-                    'Week Overview',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: AppColors.emeraldGradient,
+                    borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.emerald.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    LucideIcons.award,
+                    color: Colors.white,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Your momentum tracker',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.emerald.withOpacity(0.7),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ShaderMask(
+                        shaderCallback: (bounds) => AppColors.emeraldGradient
+                            .createShader(bounds),
+                        child: const Text(
+                          'Week Overview',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Your momentum tracker',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.emerald.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ],
-        ),
-        Container(
+          ),
+          const SizedBox(width: 8),
+          Container(
           padding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 6,
@@ -247,6 +254,7 @@ class _WeekOverviewCardState extends State<WeekOverviewCard>
           ),
         ),
       ],
+    ),
     );
   }
 

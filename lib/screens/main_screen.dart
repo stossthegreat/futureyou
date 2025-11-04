@@ -37,7 +37,7 @@ class _MainScreenState extends State<MainScreen>
     ),
     TabItem(
       icon: LucideIcons.brain,
-      label: 'Future-You',
+      label: 'Future\nYou',
       screen: const FutureYouScreen(),
     ),
     TabItem(
@@ -351,10 +351,11 @@ class _MainScreenState extends State<MainScreen>
                     fontWeight: isActive 
                         ? FontWeight.w700 
                         : FontWeight.w400,
+                    height: 1.2,
                   ),
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+                  maxLines: 2,
                 ),
               ],
             ),

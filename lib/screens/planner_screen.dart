@@ -584,23 +584,30 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         .toList();
 
     if (filtered.isEmpty) {
-      return Center(
-        child: GlassCard(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(LucideIcons.calendar,
-                  size: 48, color: AppColors.textQuaternary),
-              const SizedBox(height: AppSpacing.md),
-              Text('No habits or tasks for this day',
-                  style: AppTextStyles.bodySemiBold
-                      .copyWith(color: AppColors.textSecondary)),
-              const SizedBox(height: AppSpacing.sm),
-              Text('Pick another date above or create a new one below.',
-                  style: AppTextStyles.caption
-                      .copyWith(color: AppColors.textTertiary),
-                  textAlign: TextAlign.center),
-            ],
+      return Padding(
+        padding: const EdgeInsets.only(top: 60),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl * 2),
+            child: GlassCard(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.calendar,
+                      size: 32, color: AppColors.textQuaternary),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text('No habits or tasks for this day',
+                      style: AppTextStyles.bodySemiBold
+                          .copyWith(color: AppColors.textSecondary)),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text('Pick another date above or create a new one below.',
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.textTertiary),
+                      textAlign: TextAlign.center),
+                ],
+              ),
+            ),
           ),
         ),
       );

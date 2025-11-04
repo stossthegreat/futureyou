@@ -122,30 +122,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             
             // Habit cards (React style)
           if (dayHabits.isEmpty)
-            GlassCard(
-              child: Column(
-                children: [
-                  Icon(
-                    LucideIcons.calendar,
-                    size: 48,
-                    color: AppColors.textQuaternary,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    'Nothing here yet',
-                    style: AppTextStyles.bodySemiBold.copyWith(
-                      color: AppColors.textSecondary,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl * 2),
+              child: GlassCard(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.calendar,
+                      size: 32,
+                      color: AppColors.textQuaternary,
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'Add a habit or task in Planner.',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textTertiary,
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Nothing here yet',
+                      style: AppTextStyles.bodySemiBold.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Add a habit or task in Planner.',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             )
           else
