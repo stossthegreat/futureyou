@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
+import '../services/local_storage.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -14,10 +15,29 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   int _step = 0;
-  final int _total = 6;
+  final int _total = 7; // Updated from 6 to 7 for identity page
   final TextEditingController _lifeTaskController = TextEditingController();
+  
+  // Identity capture controllers
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _burningQuestionController = TextEditingController();
 
   void _nextStep() {
+    // Validate identity page before proceeding
+    if (_step == 1) {
+      if (_nameController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter your name'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      _saveIdentityToLocal();
+    }
+    
     if (_step < _total - 1) {
       setState(() => _step++);
     }
@@ -31,9 +51,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   double get _progress => ((_step + 1) / _total) * 100;
 
+  Future<void> _saveIdentityToLocal() async {
+    await LocalStorageService.saveSetting('userName', _nameController.text.trim());
+    await LocalStorageService.saveSetting('userAge', int.tryParse(_ageController.text) ?? 0);
+    await LocalStorageService.saveSetting('burningQuestion', _burningQuestionController.text.trim());
+  }
+
   @override
   void dispose() {
     _lifeTaskController.dispose();
+    _nameController.dispose();
+    _ageController.dispose();
+    _burningQuestionController.dispose();
     super.dispose();
   }
 
@@ -134,14 +163,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       case 0:
         return _buildAwakeningPage();
       case 1:
-        return _buildMirrorPage();
+        return _buildIdentityPage(); // NEW: Identity capture
       case 2:
-        return _buildOSOPage();
+        return _buildMirrorPage();
       case 3:
-        return _buildWhatIfPage();
+        return _buildOSOPage();
       case 4:
-        return _buildOathPage();
+        return _buildWhatIfPage();
       case 5:
+        return _buildOathPage();
+      case 6:
         return _buildPaywallPage();
       default:
         return Container();
@@ -271,10 +302,122 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // PAGE 2: THE MIRROR
+  // PAGE 2: IDENTITY CAPTURE
+  Widget _buildIdentityPage() {
+    return Container(
+      key: const ValueKey(1),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.black, Color(0xFF0F1F0F)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Icon(LucideIcons.user, size: 64, color: AppColors.emerald)
+                  .animate()
+                  .fadeIn(duration: 600.ms)
+                  .scale(delay: 200.ms),
+              const SizedBox(height: 24),
+              Text(
+                'First, let me know you',
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ).animate().fadeIn(delay: 300.ms),
+              const SizedBox(height: 48),
+              
+              // Name input
+              TextFormField(
+                controller: _nameController,
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+                decoration: InputDecoration(
+                  labelText: 'Your Name',
+                  labelStyle: TextStyle(color: AppColors.emerald),
+                  hintText: 'What should I call you?',
+                  hintStyle: const TextStyle(color: Colors.white30),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: AppColors.emerald.withOpacity(0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: AppColors.emerald, width: 2),
+                  ),
+                ),
+              ).animate().slideY(begin: 0.2, delay: 400.ms),
+              
+              const SizedBox(height: 20),
+              
+              // Age input
+              TextFormField(
+                controller: _ageController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+                decoration: InputDecoration(
+                  labelText: 'Your Age',
+                  labelStyle: TextStyle(color: AppColors.emerald),
+                  hintText: 'How old are you?',
+                  hintStyle: const TextStyle(color: Colors.white30),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: AppColors.emerald.withOpacity(0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: AppColors.emerald, width: 2),
+                  ),
+                ),
+              ).animate().slideY(begin: 0.2, delay: 500.ms),
+              
+              const SizedBox(height: 20),
+              
+              // Burning question input
+              TextFormField(
+                controller: _burningQuestionController,
+                maxLines: 3,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+                decoration: InputDecoration(
+                  labelText: 'One Burning Question',
+                  labelStyle: TextStyle(color: AppColors.emerald),
+                  hintText: 'What\'s the ONE thing you want to change?',
+                  hintStyle: const TextStyle(color: Colors.white30),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: AppColors.emerald.withOpacity(0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: AppColors.emerald, width: 2),
+                  ),
+                ),
+              ).animate().slideY(begin: 0.2, delay: 600.ms),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // PAGE 3: THE MIRROR
   Widget _buildMirrorPage() {
     return Center(
-      key: const ValueKey(1),
+      key: const ValueKey(2),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
@@ -374,10 +517,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // PAGE 3: THE OSO SYSTEM
+  // PAGE 4: THE OSO SYSTEM
   Widget _buildOSOPage() {
     return Center(
-      key: const ValueKey(2),
+      key: const ValueKey(3),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -530,10 +673,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ).animate().fadeIn(delay: delay.ms, duration: 600.ms).slideY(begin: 0.1, end: 0);
   }
 
-  // PAGE 4: WHAT-IF ENGINE
+  // PAGE 5: WHAT-IF ENGINE
   Widget _buildWhatIfPage() {
     return Center(
-      key: const ValueKey(3),
+      key: const ValueKey(4),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -726,10 +869,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // PAGE 5: OATH
+  // PAGE 6: OATH
   Widget _buildOathPage() {
     return Center(
-      key: const ValueKey(4),
+      key: const ValueKey(5),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
@@ -830,10 +973,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // PAGE 6: PAYWALL
+  // PAGE 7: PAYWALL
   Widget _buildPaywallPage() {
     return Center(
-      key: const ValueKey(5),
+      key: const ValueKey(6),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(

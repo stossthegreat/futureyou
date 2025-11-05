@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/habit.dart';
+import 'local_storage.dart';
 
 class ApiClient {
   // Future-You OS Backend Integration
@@ -336,8 +337,52 @@ class ApiClient {
     return await _post('/api/v1/coach/messages/$messageId/read', {});
   }
 
+  // Sync user identity to backend (name, age, burning question)
+  static Future<void> syncIdentityToBackend() async {
+    final name = LocalStorageService.getSetting<String>('userName');
+    final age = LocalStorageService.getSetting<int>('userAge');
+    final burningQuestion = LocalStorageService.getSetting<String>('burningQuestion');
+    
+    if (name == null) return; // Not captured yet
+    
+    final synced = LocalStorageService.getSetting<bool>('identitySynced', defaultValue: false);
+    if (synced == true) return; // Already synced
+    
+    try {
+      await _post('/api/v1/user/identity', {
+        'name': name,
+        'age': age,
+        'burningQuestion': burningQuestion,
+      });
+      await LocalStorageService.saveSetting('identitySynced', true);
+      debugPrint('✓ Identity synced to backend');
+    } catch (e) {
+      debugPrint('Failed to sync identity: $e');
+    }
+  }
+
+  // Get purpose-aligned What-If goals
+  static Future<ApiResponse<Map<String, dynamic>>> getPurposeAlignedGoals() async {
+    try {
+      final response = await _get('/api/v1/whatif/purpose-goals');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      } else {
+        return ApiResponse.error('Failed to load custom goals');
+      }
+    } catch (e) {
+      debugPrint('Failed to get purpose-aligned goals: $e');
+      return ApiResponse.error(e.toString());
+    }
+  }
+
   // Chat with Future You (enhanced endpoint) - Returns properly parsed response
   static Future<ApiResponse<Map<String, dynamic>>> sendChatMessageV2(String message) async {
+    // Ensure identity is synced before sending message
+    await syncIdentityToBackend();
+    
     try {
       final response = await _post('/api/v1/chat', {'message': message});
       

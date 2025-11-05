@@ -1,7 +1,18 @@
 import { prisma } from "../utils/db";
 import { redis } from "../utils/redis";
 import { aiService } from "./ai.service";
+import { memoryService } from "./memory.service";
 import { purposePrompts } from "../modules/purpose/prompt.templates";
+import OpenAI from "openai";
+
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+function getOpenAIClient() {
+  if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
+  if (!process.env.OPENAI_API_KEY) return null;
+  const apiKey = process.env.OPENAI_API_KEY.trim();
+  return new OpenAI({ apiKey });
+}
 
 type HabitSuggestion = {
   title: string;
@@ -13,6 +24,46 @@ type HabitSuggestion = {
 };
 
 export class ChatService {
+  private async extractPurposeFromDiscovery(userId: string, allAnswers: Record<string, string>) {
+    const openai = getOpenAIClient();
+    if (!openai) return null;
+
+    const prompt = `
+CONTEXT: User completed life purpose discovery. Their answers:
+${JSON.stringify(allAnswers, null, 2)}
+
+TASK: Extract their core identity and purpose.
+Return ONLY valid JSON:
+{
+  "purpose": "One sentence: their distilled life purpose",
+  "coreValues": ["value1", "value2", "value3"],
+  "vision": "What their ideal day looks like (2 sentences)",
+  "funeralWish": "What they want said at their funeral",
+  "biggestFear": "What they're most afraid of",
+  "whyNow": "Why they're starting this journey now"
+}
+`;
+
+    const completion = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      temperature: 0.2,
+      max_tokens: 500,
+      messages: [
+        { role: "system", content: "Extract identity insights from discovery conversations. Output only JSON." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    try {
+      const raw = completion.choices[0]?.message?.content?.trim() || "{}";
+      const cleaned = raw.replace(/```json|```/g, "").trim();
+      return JSON.parse(cleaned);
+    } catch (err) {
+      console.warn("Failed to extract purpose:", err);
+      return null;
+    }
+  }
+
   async nextMessage(userId: string, userInput: string) {
     const key = `chatstate:${userId}`;
     const raw = await redis.get(key);
@@ -23,8 +74,26 @@ export class ChatService {
 
     // decide next phase
     const order = ["intro", "funeral", "values", "vision", "commitment"];
-    const nextIdx = Math.min(order.indexOf(state.phase) + 1, order.length - 1);
+    const currentIdx = order.indexOf(state.phase);
+    const nextIdx = Math.min(currentIdx + 1, order.length - 1);
     const nextPhase = order[nextIdx];
+
+    // NEW: If completing discovery, extract and store purpose
+    if (state.phase === "commitment" && currentIdx === order.length - 1) {
+      const insights = await this.extractPurposeFromDiscovery(userId, state.context.answers);
+      if (insights) {
+        await memoryService.upsertFacts(userId, {
+          identity: {
+            ...insights,
+            discoveryCompletedAt: new Date().toISOString(),
+          },
+        });
+        
+        await prisma.event.create({
+          data: { userId, type: "discovery_completed", payload: insights },
+        });
+      }
+    }
 
     const prompt = purposePrompts[nextPhase];
     const message = await aiService.generateFutureYouReply(userId, prompt, {
@@ -32,7 +101,7 @@ export class ChatService {
       maxChars: 800, // Increased for better responses
     });
 
-    // 🚀 NEW: Extract habit suggestions from conversation
+    // 🚀 Extract habit suggestions from conversation
     const suggestions = await this.extractHabitSuggestions(userId, userInput, message);
 
     // persist

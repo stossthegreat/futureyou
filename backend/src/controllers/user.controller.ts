@@ -1,5 +1,12 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../utils/db';
+import { memoryService } from '../services/memory.service';
+
+function getUserIdOr401(req: any) {
+  const uid = req?.user?.id || req.headers["x-user-id"];
+  if (!uid) throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
+  return uid;
+}
 
 export async function userController(fastify: FastifyInstance) {
   /**
@@ -94,6 +101,26 @@ export async function userController(fastify: FastifyInstance) {
     } catch (err: any) {
       const code = err.statusCode || 500;
       return reply.code(code).send({ error: err.message });
+    }
+  });
+
+  /**
+   * 🆔 Store user identity (name, age, burning question)
+   */
+  fastify.post("/api/v1/user/identity", async (req: any, reply) => {
+    try {
+      const userId = getUserIdOr401(req);
+      const { name, age, burningQuestion } = req.body;
+      
+      await memoryService.upsertFacts(userId, {
+        name,
+        age,
+        burningQuestion,
+      });
+      
+      return { success: true };
+    } catch (err: any) {
+      return reply.code(err.statusCode || 500).send({ error: err.message });
     }
   });
 }

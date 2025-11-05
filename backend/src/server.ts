@@ -14,6 +14,7 @@ import { chatController } from "./controllers/chat.controller";
 import { userController } from "./controllers/user.controller";
 import { testController } from "./controllers/test.controller";
 import { insightsController } from "./controllers/insights.controller";
+import { whatIfController } from "./controllers/whatif.controller";
 
 dotenv.config();
 
@@ -58,6 +59,7 @@ const buildServer = () => {
   fastify.register(systemController);
   fastify.register(userController);
   fastify.register(insightsController); // Pattern analysis & insights
+  fastify.register(whatIfController); // Purpose-aligned goals
   fastify.register(testController); // For manual testing
 
   return fastify;

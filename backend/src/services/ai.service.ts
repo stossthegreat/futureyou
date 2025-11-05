@@ -30,24 +30,34 @@ export class AIService {
     const openai = getOpenAIClient();
     if (!openai) return "Future You is silent right now — try again later.";
 
-    const [profile, ctx] = await Promise.all([
+    const [profile, ctx, identity] = await Promise.all([
       memoryService.getProfileForMentor(userId),
       memoryService.getUserContext(userId),
+      memoryService.getIdentityFacts(userId), // NEW
     ]);
 
-    const guidelines = this.buildGuidelines(opts.purpose || "coach", profile);
+    const guidelines = this.buildGuidelines(opts.purpose || "coach", profile, identity); // NEW: pass identity
+
+    const contextString = identity.discoveryCompleted
+      ? `IDENTITY:\nName: ${identity.name}, Age: ${identity.age}
+Purpose: ${identity.purpose}
+Core Values: ${identity.coreValues.join(", ")}
+Vision: ${identity.vision}
+Burning Question: ${identity.burningQuestion}
+
+CONTEXT:
+${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0, 30) })}`
+      : `IDENTITY:\nName: ${identity.name}, Age: ${identity.age || "unknown"}
+Burning Question: ${identity.burningQuestion || "not yet answered"}
+Note: User hasn't completed purpose discovery yet.
+
+CONTEXT:
+${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0, 30) })}`;
 
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "system", content: MENTOR.systemPrompt },
       { role: "system", content: guidelines },
-      {
-        role: "system",
-        content: `CONTEXT:\n${JSON.stringify({
-          profile,
-          habits: ctx.habitSummaries,
-          recent: ctx.recentEvents.slice(0, 30),
-        })}`,
-      },
+      { role: "system", content: contextString },
       { role: "user", content: userMessage },
     ];
 
@@ -141,19 +151,36 @@ If no clear habit/task, return: {"none": true}
     return this.generateFutureYouReply(userId, userMessage, opts);
   }
 
-  private buildGuidelines(purpose: string, profile: any) {
+  private buildGuidelines(purpose: string, profile: any, identity: any) {
     const base = [
-      `You are Future You — wise, calm, but uncompromising.`,
+      `You are Future You — wise, calm, uncompromising.`,
+      `Speaking to: ${identity.name}${identity.age ? `, age ${identity.age}` : ''}`,
       `Match tone=${profile.tone}, intensity=${profile.intensity}.`,
-      `Be concise, human, actionable.`,
     ];
+
+    if (identity.discoveryCompleted) {
+      base.push(`THEIR PURPOSE: ${identity.purpose}`);
+      base.push(`THEIR VALUES: ${identity.coreValues.join(", ")}`);
+      base.push(`THEIR VISION: ${identity.vision}`);
+    } else if (identity.burningQuestion) {
+      base.push(`THEIR QUESTION: ${identity.burningQuestion}`);
+      base.push(`Note: Encourage them to complete Future-You discovery for deeper insights.`);
+    }
+
     const byPurpose: Record<string, string[]> = {
-      brief: ["Morning brief: 2-3 short orders, end with drive."],
-      debrief: ["Evening debrief: 3 lines, reflection + next step."],
-      nudge: ["Nudge: 1 sentence, directive, motivational."],
-      coach: ["Coach: call out avoidance, give one clear move."],
-      letter: ["Letter: reflective, clarifying, self-honest."],
+      brief: identity.discoveryCompleted 
+        ? [`Morning brief for ${identity.name}: Reference their PURPOSE (${identity.purpose}) and give 2-3 orders aligned with their VISION.`]
+        : ["Morning brief: 2-3 short orders. Gently remind to complete Future-You discovery."],
+      debrief: identity.discoveryCompleted
+        ? [`Evening debrief for ${identity.name}: Reflect on progress toward their PURPOSE. Did today align with their VALUES (${identity.coreValues.join(", ")})?`]
+        : ["Evening debrief: Reflect briefly. Encourage discovery completion."],
+      nudge: identity.discoveryCompleted
+        ? [`Nudge: One sentence. Remind ${identity.name} of their PURPOSE (${identity.purpose}) and what they want said at their funeral.`]
+        : ["Nudge: Motivational, but generic until they complete discovery."],
+      coach: ["Coach: Call out avoidance, give one clear move."],
+      letter: ["Letter: Reflective, clarifying, self-honest."],
     };
+    
     return [...base, ...(byPurpose[purpose] || [])].join("\n");
   }
 }

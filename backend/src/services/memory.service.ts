@@ -137,12 +137,36 @@ Keep JSON valid and concise.
     return out;
   }
 
+  async getIdentityFacts(userId: string) {
+    const factsRow = await prisma.userFacts.findUnique({ where: { userId } });
+    const facts = (factsRow?.json as Record<string, any>) || {};
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    
+    return {
+      // Basic profile
+      name: facts.name || user?.email?.split('@')[0] || 'Friend',
+      age: facts.age || null,
+      burningQuestion: facts.burningQuestion || null,
+      
+      // Discovery insights
+      discoveryCompleted: !!facts.identity?.discoveryCompletedAt,
+      purpose: facts.identity?.purpose || null,
+      coreValues: facts.identity?.coreValues || [],
+      vision: facts.identity?.vision || null,
+      funeralWish: facts.identity?.funeralWish || null,
+      biggestFear: facts.identity?.biggestFear || null,
+      whyNow: facts.identity?.whyNow || null,
+    };
+  }
+
   async getProfileForMentor(userId: string) {
+    const identity = await this.getIdentityFacts(userId);
     const factsRow = await prisma.userFacts.findUnique({ where: { userId } });
     const facts = (factsRow?.json as Record<string, any>) || {};
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
     return {
+      ...identity, // spread identity facts
       tz: user?.tz || "UTC",
       tone: user?.tone || "balanced",
       intensity: user?.intensity || 2,

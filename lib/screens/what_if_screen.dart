@@ -50,6 +50,48 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
   final TextEditingController _chatInputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;
+  
+  // Custom goals state
+  List<GoalData> _customGoals = [];
+  bool _loadingCustomGoals = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomGoals();
+  }
+
+  Future<void> _loadCustomGoals() async {
+    try {
+      final response = await ApiClient.getPurposeAlignedGoals();
+      if (response.success && response.data != null) {
+        final goals = response.data!['goals'] as List? ?? [];
+        setState(() {
+          _customGoals = goals.map((goal) {
+            return GoalData(
+              id: goal['title'].hashCode,
+              title: goal['title'],
+              subtitle: goal['subtitle'],
+              icon: goal['icon'],
+              plan: (goal['plan'] as List).map((step) {
+                return PlanStep(
+                  action: step['action'],
+                  why: step['why'],
+                  study: step['study'],
+                );
+              }).toList(),
+            );
+          }).toList();
+          _loadingCustomGoals = false;
+        });
+      } else {
+        setState(() => _loadingCustomGoals = false);
+      }
+    } catch (e) {
+      debugPrint('No custom goals available: $e');
+      setState(() => _loadingCustomGoals = false);
+    }
+  }
 
   final List<GoalData> _goals = [
     GoalData(
@@ -386,6 +428,14 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                         const SizedBox(height: AppSpacing.xl),
                         _buildCustomGoalInput(),
                         const SizedBox(height: AppSpacing.xl),
+                        // Custom goals section
+                        if (_customGoals.isNotEmpty) ...[
+                          _buildCustomGoalsSection(),
+                          const SizedBox(height: AppSpacing.xl),
+                        ],
+                        // Preset goals header
+                        _buildPresetsHeader(),
+                        const SizedBox(height: AppSpacing.lg),
                         _buildGoalsGrid(),
                         const SizedBox(height: 150), // Bottom padding for nav
                       ],
@@ -570,6 +620,72 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
     ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0);
   }
 
+  Widget _buildCustomGoalsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: AppColors.emeraldGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(LucideIcons.target, size: 24, color: Colors.black),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Goals Aligned With Your Purpose',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.emerald,
+                    ),
+                  ),
+                  Text(
+                    'AI-generated based on your discovery',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Display custom goals
+        ..._customGoals.map((goal) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: _buildGoalCard(goal, isCustom: true),
+        )),
+      ],
+    );
+  }
+
+  Widget _buildPresetsHeader() {
+    return Row(
+      children: [
+        const Icon(LucideIcons.bookOpen, size: 20, color: AppColors.emerald),
+        const SizedBox(width: 8),
+        Text(
+          'Science-Backed Classics',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildGoalsGrid() {
     return GridView.builder(
       shrinkWrap: true,
@@ -583,12 +699,12 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
       itemCount: _goals.length,
       itemBuilder: (context, index) {
         final goal = _goals[index];
-        return _buildGoalCard(goal, index);
+        return _buildGoalCard(goal, index: index);
       },
     );
   }
 
-  Widget _buildGoalCard(GoalData goal, int index) {
+  Widget _buildGoalCard(GoalData goal, {int? index, bool isCustom = false}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.black,
@@ -777,7 +893,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
           ),
         ],
       ),
-    ).animate(delay: (index * 100).ms).fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95));
+    ).animate(delay: ((index ?? 0) * 100).ms).fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95));
   }
 
   Widget _buildToast() {
