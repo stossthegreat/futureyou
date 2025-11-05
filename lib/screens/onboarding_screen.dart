@@ -314,19 +314,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ),
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top spacer
-              const SizedBox(height: 40),
-              
-              // Content
-              Expanded(
+        child: Column(
+          children: [
+            // Scrollable content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Icon(LucideIcons.user, size: 64, color: AppColors.emerald)
@@ -416,12 +410,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ),
                     ).animate().slideY(begin: 0.2, delay: 600.ms),
+                    
+                    const SizedBox(height: 40), // Extra space before button
                   ],
                 ),
               ),
-              
-              // Bottom navigation
-              Column(
+            ),
+            
+            // Fixed bottom navigation (stays at bottom)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              child: Column(
                 children: [
                   // Continue button
                   GestureDetector(
@@ -452,8 +451,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const SizedBox(height: 80), // Space for bottom dots
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
