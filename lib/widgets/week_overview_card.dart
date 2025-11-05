@@ -239,8 +239,9 @@ class _WeekOverviewCardState extends State<WeekOverviewCard>
             ],
           ),
         ),
-      ],
-    ),
+          ),
+        ],
+      ),
     );
   }
 
