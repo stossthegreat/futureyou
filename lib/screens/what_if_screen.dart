@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -285,8 +286,8 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
 
   Future<void> _commitGoal(GoalData goal) async {
     try {
-      // Build title with micro goals (first 3 action steps)
-      final microGoals = goal.plan.take(3).map((step) => step.action).join(' • ');
+      // Build title with ALL micro goals (all action steps with bullet points)
+      final microGoals = goal.plan.map((step) => '• ${step.action}').join('\n');
       final fullTitle = '${goal.title}\n$microGoals';
       
       // Create habit using HabitEngine
@@ -651,8 +652,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                     ),
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
 
           // Toast
@@ -1361,12 +1361,49 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                       : AppColors.emerald.withOpacity(0.2),
                 ),
               ),
-              child: Text(
-                message.text,
-                style: AppTextStyles.body.copyWith(
-                  color: Colors.white,
-                ),
-              ),
+              child: isUser
+                  ? Text(
+                      message.text,
+                      style: AppTextStyles.body.copyWith(
+                        color: Colors.white,
+                      ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SelectableText(
+                          message.text,
+                          style: AppTextStyles.body.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                Clipboard.setData(ClipboardData(text: message.text));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text('Copied!'),
+                                    duration: const Duration(seconds: 1),
+                                    backgroundColor: AppColors.emerald,
+                                  ),
+                                );
+                              },
+                              icon: Icon(
+                                LucideIcons.copy,
+                                size: 14,
+                                color: AppColors.textTertiary.withOpacity(0.6),
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
             ),
           ),
         ],
