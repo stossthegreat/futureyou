@@ -4,7 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/glass_card.dart' as glass;
-import '../widgets/scrollable_header.dart';
+import '../widgets/simple_header.dart';
 import '../services/local_storage.dart';
 import '../services/messages_service.dart';
 import '../models/coach_message.dart';
@@ -81,7 +81,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
       backgroundColor: Colors.transparent,
       body: Column(
         children: [
-          const ScrollableHeader(),
+          const SimpleHeader(),
           Expanded(
             child: SingleChildScrollView(
               child: Column(

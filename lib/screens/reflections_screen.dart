@@ -7,7 +7,7 @@ import '../design/tokens.dart';
 import '../models/coach_message.dart';
 import '../services/messages_service.dart';
 import '../widgets/glass_card.dart';
-import '../widgets/scrollable_header.dart';
+import '../widgets/simple_header.dart';
 
 class ReflectionsScreen extends StatefulWidget {
   const ReflectionsScreen({super.key});
@@ -27,21 +27,25 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
   }
 
   Future<void> _loadMessages() async {
+    debugPrint('🔄 _loadMessages called');
     // Sync from backend first
     debugPrint('🔄 Syncing messages from backend...');
     final success = await messagesService.syncMessages('test-user-felix');
     debugPrint('📊 Sync result: $success');
     
+    debugPrint('🔄 Getting messages from service, filter: $_filter');
+    final newMessages = _filter == null 
+        ? messagesService.getAllMessages()
+        : messagesService.getMessagesByKind(_filter!);
+    
+    debugPrint('📨 Got ${newMessages.length} messages from service');
+    if (newMessages.isNotEmpty) {
+      debugPrint('   First message: ${newMessages.first.id} - ${newMessages.first.title}');
+    }
+    
     setState(() {
-      if (_filter == null) {
-        _messages = messagesService.getAllMessages();
-      } else {
-        _messages = messagesService.getMessagesByKind(_filter!);
-      }
-      debugPrint('📨 Loaded ${_messages.length} messages from local storage');
-      if (_messages.isNotEmpty) {
-        debugPrint('   First message: ${_messages.first.title}');
-      }
+      _messages = newMessages;
+      debugPrint('📨 setState called, _messages now has ${_messages.length} items');
     });
   }
 
@@ -58,7 +62,7 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
       backgroundColor: Colors.transparent,
       body: Column(
         children: [
-          const ScrollableHeader(),
+          const SimpleHeader(),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadMessages,
@@ -133,8 +137,11 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                           setState(() {});
                         },
                         onDelete: () async {
+                          debugPrint('🗑️ DELETE STARTED: ${message.id}');
                           await messagesService.deleteMessage(message.id);
-                          _loadMessages();
+                          debugPrint('🗑️ DELETE COMPLETED, RELOADING...');
+                          await _loadMessages();
+                          debugPrint('🗑️ RELOAD COMPLETED');
                         },
                       );
                     }).toList(),
@@ -302,6 +309,7 @@ class _LetterCard extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context, Future<void> Function() deleteCallback) {
+    debugPrint('🗑️ _confirmDelete called - showing dialog');
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -324,8 +332,11 @@ class _LetterCard extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
+              debugPrint('🗑️ Dialog Delete button pressed');
               Navigator.pop(context);
+              debugPrint('🗑️ Dialog closed, calling deleteCallback');
               await deleteCallback();
+              debugPrint('🗑️ deleteCallback completed');
             },
             child: Text(
               'Delete',

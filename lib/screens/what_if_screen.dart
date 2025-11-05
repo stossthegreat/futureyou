@@ -5,7 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../services/api_client.dart';
 import '../providers/habit_provider.dart';
-import '../widgets/scrollable_header.dart';
+import '../widgets/simple_header.dart';
 
 class GoalData {
   final int id;
@@ -616,7 +616,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
           // Main content
           Column(
             children: [
-              const ScrollableHeader(),
+              const SimpleHeader(),
               Expanded(
                 child: SingleChildScrollView(
                   child: Padding(

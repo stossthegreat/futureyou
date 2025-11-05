@@ -6,7 +6,7 @@ import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/date_strip.dart';
-import '../widgets/scrollable_header.dart';
+import '../widgets/simple_header.dart';
 import '../providers/habit_provider.dart';
 import '../models/habit.dart';
 
@@ -234,7 +234,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         children: [
           Column(
             children: [
-              const ScrollableHeader(),
+              const SimpleHeader(),
               Expanded(
                 child: CustomScrollView(
                   slivers: [

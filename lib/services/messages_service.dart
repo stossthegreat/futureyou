@@ -225,8 +225,18 @@ class MessagesService {
 
   /// Delete a specific message
   Future<void> deleteMessage(String messageId) async {
-    if (!_initialized) await init();
+    debugPrint('🗑️ deleteMessage called for: $messageId');
+    debugPrint('🗑️ _initialized: $_initialized');
+    if (!_initialized) {
+      debugPrint('🗑️ Not initialized, calling init()');
+      await init();
+      debugPrint('🗑️ init() completed');
+    }
+    debugPrint('🗑️ Box length before delete: ${_box.length}');
+    debugPrint('🗑️ Message exists in box: ${_box.containsKey(messageId)}');
     await _box.delete(messageId);
+    debugPrint('🗑️ Box length after delete: ${_box.length}');
+    debugPrint('🗑️ Message still exists: ${_box.containsKey(messageId)}');
     debugPrint('🗑️ Deleted message: $messageId');
   }
 }
