@@ -32,17 +32,17 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
     debugPrint('🔄 Syncing messages from backend...');
     final success = await messagesService.syncMessages('test-user-felix');
     debugPrint('📊 Sync result: $success');
-    
+
     debugPrint('🔄 Getting messages from service, filter: $_filter');
-    final newMessages = _filter == null 
+    final newMessages = _filter == null
         ? messagesService.getAllMessages()
         : messagesService.getMessagesByKind(_filter!);
-    
+
     debugPrint('📨 Got ${newMessages.length} messages from service');
     if (newMessages.isNotEmpty) {
       debugPrint('   First message: ${newMessages.first.id} - ${newMessages.first.title}');
     }
-    
+
     setState(() {
       _messages = newMessages;
       debugPrint('📨 setState called, _messages now has ${_messages.length} items');
@@ -81,92 +81,89 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppSpacing.lg),
-            
-                    // Filters
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                  _FilterChip(
-                    label: 'All',
-                    isSelected: _filter == null,
-                    onTap: () => _setFilter(null),
+
+                  // Filters
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _FilterChip(
+                            label: 'All',
+                            isSelected: _filter == null,
+                            onTap: () => _setFilter(null),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          _FilterChip(
+                            label: 'Briefs',
+                            emoji: '🌅',
+                            isSelected: _filter == MessageKind.brief,
+                            onTap: () => _setFilter(MessageKind.brief),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          _FilterChip(
+                            label: 'Nudges',
+                            emoji: '🔴',
+                            isSelected: _filter == MessageKind.nudge,
+                            onTap: () => _setFilter(MessageKind.nudge),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          _FilterChip(
+                            label: 'Debriefs',
+                            emoji: '🌙',
+                            isSelected: _filter == MessageKind.debrief,
+                            onTap: () => _setFilter(MessageKind.debrief),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          _FilterChip(
+                            label: 'Letters',
+                            emoji: '💌',
+                            isSelected: _filter == MessageKind.letter,
+                            onTap: () => _setFilter(MessageKind.letter),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  _FilterChip(
-                    label: 'Briefs',
-                    emoji: '🌅',
-                    isSelected: _filter == MessageKind.brief,
-                    onTap: () => _setFilter(MessageKind.brief),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  _FilterChip(
-                    label: 'Nudges',
-                    emoji: '🔴',
-                    isSelected: _filter == MessageKind.nudge,
-                    onTap: () => _setFilter(MessageKind.nudge),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  _FilterChip(
-                    label: 'Debriefs',
-                    emoji: '🌙',
-                    isSelected: _filter == MessageKind.debrief,
-                    onTap: () => _setFilter(MessageKind.debrief),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  _FilterChip(
-                    label: 'Letters',
-                    emoji: '💌',
-                    isSelected: _filter == MessageKind.letter,
-                    onTap: () => _setFilter(MessageKind.letter),
-                  ),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Messages list
+                  _messages.isEmpty
+                      ? _buildEmptyState()
+                      : Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                          child: Column(
+                            children: _messages.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final message = entry.value;
+                              return _LetterCard(
+                                message: message,
+                                index: index,
+                                onRead: () {
+                                  messagesService.markAsRead(message.id);
+                                  setState(() {});
+                                },
+                                onDelete: () async {
+                                  debugPrint('🗑️ DELETE STARTED: ${message.id}');
+                                  await messagesService.deleteMessage(message.id);
+                                  debugPrint('🗑️ DELETE COMPLETED, REFRESHING UI...');
+                                  setState(() {
+                                    _messages.removeWhere((m) => m.id == message.id);
+                                  });
+                                  debugPrint('🗑️ UI REFRESHED - ${_messages.length} messages remaining');
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ),
+
+                  const SizedBox(height: 120), // Bottom padding for nav
                 ],
               ),
             ),
-          ),
-
-          const SizedBox(height: AppSpacing.lg),
-
-          // Messages list
-          _messages.isEmpty
-              ? _buildEmptyState()
-              : Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                  child: Column(
-                    children: _messages.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final message = entry.value;
-                      return _LetterCard(
-                        message: message,
-                        index: index,
-                        onRead: () {
-                          messagesService.markAsRead(message.id);
-                          setState(() {});
-                        },
-                        onDelete: () async {
-                          debugPrint('🗑️ DELETE STARTED: ${message.id}');
-                          await messagesService.deleteMessage(message.id);
-                          debugPrint('🗑️ DELETE COMPLETED, REFRESHING UI...');
-                          // DON'T call _loadMessages() - it re-syncs from backend and re-adds the message!
-                          // Instead, just remove from local list and refresh UI
-                          setState(() {
-                            _messages.removeWhere((m) => m.id == message.id);
-                          });
-                          debugPrint('🗑️ UI REFRESHED - ${_messages.length} messages remaining');
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-          
-                const SizedBox(height: 120), // Bottom padding for nav
-              ],
-            ),
-          ),
-        ],
-      ),
+          ],
         ),
       ),
     );
@@ -351,7 +348,7 @@ class _LetterCard extends StatelessWidget {
               await deleteCallback();
               debugPrint('🗑️ deleteCallback completed');
             },
-            child: Text(
+            child: const Text(
               'Delete',
               style: TextStyle(color: Colors.red),
             ),
@@ -364,9 +361,8 @@ class _LetterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kindColor = _getKindColor();
-    
+
     final card = Container(
-      // Outer gradient aura
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
@@ -388,7 +384,6 @@ class _LetterCard extends StatelessWidget {
         ],
       ),
       child: Container(
-        // Inner dark container
         decoration: BoxDecoration(
           color: const Color(0xFF0F0F0F),
           borderRadius: BorderRadius.circular(AppBorderRadius.xxl - 3),
@@ -401,102 +396,99 @@ class _LetterCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-                  // Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      Text(message.emoji, style: const TextStyle(fontSize: 18)),
+                      const SizedBox(width: AppSpacing.sm),
                       Flexible(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              message.emoji,
-                              style: const TextStyle(fontSize: 18),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Flexible(
-                              child: Text(
-                                message.kindLabel.toUpperCase(),
-                                style: AppTextStyles.captionSmall.copyWith(
-                                  color: kindColor,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.2,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Future-You OS',
-                        style: AppTextStyles.captionSmall.copyWith(
-                          color: AppColors.textQuaternary,
-                          fontSize: 10,
+                        child: Text(
+                          message.kindLabel.toUpperCase(),
+                          style: AppTextStyles.captionSmall.copyWith(
+                            color: kindColor,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Title
-                  Text(
-                    message.title,
-                    style: AppTextStyles.h3.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.3,
-                    ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Future-You OS',
+                  style: AppTextStyles.captionSmall.copyWith(
+                    color: AppColors.textQuaternary,
+                    fontSize: 10,
                   ),
+                ),
+              ],
+            ),
 
-                  const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.md),
 
-                  // Body
-                  Text(
-                    message.body,
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.textSecondary,
-                      height: 1.6,
-                    ),
-                  ),
+            // Title
+            Text(
+              message.title,
+              style: AppTextStyles.h3.copyWith(
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3,
+              ),
+            ),
 
-                  const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.sm),
 
-                  // Action buttons
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: [
-                      _ActionButton(
-                        label: 'Copy',
-                        icon: LucideIcons.copy,
-                        onTap: () => _copyToClipboard(context),
-                      ),
-                      _ActionButton(
-                        label: 'Share',
-                        icon: LucideIcons.share2,
-                        onTap: _shareMessage,
-                      ),
-                      _ActionButton(
-                        label: 'Export',
-                        icon: LucideIcons.download,
-                        onTap: () => _exportPNG(context),
-                        isPrimary: true,
-                      ),
-                      _ActionButton(
-                        label: 'Delete',
-                        icon: LucideIcons.trash2,
-                        onTap: () => _confirmDelete(context, onDelete),
-                        isDestructive: true,
-                      ),
-                    ],
-                  ),
+            // Body
+            Text(
+              message.body,
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.6,
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // Action buttons
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                _ActionButton(
+                  label: 'Copy',
+                  icon: LucideIcons.copy,
+                  onTap: () => _copyToClipboard(context),
+                ),
+                _ActionButton(
+                  label: 'Share',
+                  icon: LucideIcons.share2,
+                  onTap: _shareMessage,
+                ),
+                _ActionButton(
+                  label: 'Export',
+                  icon: LucideIcons.download,
+                  onTap: () => _exportPNG(context),
+                  isPrimary: true,
+                ),
+                _ActionButton(
+                  label: 'Delete',
+                  icon: LucideIcons.trash2,
+                  onTap: () => _confirmDelete(context, onDelete),
+                  isDestructive: true,
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.lg),
       child: card
@@ -579,4 +571,3 @@ class _ActionButton extends StatelessWidget {
     );
   }
 }
-

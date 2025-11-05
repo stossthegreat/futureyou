@@ -118,7 +118,8 @@ RULES:
 - ONE citation per response
 - NEVER give unsolicited advice
 - Questions first, solutions after understanding
-- If readiness ≥8 and context clear → you may offer to create a plan
+- If readiness ≥6 and context clear → offer to create a committa ble habit plan
+- When offering plan say: "Want me to create a committa ble habit plan for you?"
 `;
 
 /**
@@ -232,10 +233,10 @@ Classify conversation type, assess readiness, generate questions.
       approved_source: "Atomic Habits — James Clear"
     });
 
-    // 5. CHECK IF USER IS READY FOR PLAN
-    const userWantsPlan = /ready|commit|let's do|create.*plan|give me.*plan/i.test(message);
-    const highReadiness = (analyst.readiness_score || 0) >= 8;
-    const hasEnoughContext = history.length >= 4; // At least 2 exchanges
+    // 5. CHECK IF USER IS READY FOR PLAN (More aggressive triggers)
+    const userWantsPlan = /ready|commit|let's do|create.*plan|give me.*plan|make.*plan|show me.*plan|want.*plan|build.*plan|help me (start|begin|do|with)|yes.*plan/i.test(message);
+    const highReadiness = (analyst.readiness_score || 0) >= 6; // Lowered from 8 to 6
+    const hasEnoughContext = history.length >= 2; // At least 1 exchange (lowered from 4)
 
     if (userWantsPlan && highReadiness && hasEnoughContext) {
       // Generate structured plan instead of continuing conversation

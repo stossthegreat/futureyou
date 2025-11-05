@@ -578,8 +578,49 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
   }
 
   Future<void> _commitPlanFromChat(Map<String, dynamic> plan) async {
-    // TODO: Implement commit logic (create habits from plan steps)
-    _showToast('Plan committed! Check your habits.');
+    try {
+      // Extract plan details
+      final title = plan['title'] ?? 'AI-Generated Plan';
+      final steps = plan['steps'] as List? ?? [];
+      
+      // Build full title with all action steps (like presets do)
+      final microGoals = steps.map((step) => '• ${step['action']}').join('\n');
+      final fullTitle = '$title\n$microGoals';
+      
+      // Determine duration from plan or default to 21 days
+      final durationStr = plan['duration_estimate'] ?? '21 days';
+      final durationDays = _parseDurationDays(durationStr);
+      
+      // Create habit using HabitEngine (same as preset goals)
+      await ref.read(habitEngineProvider).createHabit(
+        title: fullTitle,
+        type: 'habit',
+        time: '07:00',
+        startDate: DateTime.now(),
+        endDate: DateTime.now().add(Duration(days: durationDays)),
+        repeatDays: [1, 2, 3, 4, 5, 6, 0], // All days
+        color: AppColors.emerald,
+        emoji: '🎯', // Default emoji for AI plans
+        reminderOn: false,
+      );
+
+      _showToast('💚 $title committed for $durationDays days!');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to commit: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Helper to parse duration string to days
+  int _parseDurationDays(String durationStr) {
+    final match = RegExp(r'(\d+)').firstMatch(durationStr);
+    return match != null ? int.parse(match.group(1)!) : 21;
   }
 
   void _startCustomChat() {
