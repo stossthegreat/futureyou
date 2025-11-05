@@ -240,7 +240,7 @@ class _LetterCard extends StatelessWidget {
   final CoachMessage message;
   final int index;
   final VoidCallback onRead;
-  final VoidCallback onDelete;
+  final Future<void> Function() onDelete;
 
   const _LetterCard({
     required this.message,
@@ -323,9 +323,9 @@ class _LetterCard extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              onDelete();
+              await onDelete();
             },
             child: Text(
               'Delete',

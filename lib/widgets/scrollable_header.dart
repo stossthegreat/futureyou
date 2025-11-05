@@ -35,8 +35,8 @@ class ScrollableHeader extends StatelessWidget {
               // Content - centered vertically, full width from left to right
               Padding(
                 padding: const EdgeInsets.only(
-                  left: 12, // Pushed more to the left
-                  right: 70, // Space for settings icon
+                  left: 16, // Moved to the left
+                  right: 80, // More space for settings icon
                 ),
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -76,11 +76,11 @@ class ScrollableHeader extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 14),
-                      // Text - WAY BIGGER
+                      // Text
                       Text(
-                        'FUTURE-YOU OS',
+                        'Future-You OS',
                         style: TextStyle(
-                          fontSize: 28, // Way bigger!
+                          fontSize: 28,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
                           letterSpacing: 1.2,
