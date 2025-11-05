@@ -232,12 +232,18 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          Column(
-            children: [
-              const SimpleHeader(),
-              Expanded(
-                child: CustomScrollView(
-                  slivers: [
+          CustomScrollView(
+            slivers: [
+              // Header that disappears when scrolling
+              SliverAppBar(
+                expandedHeight: 80,
+                floating: true,
+                snap: true,
+                pinned: false,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                flexibleSpace: const SimpleHeader(),
+              ),
                     // Date strip
               SliverToBoxAdapter(
                 child: Column(
@@ -269,23 +275,20 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               ),
             ],
           ),
-        ),
-      ],
-    ),
-    // Floating "Create" button only visible on Manage tab
-    if (_tabController.index == 1)
-      Positioned(
-        bottom: 24,
-        right: 24,
-        child: FloatingActionButton.extended(
-          onPressed: () => _tabController.animateTo(0),
-          backgroundColor: AppColors.emerald,
-          icon: const Icon(LucideIcons.plus, color: Colors.black),
-          label: const Text('Create', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
-        ),
+          // Floating "Create" button only visible on Manage tab
+          if (_tabController.index == 1)
+            Positioned(
+              bottom: 24,
+              right: 24,
+              child: FloatingActionButton.extended(
+                onPressed: () => _tabController.animateTo(0),
+                backgroundColor: AppColors.emerald,
+                icon: const Icon(LucideIcons.plus, color: Colors.black),
+                label: const Text('Create', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+              ),
+            ),
+        ],
       ),
-  ],
-),
     );
   }
   Widget _buildAddNewTab() {

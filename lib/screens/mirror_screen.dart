@@ -79,14 +79,23 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Column(
-        children: [
-          const SimpleHeader(),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: AppSpacing.lg),
+      body: CustomScrollView(
+        slivers: [
+          // Header that disappears when scrolling
+          SliverAppBar(
+            expandedHeight: 80,
+            floating: true,
+            snap: true,
+            pinned: false,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: const SimpleHeader(),
+          ),
+          // Content
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(height: AppSpacing.lg),
           // Main mirror card
           GlassCard(
             child: Column(
@@ -311,12 +320,11 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           if (isEvening && latestDebrief != null)
             _buildDebriefSection(latestDebrief, completedToday, todayHabits.length),
           
-                  // Bottom padding for navigation
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-          ),
+          // Bottom padding for navigation
+          const SizedBox(height: 100),
+        ],
+      ),
+    ),
         ],
       ),
     );

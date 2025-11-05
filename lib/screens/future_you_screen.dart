@@ -214,27 +214,35 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // Main content
-          Column(
-            children: [
-              const SimpleHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildHeroSection(),
-                        const SizedBox(height: AppSpacing.xl),
-                        _buildVisualizationVideos(),
-                        const SizedBox(height: AppSpacing.xl),
-                        _buildDiscoveryPrompts(),
-                        const SizedBox(height: AppSpacing.xl),
-                        _buildStartSessionButton(),
-                        const SizedBox(height: 150), // Bottom padding for nav
-                      ],
-                    ),
+          // Main content with scrollable header
+          CustomScrollView(
+            slivers: [
+              // Header that disappears when scrolling
+              SliverAppBar(
+                expandedHeight: 80,
+                floating: true,
+                snap: true,
+                pinned: false,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                flexibleSpace: const SimpleHeader(),
+              ),
+              // Content
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildHeroSection(),
+                      const SizedBox(height: AppSpacing.xl),
+                      _buildVisualizationVideos(),
+                      const SizedBox(height: AppSpacing.xl),
+                      _buildDiscoveryPrompts(),
+                      const SizedBox(height: AppSpacing.xl),
+                      _buildStartSessionButton(),
+                      const SizedBox(height: 150), // Bottom padding for nav
+                    ],
                   ),
                 ),
               ),

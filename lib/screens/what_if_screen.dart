@@ -613,15 +613,24 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // Main content
-          Column(
-            children: [
-              const SimpleHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Column(
+          // Main content with scrollable header
+          CustomScrollView(
+            slivers: [
+              // Header that disappears when scrolling
+              SliverAppBar(
+                expandedHeight: 80,
+                floating: true,
+                snap: true,
+                pinned: false,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                flexibleSpace: const SimpleHeader(),
+              ),
+              // Content
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _buildHeroSection(),
@@ -642,8 +651,8 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           // Toast

@@ -60,18 +60,27 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Column(
-        children: [
-          const SimpleHeader(),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _loadMessages,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppSpacing.lg),
+      body: RefreshIndicator(
+        onRefresh: _loadMessages,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // Header that disappears when scrolling
+            SliverAppBar(
+              expandedHeight: 80,
+              floating: true,
+              snap: true,
+              pinned: false,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              flexibleSpace: const SimpleHeader(),
+            ),
+            // Content
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: AppSpacing.lg),
             
                     // Filters
             Padding(
@@ -139,22 +148,26 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                         onDelete: () async {
                           debugPrint('🗑️ DELETE STARTED: ${message.id}');
                           await messagesService.deleteMessage(message.id);
-                          debugPrint('🗑️ DELETE COMPLETED, RELOADING...');
-                          await _loadMessages();
-                          debugPrint('🗑️ RELOAD COMPLETED');
+                          debugPrint('🗑️ DELETE COMPLETED, REFRESHING UI...');
+                          // DON'T call _loadMessages() - it re-syncs from backend and re-adds the message!
+                          // Instead, just remove from local list and refresh UI
+                          setState(() {
+                            _messages.removeWhere((m) => m.id == message.id);
+                          });
+                          debugPrint('🗑️ UI REFRESHED - ${_messages.length} messages remaining');
                         },
                       );
                     }).toList(),
                   ),
                 ),
           
-                    const SizedBox(height: 120), // Bottom padding for nav
-                  ],
-                ),
-              ),
+                const SizedBox(height: 120), // Bottom padding for nav
+              ],
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }
