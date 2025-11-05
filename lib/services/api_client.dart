@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/habit.dart';
 import 'local_storage.dart';
 
@@ -12,37 +13,37 @@ class ApiClient {
   static const String _localUrl = 'http://localhost:8080'; // For local development
   static const Duration _timeout = Duration(seconds: 30);
   
-  // Generate persistent user ID on first launch
-  // TODO: Replace with real auth system later
-  static String _userId = 'test-user-felix'; // Fixed for testing, change after auth is added
-  
-  static final Map<String, String> _defaultHeaders = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'x-user-id': _userId, // Backend uses this header for user identification
-  };
-  
-  // Set custom user ID (for testing or if user signs in)
-  static void setUserId(String userId) {
-    _userId = userId;
-    _defaultHeaders['x-user-id'] = userId;
-    debugPrint('✓ User ID set to: $userId');
-  }
-  
-  static String get userId => _userId;
-  
-  // Authentication token (to be set after login)
-  static String? _authToken;
-  
-  static void setAuthToken(String token) {
-    _authToken = token;
-  }
-  
-  static Map<String, String> get _headers {
-    final headers = Map<String, String>.from(_defaultHeaders);
-    if (_authToken != null) {
-      headers['Authorization'] = 'Bearer $_authToken';
+  // Firebase Authentication
+  static Future<String?> _getFirebaseToken() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        debugPrint('⚠️ No Firebase user signed in');
+        return null;
+      }
+      return await user.getIdToken();
+    } catch (e) {
+      debugPrint('❌ Error getting Firebase token: $e');
+      return null;
     }
+  }
+  
+  static String? get userId => FirebaseAuth.instance.currentUser?.uid;
+  
+  // Get headers with Firebase token
+  static Future<Map<String, String>> get _headers async {
+    final headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    
+    final token = await _getFirebaseToken();
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    } else {
+      debugPrint('⚠️ Making API call without authentication token');
+    }
+    
     return headers;
   }
   
@@ -50,7 +51,8 @@ class ApiClient {
   static Future<http.Response> _get(String endpoint) async {
     try {
       final uri = Uri.parse('$_baseUrl$endpoint');
-      final response = await http.get(uri, headers: _headers).timeout(_timeout);
+      final headers = await _headers;
+      final response = await http.get(uri, headers: headers).timeout(_timeout);
       return response;
     } catch (e) {
       debugPrint('GET request failed: $e');
@@ -61,9 +63,10 @@ class ApiClient {
   static Future<http.Response> _post(String endpoint, Map<String, dynamic> data) async {
     try {
       final uri = Uri.parse('$_baseUrl$endpoint');
+      final headers = await _headers;
       final response = await http.post(
         uri,
-        headers: _headers,
+        headers: headers,
         body: jsonEncode(data),
       ).timeout(_timeout);
       return response;
@@ -76,9 +79,10 @@ class ApiClient {
   static Future<http.Response> _put(String endpoint, Map<String, dynamic> data) async {
     try {
       final uri = Uri.parse('$_baseUrl$endpoint');
+      final headers = await _headers;
       final response = await http.put(
         uri,
-        headers: _headers,
+        headers: headers,
         body: jsonEncode(data),
       ).timeout(_timeout);
       return response;
@@ -91,7 +95,8 @@ class ApiClient {
   static Future<http.Response> _delete(String endpoint) async {
     try {
       final uri = Uri.parse('$_baseUrl$endpoint');
-      final response = await http.delete(uri, headers: _headers).timeout(_timeout);
+      final headers = await _headers;
+      final response = await http.delete(uri, headers: headers).timeout(_timeout);
       return response;
     } catch (e) {
       debugPrint('DELETE request failed: $e');
@@ -432,6 +437,22 @@ class ApiClient {
       return ApiResponse.error('No internet connection.');
     } catch (e) {
       return ApiResponse.error('Network error: $e');
+    }
+  }
+
+  // Delete user account
+  static Future<void> deleteAccount() async {
+    try {
+      final response = await _delete('/api/v1/user/account');
+      
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Failed to delete account: ${response.statusCode}');
+      }
+      
+      debugPrint('✅ Account deleted from backend');
+    } catch (e) {
+      debugPrint('❌ Delete account error: $e');
+      rethrow;
     }
   }
 }

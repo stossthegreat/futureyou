@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // Timezone init
 import 'package:timezone/data/latest.dart' as tzdata;
@@ -20,6 +22,7 @@ import 'services/offline_queue.dart'; // QueuedRequest Hive adapter is in .g.dar
 import 'services/alarm_service.dart';
 import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/auth/login_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/terms_screen.dart';
 import 'screens/privacy_screen.dart';
@@ -42,6 +45,15 @@ Future<void> main() async {
   // Wrap everything in error handler
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Initialize Firebase
+    try {
+      await Firebase.initializeApp();
+      debugPrint('✅ Firebase initialized');
+    } catch (e) {
+      debugPrint('❌ Firebase initialization failed: $e');
+      // Continue anyway - app should still work without Firebase (degraded mode)
+    }
 
     // Initialize timezone ONCE
     await _initTimezone();
@@ -134,30 +146,38 @@ class AppRouter extends StatefulWidget {
 
 class _AppRouterState extends State<AppRouter> {
   bool _showOnboarding = true;
+  bool _isAuthenticated = false;
   bool _isLoading = true;
   String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    _checkOnboardingStatus();
+    _checkAppState();
   }
 
-  Future<void> _checkOnboardingStatus() async {
+  Future<void> _checkAppState() async {
     try {
+      // Check onboarding status
       final prefs = await SharedPreferences.getInstance();
       final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-      debugPrint('📱 Onboarding status: $hasSeenOnboarding');
+      
+      // Check auth status
+      final user = FirebaseAuth.instance.currentUser;
+      final isAuthenticated = user != null;
+      
+      debugPrint('📱 Onboarding: $hasSeenOnboarding | Auth: $isAuthenticated');
       
       if (!mounted) return;
       setState(() {
         _showOnboarding = !hasSeenOnboarding;
+        _isAuthenticated = isAuthenticated;
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('❌ Prefs load error: $e');
+      debugPrint('❌ App state check error: $e');
       if (!mounted) return;
-    setState(() {
+      setState(() {
         _isLoading = false;
         _errorMessage = e.toString();
       });
@@ -175,7 +195,7 @@ class _AppRouterState extends State<AppRouter> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('🟢 Building AppRouter | loading=$_isLoading | onboarding=$_showOnboarding');
+    debugPrint('🟢 Building AppRouter | loading=$_isLoading | onboarding=$_showOnboarding | auth=$_isAuthenticated');
 
     // Error state
     if (_errorMessage.isNotEmpty) {
@@ -237,13 +257,21 @@ class _AppRouterState extends State<AppRouter> {
       );
     }
 
-    // Onboarding or main screen
+    // Route based on onboarding and auth state
     try {
+      // Show onboarding if not completed
       if (_showOnboarding) {
         debugPrint('🟢 Showing OnboardingScreen');
         return OnboardingScreen(onComplete: _completeOnboarding);
       }
 
+      // Show login if not authenticated
+      if (!_isAuthenticated) {
+        debugPrint('🟢 Showing LoginScreen');
+        return const LoginScreen();
+      }
+
+      // Show main app if authenticated
       debugPrint('🟢 Showing MainScreen');
       return const MainScreen();
     } catch (e) {
