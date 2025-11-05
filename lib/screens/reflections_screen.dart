@@ -339,27 +339,35 @@ class _LetterCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            message.emoji,
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Text(
-                            message.kindLabel.toUpperCase(),
-                            style: AppTextStyles.captionSmall.copyWith(
-                              color: kindColor,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
+                      Flexible(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              message.emoji,
+                              style: const TextStyle(fontSize: 18),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: AppSpacing.sm),
+                            Flexible(
+                              child: Text(
+                                message.kindLabel.toUpperCase(),
+                                style: AppTextStyles.captionSmall.copyWith(
+                                  color: kindColor,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.2,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         'Future-You OS',
                         style: AppTextStyles.captionSmall.copyWith(
                           color: AppColors.textQuaternary,
+                          fontSize: 10,
                         ),
                       ),
                     ],
@@ -390,22 +398,22 @@ class _LetterCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
 
                   // Action buttons
-                  Row(
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
                     children: [
                       _ActionButton(
-                        label: 'Copy Quote',
+                        label: 'Copy',
                         icon: LucideIcons.copy,
                         onTap: () => _copyToClipboard(context),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
                       _ActionButton(
                         label: 'Share',
                         icon: LucideIcons.share2,
                         onTap: _shareMessage,
                       ),
-                      const Spacer(),
                       _ActionButton(
-                        label: 'Export PNG',
+                        label: 'Export',
                         icon: LucideIcons.download,
                         onTap: () => _exportPNG(context),
                         isPrimary: true,

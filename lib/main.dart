@@ -24,6 +24,9 @@ import 'services/offline_queue.dart'; // QueuedRequest Hive adapter is in .g.dar
 import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/terms_screen.dart';
+import 'screens/privacy_screen.dart';
+import 'screens/support_screen.dart';
 import 'design/theme.dart';
 import 'logic/habit_engine.dart';
 
@@ -181,6 +184,9 @@ class FutureYouApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       routes: {
         '/settings': (context) => const SettingsScreen(),
+        '/terms': (context) => const TermsScreen(),
+        '/privacy': (context) => const PrivacyScreen(),
+        '/support': (context) => const SupportScreen(),
       },
     );
   }

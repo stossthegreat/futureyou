@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'dart:ui';
 import '../models/coach_message.dart';
 import '../services/messages_service.dart';
+import '../design/tokens.dart';
 
 class NudgeBanner extends StatefulWidget {
   final CoachMessage nudge;
@@ -64,32 +67,39 @@ class _NudgeBannerState extends State<NudgeBanner>
       animation: _pulseAnimation,
       builder: (context, child) {
         return Container(
-          margin: const EdgeInsets.all(16),
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFF6B6B).withOpacity(0.3 * _pulseAnimation.value),
-                blurRadius: 20,
-                spreadRadius: 5,
+                color: AppColors.emerald.withOpacity(0.3 * _pulseAnimation.value),
+                blurRadius: 24,
+                spreadRadius: 0,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFFFF6B6B).withOpacity(0.2),
-                      const Color(0xFFFF8E53).withOpacity(0.15),
+                      AppColors.emerald.withOpacity(0.15),
+                      AppColors.emerald.withOpacity(0.08),
+                      Colors.transparent,
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
                   border: Border.all(
-                    color: const Color(0xFFFF6B6B).withOpacity(0.5),
+                    color: AppColors.emerald.withOpacity(0.4),
                     width: 1.5,
                   ),
                 ),
@@ -103,56 +113,89 @@ class _NudgeBannerState extends State<NudgeBanner>
         color: Colors.transparent,
         child: InkWell(
           onTap: () => setState(() => _isExpanded = !_isExpanded),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    // Warning icon
+                    // Emerald pulse icon
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B6B).withOpacity(0.2),
+                        gradient: AppColors.emeraldGradient,
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.emerald.withOpacity(0.4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: const Center(
-                        child: Text(
-                          '🔴',
-                          style: TextStyle(fontSize: 20),
+                        child: Icon(
+                          LucideIcons.zap,
+                          color: Colors.black,
+                          size: 24,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
+                    ).animate(onPlay: (controller) => controller.repeat())
+                        .scale(
+                          begin: const Offset(1, 1),
+                          end: const Offset(1.1, 1.1),
+                          duration: 1500.ms,
+                        )
+                        .then()
+                        .scale(
+                          begin: const Offset(1.1, 1.1),
+                          end: const Offset(1, 1),
+                          duration: 1500.ms,
+                        ),
+                    const SizedBox(width: AppSpacing.md),
 
-                    // Label
+                    // Content
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'NUDGE FROM FUTURE YOU',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1,
-                              color: const Color(0xFFFF6B6B),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.emerald.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                              border: Border.all(
+                                color: AppColors.emerald.withOpacity(0.4),
+                              ),
+                            ),
+                            child: Text(
+                              'NUDGE FROM FUTURE-YOU',
+                              style: AppTextStyles.captionSmall.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                                color: AppColors.emerald,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Text(
                             _isExpanded
                                 ? widget.nudge.body
                                 : _truncateText(widget.nudge.body),
-                            style: const TextStyle(
+                            style: AppTextStyles.body.copyWith(
                               fontSize: 15,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
                             ),
-                            maxLines: _isExpanded ? null : 1,
+                            maxLines: _isExpanded ? null : 2,
                             overflow: _isExpanded ? null : TextOverflow.ellipsis,
                           ),
                         ],
@@ -160,35 +203,46 @@ class _NudgeBannerState extends State<NudgeBanner>
                     ),
 
                     // Expand icon
-                    Icon(
-                      _isExpanded ? Icons.expand_less : Icons.expand_more,
-                      color: Colors.white.withOpacity(0.6),
-                      size: 24,
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.emerald.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                        border: Border.all(
+                          color: AppColors.emerald.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Icon(
+                        _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                        color: AppColors.emerald,
+                        size: 20,
+                      ),
                     ),
                   ],
                 ),
 
                 // Actions (shown when expanded)
                 if (_isExpanded) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   Row(
                     children: [
                       Expanded(
+                        flex: 2,
                         child: _ActionButton(
                           label: 'Do it now',
-                          icon: Icons.bolt,
-                          color: const Color(0xFFFF6B6B),
+                          icon: LucideIcons.zap,
                           onPressed: _handleDoIt,
+                          isPrimary: true,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: _ActionButton(
                           label: 'Later',
-                          icon: Icons.schedule,
-                          color: Colors.white.withOpacity(0.3),
+                          icon: LucideIcons.clock,
                           onPressed: _handleDismiss,
-                          isSecondary: true,
+                          isPrimary: false,
                         ),
                       ),
                     ],
@@ -203,24 +257,22 @@ class _NudgeBannerState extends State<NudgeBanner>
   }
 
   String _truncateText(String text) {
-    if (text.length <= 50) return text;
-    return '${text.substring(0, 50)}...';
+    if (text.length <= 60) return text;
+    return '${text.substring(0, 60)}...';
   }
 }
 
 class _ActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
-  final Color color;
   final VoidCallback onPressed;
-  final bool isSecondary;
+  final bool isPrimary;
 
   const _ActionButton({
     required this.label,
     required this.icon,
-    required this.color,
     required this.onPressed,
-    this.isSecondary = false,
+    required this.isPrimary,
   });
 
   @override
@@ -228,30 +280,45 @@ class _ActionButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 16,
+        ),
         decoration: BoxDecoration(
-          color: isSecondary ? color : color.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(12),
+          gradient: isPrimary ? AppColors.emeraldGradient : null,
+          color: isPrimary ? null : AppColors.glassBackground,
+          borderRadius: BorderRadius.circular(AppBorderRadius.md),
           border: Border.all(
-            color: isSecondary ? color : color.withOpacity(0.5),
+            color: isPrimary
+                ? AppColors.emerald.withOpacity(0.5)
+                : AppColors.glassBorder,
             width: 1.5,
           ),
+          boxShadow: isPrimary
+              ? [
+                  BoxShadow(
+                    color: AppColors.emerald.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 18,
-              color: isSecondary ? Colors.white.withOpacity(0.7) : Colors.white,
+              size: 16,
+              color: isPrimary ? Colors.black : AppColors.textSecondary,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: isSecondary ? Colors.white.withOpacity(0.7) : Colors.white,
+              style: AppTextStyles.bodyMedium.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: isPrimary ? Colors.black : AppColors.textSecondary,
               ),
             ),
           ],
@@ -260,4 +327,3 @@ class _ActionButton extends StatelessWidget {
     );
   }
 }
-

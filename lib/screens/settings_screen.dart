@@ -491,6 +491,41 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           
           const SizedBox(height: AppSpacing.lg),
           
+          // Legal & Support section
+          GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Legal & Support',
+                  style: AppTextStyles.h3.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _buildNavigationItem(
+                  'Terms & Conditions',
+                  LucideIcons.fileText,
+                  () => Navigator.pushNamed(context, '/terms'),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                _buildNavigationItem(
+                  'Privacy Policy',
+                  LucideIcons.shield,
+                  () => Navigator.pushNamed(context, '/privacy'),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                _buildNavigationItem(
+                  'Help & Support',
+                  LucideIcons.helpCircle,
+                  () => Navigator.pushNamed(context, '/support'),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: AppSpacing.lg),
+          
           // About section
           GlassCard(
             child: Column(
@@ -504,7 +539,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Future U OS — build integrity through daily commitments. v1.0.0 Flutter.',
+                  'Future-You OS — AI-powered system to discover your life\'s purpose and build the habits that get you there. v1.0.0',
                   style: AppTextStyles.caption.copyWith(
                     color: AppColors.textTertiary,
                   ),
@@ -570,6 +605,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           onChanged: onChanged,
         ),
       ],
+    );
+  }
+  
+  Widget _buildNavigationItem(String title, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.glassBackground,
+          borderRadius: BorderRadius.circular(AppBorderRadius.md),
+          border: Border.all(color: AppColors.glassBorder),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: AppColors.emerald),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                title,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            const Icon(
+              LucideIcons.chevronRight,
+              size: 20,
+              color: AppColors.textTertiary,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
