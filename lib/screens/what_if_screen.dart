@@ -340,6 +340,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
 
       if (result.success && result.data != null) {
         final aiMessage = result.data!['message'] as String;
+        final suggestedPlan = result.data!['suggestedPlan'];
 
         final responseMessage = ChatMessage(
           id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
@@ -352,6 +353,11 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
           _messages.add(responseMessage);
           _isLoading = false;
         });
+
+        // If AI generated a plan, show it as a beautiful card!
+        if (suggestedPlan != null && suggestedPlan is Map) {
+          _showSuggestedPlanCard(suggestedPlan);
+        }
       } else {
         setState(() => _isLoading = false);
         if (!mounted) return;
@@ -380,6 +386,199 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
         );
       }
     });
+  }
+
+  void _showSuggestedPlanCard(Map<String, dynamic> plan) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF0F1F0F),
+                Colors.black,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.emerald.withOpacity(0.3), width: 2),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: AppColors.emeraldGradient,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(22),
+                    topRight: Radius.circular(22),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      plan['icon'] ?? '🎯',
+                      style: const TextStyle(fontSize: 32),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            plan['title'] ?? 'Your Plan',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                            ),
+                          ),
+                          Text(
+                            plan['subtitle'] ?? 'Science-backed steps',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Plan steps
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: (plan['plan'] as List?)?.length ?? 0,
+                  itemBuilder: (context, index) {
+                    final step = (plan['plan'] as List)[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.emerald.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.emerald.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: const TextStyle(
+                                      color: AppColors.emerald,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    step['action'] ?? '',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '💡 ${step['why'] ?? ''}',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '📚 ${step['study'] ?? ''}',
+                              style: TextStyle(
+                                color: AppColors.emerald.withOpacity(0.8),
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              // Commit button
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'Not Yet',
+                          style: TextStyle(color: AppColors.textTertiary),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _commitPlanFromChat(plan);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.emerald,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Commit This Plan 🔥',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _commitPlanFromChat(Map<String, dynamic> plan) async {
+    // TODO: Implement commit logic (create habits from plan steps)
+    _showToast('Plan committed! Check your habits.');
   }
 
   void _startCustomChat() {
