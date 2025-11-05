@@ -119,91 +119,95 @@ class _NudgeBannerState extends State<NudgeBanner>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header with badge
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Emerald pulse icon
                     Container(
-                      width: 48,
-                      height: 48,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         gradient: AppColors.emeraldGradient,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(AppBorderRadius.full),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.emerald.withOpacity(0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
+                            color: AppColors.emerald.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                      child: const Center(
-                        child: Icon(
-                          LucideIcons.zap,
-                          color: Colors.black,
-                          size: 24,
-                        ),
-                      ),
-                    ).animate(onPlay: (controller) => controller.repeat())
-                        .scale(
-                          begin: const Offset(1, 1),
-                          end: const Offset(1.1, 1.1),
-                          duration: 1500.ms,
-                        )
-                        .then()
-                        .scale(
-                          begin: const Offset(1.1, 1.1),
-                          end: const Offset(1, 1),
-                          duration: 1500.ms,
-                        ),
-                    const SizedBox(width: AppSpacing.md),
-
-                    // Content
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.emerald.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(AppBorderRadius.sm),
-                              border: Border.all(
-                                color: AppColors.emerald.withOpacity(0.4),
-                              ),
-                            ),
-                            child: Text(
-                              'NUDGE FROM FUTURE-YOU',
-                              style: AppTextStyles.captionSmall.copyWith(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.2,
-                                color: AppColors.emerald,
-                              ),
-                            ),
+                          const Icon(
+                            LucideIcons.zap,
+                            color: Colors.black,
+                            size: 14,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(width: 6),
                           Text(
-                            _isExpanded
-                                ? widget.nudge.body
-                                : _truncateText(widget.nudge.body),
-                            style: AppTextStyles.body.copyWith(
-                              fontSize: 15,
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                              height: 1.4,
+                            'NUDGE FROM FUTURE-YOU',
+                            style: AppTextStyles.captionSmall.copyWith(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.2,
+                              color: Colors.black,
                             ),
-                            maxLines: _isExpanded ? null : 2,
-                            overflow: _isExpanded ? null : TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
 
-                    // Expand icon
-                    Container(
+                // Full-width message
+                Text(
+                  _isExpanded
+                      ? widget.nudge.body
+                      : _truncateText(widget.nudge.body),
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 16,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                    letterSpacing: 0.2,
+                  ),
+                  maxLines: _isExpanded ? null : 3,
+                  overflow: _isExpanded ? null : TextOverflow.ellipsis,
+                ),
+
+                // Expand hint (if collapsed)
+                if (!_isExpanded)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          LucideIcons.chevronDown,
+                          color: AppColors.emerald.withOpacity(0.6),
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Tap to expand',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.emerald.withOpacity(0.6),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // Action buttons (when expanded)
+                if (_isExpanded) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Container(
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(

@@ -132,6 +132,10 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                           messagesService.markAsRead(message.id);
                           setState(() {});
                         },
+                        onDelete: () async {
+                          await messagesService.deleteMessage(message.id);
+                          _loadMessages();
+                        },
                       );
                     }).toList(),
                   ),
@@ -236,11 +240,13 @@ class _LetterCard extends StatelessWidget {
   final CoachMessage message;
   final int index;
   final VoidCallback onRead;
+  final VoidCallback onDelete;
 
   const _LetterCard({
     required this.message,
     required this.index,
     required this.onRead,
+    required this.onDelete,
   });
 
   Color _getKindColor() {
@@ -291,6 +297,42 @@ class _LetterCard extends StatelessWidget {
         content: const Text('PNG export coming soon!'),
         backgroundColor: AppColors.textTertiary,
         duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: Text(
+          'Delete Message?',
+          style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
+        ),
+        content: Text(
+          'This message will be permanently deleted.',
+          style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textTertiary),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onDelete();
+            },
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -418,6 +460,12 @@ class _LetterCard extends StatelessWidget {
                         onTap: () => _exportPNG(context),
                         isPrimary: true,
                       ),
+                      _ActionButton(
+                        label: 'Delete',
+                        icon: LucideIcons.trash2,
+                        onTap: () => _confirmDelete(context),
+                        isDestructive: true,
+                      ),
                     ],
                   ),
           ],
@@ -442,12 +490,14 @@ class _ActionButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool isPrimary;
+  final bool isDestructive;
 
   const _ActionButton({
     required this.label,
     required this.icon,
     required this.onTap,
     this.isPrimary = false,
+    this.isDestructive = false,
   });
 
   @override
@@ -460,14 +510,18 @@ class _ActionButton extends StatelessWidget {
           vertical: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: isPrimary
-              ? AppColors.emerald.withOpacity(0.15)
-              : AppColors.glassBackground,
+          color: isDestructive
+              ? Colors.red.withOpacity(0.15)
+              : isPrimary
+                  ? AppColors.emerald.withOpacity(0.15)
+                  : AppColors.glassBackground,
           borderRadius: BorderRadius.circular(AppBorderRadius.md),
           border: Border.all(
-            color: isPrimary
-                ? AppColors.emerald.withOpacity(0.4)
-                : AppColors.glassBorder,
+            color: isDestructive
+                ? Colors.red.withOpacity(0.4)
+                : isPrimary
+                    ? AppColors.emerald.withOpacity(0.4)
+                    : AppColors.glassBorder,
             width: 1,
           ),
         ),
@@ -477,13 +531,21 @@ class _ActionButton extends StatelessWidget {
             Icon(
               icon,
               size: 14,
-              color: isPrimary ? AppColors.emerald : AppColors.textSecondary,
+              color: isDestructive
+                  ? Colors.red.shade400
+                  : isPrimary
+                      ? AppColors.emerald
+                      : AppColors.textSecondary,
             ),
             const SizedBox(width: 6),
             Text(
               label,
               style: AppTextStyles.captionSmall.copyWith(
-                color: isPrimary ? AppColors.emerald : AppColors.textSecondary,
+                color: isDestructive
+                    ? Colors.red.shade400
+                    : isPrimary
+                        ? AppColors.emerald
+                        : AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),

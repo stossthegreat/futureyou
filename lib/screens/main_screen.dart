@@ -253,9 +253,11 @@ class _MainScreenState extends State<MainScreen>
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.xs,
-              vertical: AppSpacing.md,
+            padding: const EdgeInsets.only(
+              left: AppSpacing.xs,
+              right: AppSpacing.xs,
+              top: AppSpacing.sm, // Reduced from md to sm
+              bottom: AppSpacing.md,
             ),
             decoration: BoxDecoration(
               color: AppColors.glassBackground,
@@ -279,7 +281,7 @@ class _MainScreenState extends State<MainScreen>
                       left: _currentIndex * tabWidth,
                       child: Container(
                         width: tabWidth,
-                        height: 72,
+                        height: 64,
                         padding: const EdgeInsets.all(4),
                         child: Container(
                           decoration: BoxDecoration(
@@ -328,34 +330,45 @@ class _MainScreenState extends State<MainScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 2,
-              vertical: AppSpacing.md,
+              vertical: AppSpacing.sm,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  tab.icon,
-                  size: 24,
-                  color: isActive 
-                      ? AppColors.emeraldLight 
-                      : AppColors.textSecondary.withOpacity(0.7),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  tab.label,
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 11,
+                // Fixed height container for icon to ensure alignment
+                SizedBox(
+                  height: 24,
+                  child: Icon(
+                    tab.icon,
+                    size: 24,
                     color: isActive 
                         ? AppColors.emeraldLight 
                         : AppColors.textSecondary.withOpacity(0.7),
-                    fontWeight: isActive 
-                        ? FontWeight.w700 
-                        : FontWeight.w400,
-                    height: 1.2,
                   ),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
+                ),
+                const SizedBox(height: 4),
+                // Fixed height container for label to ensure consistent spacing
+                SizedBox(
+                  height: 28,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Text(
+                      tab.label,
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 11,
+                        color: isActive 
+                            ? AppColors.emeraldLight 
+                            : AppColors.textSecondary.withOpacity(0.7),
+                        fontWeight: isActive 
+                            ? FontWeight.w700 
+                            : FontWeight.w400,
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                  ),
                 ),
               ],
             ),
