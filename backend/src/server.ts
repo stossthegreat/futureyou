@@ -17,6 +17,8 @@ import { insightsController } from "./controllers/insights.controller";
 import { whatIfController } from "./controllers/whatif.controller";
 import { futureYouChatController } from "./controllers/future-you-chat.controller";
 import { whatIfChatController } from "./controllers/what-if-chat.controller";
+import { futureYouChatControllerV2 } from "./controllers/future-you-v2.controller";
+import { whatIfChatControllerV2 } from "./controllers/what-if-v2.controller";
 
 dotenv.config();
 
@@ -62,8 +64,15 @@ const buildServer = () => {
   fastify.register(userController);
   fastify.register(insightsController); // Pattern analysis & insights
   fastify.register(whatIfController); // Purpose-aligned goals
+  
+  // V1 Chat (structured discovery + simple coach)
   fastify.register(futureYouChatController); // Future-You freeform chat (7 lenses)
   fastify.register(whatIfChatController); // What-If implementation coach
+  
+  // V2 Chat (hybrid dual-brain architecture)
+  fastify.register(futureYouChatControllerV2); // Future-You v2 - emotion + contradiction aware
+  fastify.register(whatIfChatControllerV2); // What-If v2 - readiness + plan generation
+  
   fastify.register(testController); // For manual testing
 
   return fastify;
