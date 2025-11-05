@@ -356,7 +356,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
 
         // If AI generated a plan, show it as a beautiful card!
         if (suggestedPlan != null && suggestedPlan is Map) {
-          _showSuggestedPlanCard(suggestedPlan);
+          _showSuggestedPlanCard(Map<String, dynamic>.from(suggestedPlan as Map));
         }
       } else {
         setState(() => _isLoading = false);

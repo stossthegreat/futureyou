@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'dart:ui';
 import '../models/coach_message.dart';
@@ -205,28 +204,6 @@ class _NudgeBannerState extends State<NudgeBanner>
                   ),
 
                 // Action buttons (when expanded)
-                if (_isExpanded) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.emerald.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(AppBorderRadius.sm),
-                        border: Border.all(
-                          color: AppColors.emerald.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Icon(
-                        _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
-                        color: AppColors.emerald,
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Actions (shown when expanded)
                 if (_isExpanded) ...[
                   const SizedBox(height: AppSpacing.lg),
                   Row(
