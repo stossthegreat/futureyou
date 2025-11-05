@@ -113,19 +113,15 @@ class AlarmService {
     }
     await cancelAlarm(habit.id);
 
-    final androidDetails = AndroidNotificationDetails(
+    const androidDetails = AndroidNotificationDetails(
       _channelId,
       _channelName,
       channelDescription: _channelDescription,
       importance: Importance.max,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
       playSound: true,
-      // Do NOT reference a missing raw sound to avoid PlatformException(invalid_sound).
-      sound: null, // ← use system default
       enableVibration: true,
       enableLights: true,
-      audioAttributesUsage: AudioAttributesUsage.alarm,
     );
 
     const iOSDetails = DarwinNotificationDetails(

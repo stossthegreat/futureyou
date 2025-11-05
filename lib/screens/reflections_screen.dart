@@ -301,7 +301,7 @@ class _LetterCard extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context) {
+  void _confirmDelete(BuildContext context, Future<void> Function() deleteCallback) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -325,7 +325,7 @@ class _LetterCard extends StatelessWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              await onDelete();
+              await deleteCallback();
             },
             child: Text(
               'Delete',
@@ -463,7 +463,7 @@ class _LetterCard extends StatelessWidget {
                       _ActionButton(
                         label: 'Delete',
                         icon: LucideIcons.trash2,
-                        onTap: () => _confirmDelete(context),
+                        onTap: () => _confirmDelete(context, onDelete),
                         isDestructive: true,
                       ),
                     ],

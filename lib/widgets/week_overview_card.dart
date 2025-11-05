@@ -158,48 +158,52 @@ class _WeekOverviewCardState extends State<WeekOverviewCard>
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Badge icon
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: AppColors.emeraldGradient,
-              borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.emerald.withOpacity(0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+          // Top row: Badge + Title
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: AppColors.emeraldGradient,
+                  borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.emerald.withOpacity(0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: const Icon(
-              LucideIcons.award,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          // Title (no wrap)
-          ShaderMask(
-            shaderCallback: (bounds) => AppColors.emeraldGradient
-                .createShader(bounds),
-            child: const Text(
-              'Week Overview',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
+                child: const Icon(
+                  LucideIcons.award,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.visible,
-            ),
+              const SizedBox(width: AppSpacing.md),
+              ShaderMask(
+                shaderCallback: (bounds) => AppColors.emeraldGradient
+                    .createShader(bounds),
+                child: const Text(
+                  'Week Overview',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const Spacer(),
-          // Percentage box
-          Container(
+          const SizedBox(height: 8),
+          // Second row: Percentage box aligned to the right
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 6,

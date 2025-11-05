@@ -1,15 +1,11 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
 import '../models/habit.dart';
 import '../services/local_storage.dart';
 import '../services/sync_service.dart';
 import '../services/api_client.dart';
-
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
+import '../services/alarm_service.dart';
 
 class HabitEngine extends ChangeNotifier {
   final LocalStorageService localStorageService;
@@ -41,7 +37,7 @@ class HabitEngine extends ChangeNotifier {
     await LocalStorageService.deleteHabit(id);
     _habits.removeWhere((x) => x.id == id);
     notifyListeners();
-    await flutterLocalNotificationsPlugin.cancel(id.hashCode);
+    await AlarmService.cancelAlarm(id);
   }
 
   Future<void> completeHabit(String id) async {
@@ -61,70 +57,12 @@ class HabitEngine extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 🔔 Schedule next alarm
+  // 🔔 Schedule next alarm using AlarmService
   Future<void> _scheduleNext(Habit h) async {
-    if (h.repeatDays.isEmpty) return;
-
-    final next = _nextOccurrence(h.startDate, h.repeatDays, h.timeOfDay);
-
-    const androidDetails = AndroidNotificationDetails(
-      'futureyou_channel',
-      'Future You OS',
-      channelDescription: 'Habit reminders',
-      importance: Importance.max,
-      priority: Priority.high,
-      playSound: true,
-      enableVibration: true,
-      enableLights: true,
-      sound: null, // Use system default sound
-    );
-
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      h.id.hashCode,
-      'Future You OS',
-      '${h.title} is due now',
-      tz.TZDateTime.from(next, tz.local),
-      details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
-
+    await AlarmService.scheduleAlarm(h);
     if (kDebugMode) {
-      print('✅ Scheduled ${h.title} for $next');
+      print('✅ Scheduled alarm for ${h.title}');
     }
-  }
-
-  DateTime _nextOccurrence(DateTime start, List<int> repeatDays, TimeOfDay? time) {
-    final now = DateTime.now();
-    final base = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      time?.hour ?? start.hour,
-      time?.minute ?? start.minute,
-    );
-
-    for (int i = 0; i < 7; i++) {
-      final candidate = base.add(Duration(days: i));
-      final weekday = (candidate.weekday % 7); // Mon=1..Sun=7 → 0..6
-      if (repeatDays.contains(weekday) && candidate.isAfter(now)) {
-        return candidate;
-      }
-    }
-    return base.add(const Duration(days: 1));
   }
 
   Future<void> createHabit({
