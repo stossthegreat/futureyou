@@ -21,6 +21,7 @@ import 'services/local_storage.dart';
 import 'services/messages_service.dart';
 import 'services/sync_service.dart';
 import 'services/offline_queue.dart'; // QueuedRequest Hive adapter is in .g.dart part file
+import 'services/alarm_service.dart';
 import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/settings_screen.dart';
@@ -42,41 +43,6 @@ Future<void> _initTimezone() async {
   }
 }
 
-/// Ask Android 13+ for notification permission and (where supported) the exact-alarm app-op.
-/// This does NOT show on older Androids; it’s a no-op there.
-Future<void> _requestRuntimePermissions() async {
-  if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
-
-  // POST_NOTIFICATIONS (Android 13+)
-  try {
-    final notifStatus = await Permission.notification.status;
-    if (notifStatus.isDenied || notifStatus.isRestricted) {
-      final result = await Permission.notification.request();
-      debugPrint('🔔 Notification permission: $result');
-    } else {
-      debugPrint('🔔 Notification permission already granted.');
-    }
-  } catch (e) {
-    debugPrint('🔔 Notification permission check failed: $e');
-  }
-
-  // SCHEDULE_EXACT_ALARM (special app-op; may auto-grant on some OEMs)
-  try {
-    // `permission_handler` handles API gating internally
-    final exactStatus = await Permission.scheduleExactAlarm.status;
-    if (exactStatus.isDenied || exactStatus.isRestricted) {
-      final res = await Permission.scheduleExactAlarm.request();
-      debugPrint('⏰ Exact alarm permission: $res');
-      // If still not granted, consider guiding user to settings:
-      // if (!res.isGranted) await openAppSettings();
-    } else {
-      debugPrint('⏰ Exact alarm permission already granted.');
-    }
-  } catch (e) {
-    debugPrint('⏰ Exact alarm permission check failed: $e');
-  }
-}
-
 Future<void> main() async {
   // Wrap everything in error handler
   runZonedGuarded(() async {
@@ -85,49 +51,9 @@ Future<void> main() async {
     // Initialize timezone ONCE
     await _initTimezone();
 
-    // Alarm + notifications (Android only)
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      try {
-        await AndroidAlarmManager.initialize();
-        debugPrint('✅ AndroidAlarmManager initialized');
-      } catch (e) {
-        debugPrint('⚠️ AndroidAlarmManager failed: $e');
-      }
-    }
-
-    // Notifications
-    try {
-      final plugin = flutterLocalNotificationsPlugin;
-      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-      const iosInit = DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
-      );
-      const settings = InitializationSettings(android: androidInit, iOS: iosInit);
-      await plugin.initialize(settings);
-
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-        const androidChannel = AndroidNotificationChannel(
-          'futureyou_channel',
-          'Future You OS',
-          description: 'Habit reminders',
-          importance: Importance.max,
-          playSound: true,
-          enableVibration: true,
-          enableLights: true,
-        );
-        await plugin
-            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-            ?.createNotificationChannel(androidChannel);
-      }
-      debugPrint('✅ Notifications initialized');
-    } catch (e) {
-      debugPrint('⚠️ Notifications failed: $e');
-    }
-
-    // 👉 Request runtime permissions right before showing UI
-    await _requestRuntimePermissions(); // ← ADDED
+    // Initialize alarm service (handles permissions, notifications, and channels)
+    await AlarmService.initialize();
+    debugPrint('✅ AlarmService initialized');
 
     // Hive setup
     try {
