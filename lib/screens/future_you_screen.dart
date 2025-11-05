@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../services/api_client.dart';
-import '../widgets/simple_header.dart';
+import '../widgets/scrollable_header.dart';
 
 class VideoData {
   final int id;
@@ -217,7 +217,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
           // Main content
           Column(
             children: [
-              const SimpleHeader(),
+              const ScrollableHeader(),
               Expanded(
                 child: SingleChildScrollView(
                   child: Padding(

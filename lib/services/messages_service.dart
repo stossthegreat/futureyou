@@ -225,8 +225,9 @@ class MessagesService {
 
   /// Delete a specific message
   Future<void> deleteMessage(String messageId) async {
-    if (!_initialized) return;
+    if (!_initialized) await init();
     await _box.delete(messageId);
+    debugPrint('🗑️ Deleted message: $messageId');
   }
 }
 

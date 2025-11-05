@@ -7,7 +7,7 @@ import '../design/tokens.dart';
 import '../models/coach_message.dart';
 import '../services/messages_service.dart';
 import '../widgets/glass_card.dart';
-import '../widgets/simple_header.dart';
+import '../widgets/scrollable_header.dart';
 
 class ReflectionsScreen extends StatefulWidget {
   const ReflectionsScreen({super.key});
@@ -58,7 +58,7 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
       backgroundColor: Colors.transparent,
       body: Column(
         children: [
-          const SimpleHeader(),
+          const ScrollableHeader(),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadMessages,

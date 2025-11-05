@@ -19,6 +19,14 @@ class AlarmService {
     if (_initialized) return;
     _initialized = true;
 
+    // Initialize AndroidAlarmManager
+    try {
+      await AndroidAlarmManager.initialize();
+      debugPrint('✅ AndroidAlarmManager initialized');
+    } catch (e) {
+      debugPrint('⚠️ AndroidAlarmManager init failed: $e');
+    }
+
     // Ask runtime permissions where required (Android 13+)
     await _requestPermissions();
 
