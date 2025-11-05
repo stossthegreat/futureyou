@@ -378,6 +378,40 @@ class ApiClient {
     }
   }
 
+  // 🎯 NEW: Future-You Freeform Chat (7 lenses)
+  static Future<ApiResponse<Map<String, dynamic>>> sendFutureYouMessage(String message) async {
+    try {
+      final response = await _post('/api/v1/future-you/freeform', {'message': message});
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      } else {
+        return ApiResponse.error('Failed to send message');
+      }
+    } catch (e) {
+      debugPrint('Future-You chat error: $e');
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  // 🔬 NEW: What-If Implementation Coach
+  static Future<ApiResponse<Map<String, dynamic>>> sendWhatIfMessage(String message) async {
+    try {
+      final response = await _post('/api/v1/what-if/coach', {'message': message});
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      } else {
+        return ApiResponse.error('Failed to send message');
+      }
+    } catch (e) {
+      debugPrint('What-If coach error: $e');
+      return ApiResponse.error(e.toString());
+    }
+  }
+
   // Chat with Future You (enhanced endpoint) - Returns properly parsed response
   static Future<ApiResponse<Map<String, dynamic>>> sendChatMessageV2(String message) async {
     // Ensure identity is synced before sending message

@@ -317,96 +317,141 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(LucideIcons.user, size: 64, color: AppColors.emerald)
-                  .animate()
-                  .fadeIn(duration: 600.ms)
-                  .scale(delay: 200.ms),
-              const SizedBox(height: 24),
-              Text(
-                'First, let me know you',
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
+              // Top spacer
+              const SizedBox(height: 40),
+              
+              // Content
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Icon(LucideIcons.user, size: 64, color: AppColors.emerald)
+                        .animate()
+                        .fadeIn(duration: 600.ms)
+                        .scale(delay: 200.ms),
+                    const SizedBox(height: 24),
+                    Text(
+                      'First, let me know you',
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ).animate().fadeIn(delay: 300.ms),
+                    const SizedBox(height: 48),
+                    
+                    // Name input
+                    TextFormField(
+                      controller: _nameController,
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                      decoration: InputDecoration(
+                        labelText: 'Your Name',
+                        labelStyle: TextStyle(color: AppColors.emerald),
+                        hintText: 'What should I call you?',
+                        hintStyle: const TextStyle(color: Colors.white30),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.05),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: AppColors.emerald.withOpacity(0.3)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: AppColors.emerald, width: 2),
+                        ),
+                      ),
+                    ).animate().slideY(begin: 0.2, delay: 400.ms),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Age input
+                    TextFormField(
+                      controller: _ageController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                      decoration: InputDecoration(
+                        labelText: 'Your Age (optional)',
+                        labelStyle: TextStyle(color: AppColors.emerald),
+                        hintText: 'How old are you?',
+                        hintStyle: const TextStyle(color: Colors.white30),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.05),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: AppColors.emerald.withOpacity(0.3)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: AppColors.emerald, width: 2),
+                        ),
+                      ),
+                    ).animate().slideY(begin: 0.2, delay: 500.ms),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Burning question input
+                    TextFormField(
+                      controller: _burningQuestionController,
+                      maxLines: 3,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      decoration: InputDecoration(
+                        labelText: 'One Burning Question (optional)',
+                        labelStyle: TextStyle(color: AppColors.emerald),
+                        hintText: 'What\'s the ONE thing you want to change?',
+                        hintStyle: const TextStyle(color: Colors.white30),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.05),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: AppColors.emerald.withOpacity(0.3)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: AppColors.emerald, width: 2),
+                        ),
+                      ),
+                    ).animate().slideY(begin: 0.2, delay: 600.ms),
+                  ],
                 ),
-                textAlign: TextAlign.center,
-              ).animate().fadeIn(delay: 300.ms),
-              const SizedBox(height: 48),
+              ),
               
-              // Name input
-              TextFormField(
-                controller: _nameController,
-                style: const TextStyle(color: Colors.white, fontSize: 18),
-                decoration: InputDecoration(
-                  labelText: 'Your Name',
-                  labelStyle: TextStyle(color: AppColors.emerald),
-                  hintText: 'What should I call you?',
-                  hintStyle: const TextStyle(color: Colors.white30),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: AppColors.emerald.withOpacity(0.3)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: AppColors.emerald, width: 2),
-                  ),
-                ),
-              ).animate().slideY(begin: 0.2, delay: 400.ms),
-              
-              const SizedBox(height: 20),
-              
-              // Age input
-              TextFormField(
-                controller: _ageController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white, fontSize: 18),
-                decoration: InputDecoration(
-                  labelText: 'Your Age',
-                  labelStyle: TextStyle(color: AppColors.emerald),
-                  hintText: 'How old are you?',
-                  hintStyle: const TextStyle(color: Colors.white30),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: AppColors.emerald.withOpacity(0.3)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: AppColors.emerald, width: 2),
-                  ),
-                ),
-              ).animate().slideY(begin: 0.2, delay: 500.ms),
-              
-              const SizedBox(height: 20),
-              
-              // Burning question input
-              TextFormField(
-                controller: _burningQuestionController,
-                maxLines: 3,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-                decoration: InputDecoration(
-                  labelText: 'One Burning Question',
-                  labelStyle: TextStyle(color: AppColors.emerald),
-                  hintText: 'What\'s the ONE thing you want to change?',
-                  hintStyle: const TextStyle(color: Colors.white30),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: AppColors.emerald.withOpacity(0.3)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: AppColors.emerald, width: 2),
-                  ),
-                ),
-              ).animate().slideY(begin: 0.2, delay: 600.ms),
+              // Bottom navigation
+              Column(
+                children: [
+                  // Continue button
+                  GestureDetector(
+                    onTap: () => _nextStep(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.emeraldGradient,
+                        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Continue',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(LucideIcons.arrowRight, size: 20, color: Colors.black),
+                        ],
+                      ),
+                    ),
+                  ).animate(delay: 700.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2),
+                  const SizedBox(height: 80), // Space for bottom dots
+                ],
+              ),
             ],
           ),
         ),

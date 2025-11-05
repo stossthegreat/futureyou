@@ -335,7 +335,8 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
     _scrollToBottom();
 
     try {
-      final result = await ApiClient.sendChatMessageV2(message);
+      // Use new What-If implementation coach (context-aware + citations)
+      final result = await ApiClient.sendWhatIfMessage(message);
 
       if (result.success && result.data != null) {
         final aiMessage = result.data!['message'] as String;

@@ -126,7 +126,8 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
     _scrollToBottom();
 
     try {
-      final result = await ApiClient.sendChatMessageV2(message);
+      // Use new Future-You freeform chat (7 lenses + memory + contradictions)
+      final result = await ApiClient.sendFutureYouMessage(message);
 
       if (result.success && result.data != null) {
         final aiMessage = result.data!['message'] as String;
@@ -143,7 +144,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
           _isLoading = false;
         });
 
-        debugPrint('✅ Chat response received');
+        debugPrint('✅ Future-You freeform response received');
       } else {
         setState(() {
           _isLoading = false;
@@ -160,7 +161,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
       setState(() {
         _isLoading = false;
       });
-      debugPrint('❌ Chat error: $e');
+      debugPrint('❌ Future-You chat error: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
