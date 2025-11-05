@@ -41,19 +41,22 @@ class WeeklyStatsService {
       // Skip future dates
       if (checkDate.isAfter(now)) continue;
 
-      final fulfillmentPercent = LocalStorageService.getFulfillmentPercentage(checkDate);
-      
       // Check if there were any habits scheduled for this day
       final scheduledHabits = habits.where((h) => h.isScheduledForDate(checkDate)).toList();
+      
+      // Skip days with no habits scheduled (rest days, etc.)
       if (scheduledHabits.isEmpty) {
-        // No habits scheduled = drift day
-        driftDays++;
-      } else if (fulfillmentPercent == 100.0) {
+        continue; // Don't count as any category
+      }
+      
+      final fulfillmentPercent = LocalStorageService.getFulfillmentPercentage(checkDate);
+      
+      if (fulfillmentPercent == 100.0) {
         perfectDays++;
       } else if (fulfillmentPercent > 0 && fulfillmentPercent < 100.0) {
         microWins++;
       } else {
-        // 0% completion
+        // 0% completion = slipped day
         driftDays++;
       }
     }

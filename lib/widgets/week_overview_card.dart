@@ -159,64 +159,46 @@ class _WeekOverviewCardState extends State<WeekOverviewCard>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.emeraldGradient,
-                    borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.emerald.withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    LucideIcons.award,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) => AppColors.emeraldGradient
-                            .createShader(bounds),
-                        child: const Text(
-                          'Week Overview',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Your momentum tracker',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.emerald.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
+          // Badge icon
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: AppColors.emeraldGradient,
+              borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.emerald.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
+            child: const Icon(
+              LucideIcons.award,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.md),
+          // Title (no wrap)
+          ShaderMask(
+            shaderCallback: (bounds) => AppColors.emeraldGradient
+                .createShader(bounds),
+            child: const Text(
+              'Week Overview',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.visible,
+            ),
+          ),
+          const Spacer(),
+          // Percentage box
           Container(
           padding: const EdgeInsets.symmetric(
             horizontal: 12,
@@ -273,7 +255,7 @@ class _WeekOverviewCardState extends State<WeekOverviewCard>
               width: boxWidth,
               child: _buildStatBox(
                 animation: _perfectAnimation,
-                label: 'Perfect days',
+                label: 'Perfect',
                 gradient: const LinearGradient(
                   colors: [
                     Color(0x4010B981), // emerald-500/25
@@ -328,7 +310,7 @@ class _WeekOverviewCardState extends State<WeekOverviewCard>
               width: boxWidth,
               child: _buildStatBox(
                 animation: _driftAnimation,
-                label: 'Slipped days',
+                label: 'Slipped',
                 gradient: const LinearGradient(
                   colors: [
                     Color(0x40EF4444), // red-500/25
