@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../design/tokens.dart';
 import '../../services/auth_service.dart';
+import '../../services/sync_service.dart';
 import '../../providers/auth_provider.dart';
 import 'login_screen.dart';
 import '../main_screen.dart';
@@ -68,6 +69,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       );
 
       if (mounted) {
+        // Wait for initial sync before navigating
+        await _initializeAfterLogin();
+        
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainScreen()),
         );
@@ -106,6 +110,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       final result = await authService.signInWithGoogle();
 
       if (result != null && mounted) {
+        // Wait for initial sync before navigating
+        await _initializeAfterLogin();
+        
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainScreen()),
         );
@@ -144,6 +151,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       final result = await authService.signInWithApple();
 
       if (result != null && mounted) {
+        // Wait for initial sync before navigating
+        await _initializeAfterLogin();
+        
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainScreen()),
         );
@@ -161,6 +171,24 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  /// Initialize app data after successful signup
+  Future<void> _initializeAfterLogin() async {
+    try {
+      debugPrint('🔄 Initializing data after signup...');
+      
+      // Re-initialize sync service with authenticated user
+      await syncService.init();
+      
+      // Trigger immediate sync
+      await syncService.syncMessages();
+      
+      debugPrint('✅ Post-signup initialization complete');
+    } catch (e) {
+      debugPrint('⚠️ Post-signup initialization error: $e');
+      // Don't throw - allow user to continue even if sync fails
     }
   }
 
