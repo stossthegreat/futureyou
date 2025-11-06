@@ -18,7 +18,7 @@ class SyncService {
   static const Duration _messageSyncInterval = Duration(minutes: 15);
   static const int _maxCompletionsPerBatch = 50;
   
-  String get _userId => ApiClient.userId;
+  String? get _userId => ApiClient.userId;
 
   // State
   Timer? _messageSyncTimer;
@@ -52,14 +52,21 @@ class SyncService {
 
   /// Ensure user exists on backend (creates if not exists)
   Future<void> _ensureUserExists() async {
+    // Skip if no user is authenticated
+    final userId = _userId;
+    if (userId == null) {
+      debugPrint('⚠️ Skipping user sync - no authenticated user');
+      return;
+    }
+    
     try {
-      debugPrint('👤 Ensuring user exists on backend: $_userId');
+      debugPrint('👤 Ensuring user exists on backend: $userId');
       
       final response = await http.post(
         Uri.parse('https://futureyou-production.up.railway.app/api/v1/users'),
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': _userId,
+          'x-user-id': userId,
         },
         body: jsonEncode({}), // Send empty JSON body (Fastify requirement)
       ).timeout(const Duration(seconds: 10));
@@ -68,9 +75,9 @@ class SyncService {
         final data = jsonDecode(response.body);
         final created = data['created'] ?? false;
         if (created) {
-          debugPrint('✅ User created on backend: $_userId');
+          debugPrint('✅ User created on backend: $userId');
         } else {
-          debugPrint('✓ User already exists: $_userId');
+          debugPrint('✓ User already exists: $userId');
         }
       } else {
         debugPrint('⚠️ Failed to ensure user exists: ${response.statusCode} - ${response.body}');
@@ -102,8 +109,14 @@ class SyncService {
 
   /// Sync messages from backend
   Future<void> syncMessages() async {
+    final userId = _userId;
+    if (userId == null) {
+      debugPrint('⚠️ Skipping message sync - no authenticated user');
+      return;
+    }
+    
     try {
-      await messagesService.syncMessages(_userId);
+      await messagesService.syncMessages(userId);
     } catch (e) {
       debugPrint('❌ Message sync error: $e');
       // Don't throw - let the app continue working offline

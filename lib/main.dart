@@ -226,7 +226,7 @@ class _AppRouterState extends State<AppRouter> {
                       _errorMessage = '';
                       _isLoading = true;
                     });
-                    _checkOnboardingStatus();
+                    _checkAppState();
                   },
                   child: const Text('Retry'),
                 ),

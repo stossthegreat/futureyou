@@ -230,12 +230,10 @@ class AuthService {
   // Register user with backend
   Future<void> _registerWithBackend({required String name, required String email}) async {
     try {
-      // Store identity in local storage (for onboarding data)
-      await LocalStorageService.saveUserIdentity(
-        name: name,
-        age: null, // Will be set during onboarding if not set
-        burningQuestion: null,
-      );
+      // Store identity in local storage (same format as onboarding)
+      await LocalStorageService.saveSetting('userName', name);
+      await LocalStorageService.saveSetting('userAge', 0); // Can be updated later
+      await LocalStorageService.saveSetting('burningQuestion', ''); // Can be updated later
 
       // Sync with backend
       await ApiClient.syncIdentityToBackend();

@@ -252,7 +252,8 @@ class ApiClient {
       };
       
       final uri = Uri.parse('$_baseUrl/analytics').replace(queryParameters: queryParams);
-      final response = await http.get(uri, headers: _headers).timeout(_timeout);
+      final headers = await _headers;
+      final response = await http.get(uri, headers: headers).timeout(_timeout);
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
