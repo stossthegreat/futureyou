@@ -56,7 +56,7 @@ export async function authMiddleware(
     };
 
     // Ensure user exists in database
-    await ensureUserExists(request.user.id, request.user.email, request.user.name);
+    await ensureUserExists(request.user.id, request.user.email);
 
     // Log authenticated request
     console.log(`✅ Authenticated request from user: ${request.user.id} (${request.user.email})`);
@@ -74,7 +74,7 @@ export async function authMiddleware(
  * Ensure user exists in database
  * Auto-creates user record if it doesn't exist
  */
-async function ensureUserExists(userId: string, email: string | null, name: string | null): Promise<void> {
+async function ensureUserExists(userId: string, email: string | null): Promise<void> {
   try {
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
@@ -87,7 +87,6 @@ async function ensureUserExists(userId: string, email: string | null, name: stri
         data: {
           id: userId,
           email: email || undefined,
-          name: name || 'User',
           createdAt: new Date(),
         },
       });
@@ -124,7 +123,7 @@ export async function optionalAuthMiddleware(
         };
         
         // Ensure user exists in database
-        await ensureUserExists(request.user.id, request.user.email, request.user.name);
+        await ensureUserExists(request.user.id, request.user.email);
         
         console.log(`✅ Optional auth: user ${request.user.id} authenticated`);
       }
