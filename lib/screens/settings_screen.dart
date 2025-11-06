@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/glass_button.dart';
 import '../services/local_storage.dart';
+import '../services/auth_service.dart';
 import '../providers/habit_provider.dart';
+import '../providers/auth_provider.dart';
+import 'auth/login_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -93,6 +97,63 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _showSuccessSnackBar('Local data reset successfully');
     }
   }
+
+  Future<void> _logout() async {
+    final confirmed = await _showConfirmationDialog(
+      'Logout',
+      'Are you sure you want to logout?',
+    );
+    
+    if (confirmed) {
+      try {
+        final authService = ref.read(authServiceProvider);
+        await authService.signOut();
+        
+        // Clear all local data
+        await LocalStorageService.clearAllHabits();
+        await LocalStorageService.clearAllSettings();
+        await Hive.deleteFromDisk();
+        
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        _showErrorSnackBar('Logout failed: $e');
+      }
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    final confirmed = await _showConfirmationDialog(
+      'Delete Account',
+      'This will PERMANENTLY delete your account and all associated data. This action CANNOT be undone. Are you absolutely sure?',
+      isDestructive: true,
+    );
+    
+    if (confirmed) {
+      try {
+        final authService = ref.read(authServiceProvider);
+        await authService.deleteAccount();
+        
+        // Clear all local data
+        await LocalStorageService.clearAllHabits();
+        await LocalStorageService.clearAllSettings();
+        await Hive.deleteFromDisk();
+        
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        _showErrorSnackBar('Delete account failed: $e');
+      }
+    }
+  }
   
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -132,16 +193,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
   
-  Future<bool> _showConfirmationDialog(String title, String content) async {
+  Future<bool> _showConfirmationDialog(
+    String title,
+    String content, {
+    bool isDestructive = false,
+  }) async {
     return await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.baseDark2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-          side: const BorderSide(color: AppColors.glassBorder),
+          side: BorderSide(
+            color: isDestructive ? AppColors.error.withOpacity(0.5) : AppColors.glassBorder,
+          ),
         ),
-        title: Text(title, style: AppTextStyles.h3),
+        title: Text(
+          title,
+          style: AppTextStyles.h3.copyWith(
+            color: isDestructive ? AppColors.error : AppColors.textPrimary,
+          ),
+        ),
         content: Text(
           content,
           style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
@@ -161,7 +233,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             backgroundColor: AppColors.error.withOpacity(0.2),
             borderColor: AppColors.error.withOpacity(0.3),
             child: Text(
-              'Confirm',
+              isDestructive ? 'Delete' : 'Confirm',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.error,
                 fontWeight: FontWeight.w600,
@@ -441,6 +513,85 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ],
                           ),
                   ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: AppSpacing.lg),
+          
+          // Account Management section
+          GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Account Management',
+                  style: AppTextStyles.h3.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Manage your authentication and account settings',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                
+                Column(
+                  children: [
+                    // Logout button
+                    SizedBox(
+                      width: double.infinity,
+                      child: GlassButton(
+                        onPressed: _logout,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              LucideIcons.logOut,
+                              size: 16,
+                              color: AppColors.textPrimary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Logout',
+                              style: AppTextStyles.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    // Delete account button
+                    SizedBox(
+                      width: double.infinity,
+                      child: GlassButton(
+                        onPressed: _deleteAccount,
+                        backgroundColor: AppColors.error.withOpacity(0.1),
+                        borderColor: AppColors.error.withOpacity(0.3),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              LucideIcons.userX,
+                              size: 16,
+                              color: AppColors.error,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Delete Account',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "709150622649",
+    "project_id": "future-you-os",
+    "storage_bucket": "future-you-os.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:709150622649:android:e624237fdbbb6e346aac68",
+        "android_client_info": {
+          "package_name": "com.futureyou.futureyouos"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "709150622649-k0md1psiqr4qvmpc6kl910sgltb5lsr3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBe8DTpda4keWYQigD0B-pGlC_Pcwgtd9g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "709150622649-k0md1psiqr4qvmpc6kl910sgltb5lsr3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+
