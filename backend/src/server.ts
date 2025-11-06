@@ -68,6 +68,17 @@ const buildServer = () => {
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   }));
+  
+  // Debug endpoint to check Firebase initialization
+  fastify.get("/debug/firebase", async () => {
+    const { getFirebaseAdmin } = await import("./utils/firebase-admin");
+    const firebaseApp = getFirebaseAdmin();
+    return {
+      firebase_initialized: firebaseApp !== null,
+      has_service_account_env: !!process.env.FIREBASE_SERVICE_ACCOUNT,
+      env_length: process.env.FIREBASE_SERVICE_ACCOUNT?.length || 0,
+    };
+  });
 
   // Protected routes (Firebase auth required)
   // Apply auth middleware to all controllers
