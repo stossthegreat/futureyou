@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { verifyFirebaseToken } from '../utils/firebase-admin';
+import { prisma } from '../utils/db';
 
 // Extend Fastify request type to include user
 declare module 'fastify' {
@@ -54,6 +55,9 @@ export async function authMiddleware(
       name: decodedToken.name || null,
     };
 
+    // Ensure user exists in database
+    await ensureUserExists(request.user.id, request.user.email, request.user.name);
+
     // Log authenticated request
     console.log(`✅ Authenticated request from user: ${request.user.id} (${request.user.email})`);
     
@@ -63,6 +67,35 @@ export async function authMiddleware(
       error: 'Internal Server Error',
       message: 'Authentication failed',
     });
+  }
+}
+
+/**
+ * Ensure user exists in database
+ * Auto-creates user record if it doesn't exist
+ */
+async function ensureUserExists(userId: string, email: string | null, name: string | null): Promise<void> {
+  try {
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    // If user doesn't exist, create them
+    if (!existingUser) {
+      await prisma.user.create({
+        data: {
+          id: userId,
+          email: email || undefined,
+          name: name || 'User',
+          createdAt: new Date(),
+        },
+      });
+      console.log(`✅ Auto-created user in database: ${userId} (${email})`);
+    }
+  } catch (error) {
+    console.error('⚠️ Error ensuring user exists:', error);
+    // Don't throw - allow request to continue even if user creation fails
   }
 }
 
@@ -89,6 +122,10 @@ export async function optionalAuthMiddleware(
           email: decodedToken.email || null,
           name: decodedToken.name || null,
         };
+        
+        // Ensure user exists in database
+        await ensureUserExists(request.user.id, request.user.email, request.user.name);
+        
         console.log(`✅ Optional auth: user ${request.user.id} authenticated`);
       }
     }
