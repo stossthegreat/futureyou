@@ -8,6 +8,8 @@ import '../../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 import '../main_screen.dart';
+import '../terms_screen.dart';
+import '../privacy_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +24,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _agreedToTerms = false;
+  bool _agreedToPrivacy = false;
 
   @override
   void dispose() {
@@ -32,6 +36,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
+    
+    if (!_agreedToTerms || !_agreedToPrivacy) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please agree to Terms and Privacy Policy to continue'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -67,6 +81,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
+    if (!_agreedToTerms || !_agreedToPrivacy) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please agree to Terms and Privacy Policy to continue'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    
     setState(() => _isLoading = true);
 
     try {
@@ -98,9 +122,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _signInWithApple() async {
+    if (!_agreedToTerms || !_agreedToPrivacy) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please agree to Terms and Privacy Policy to continue'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    
     setState(() => _isLoading = true);
 
-    try {
+    try{
       final authService = ref.read(authServiceProvider);
       final result = await authService.signInWithApple();
 
@@ -308,7 +342,105 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                         
-                        const SizedBox(height: AppSpacing.md),
+                        const SizedBox(height: AppSpacing.lg),
+                        
+                        // Terms and Conditions Checkbox
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _agreedToTerms,
+                              onChanged: (value) {
+                                setState(() => _agreedToTerms = value ?? false);
+                              },
+                              fillColor: MaterialStateProperty.resolveWith((states) {
+                                if (states.contains(MaterialState.selected)) {
+                                  return AppColors.emerald;
+                                }
+                                return Colors.transparent;
+                              }),
+                              side: const BorderSide(color: AppColors.glassBorder),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const TermsScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Text.rich(
+                                  TextSpan(
+                                    text: 'I agree to the ',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: 'Terms and Conditions',
+                                        style: AppTextStyles.caption.copyWith(
+                                          color: AppColors.emerald,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: AppSpacing.sm),
+                        
+                        // Privacy Policy Checkbox
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _agreedToPrivacy,
+                              onChanged: (value) {
+                                setState(() => _agreedToPrivacy = value ?? false);
+                              },
+                              fillColor: MaterialStateProperty.resolveWith((states) {
+                                if (states.contains(MaterialState.selected)) {
+                                  return AppColors.emerald;
+                                }
+                                return Colors.transparent;
+                              }),
+                              side: const BorderSide(color: AppColors.glassBorder),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const PrivacyScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Text.rich(
+                                  TextSpan(
+                                    text: 'I agree to the ',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: 'Privacy Policy',
+                                        style: AppTextStyles.caption.copyWith(
+                                          color: AppColors.emerald,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: AppSpacing.lg),
                         
                         // Sign in button
                         ElevatedButton(

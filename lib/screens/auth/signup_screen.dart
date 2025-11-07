@@ -7,6 +7,8 @@ import '../../services/sync_service.dart';
 import '../../providers/auth_provider.dart';
 import 'login_screen.dart';
 import '../main_screen.dart';
+import '../terms_screen.dart';
+import '../privacy_screen.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -24,7 +26,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _acceptedTerms = false;
+  bool _agreedToTerms = false;
+  bool _agreedToPrivacy = false;
 
   @override
   void dispose() {
@@ -48,10 +51,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_acceptedTerms) {
+    if (!_agreedToTerms || !_agreedToPrivacy) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please accept the Terms of Service and Privacy Policy'),
+          content: Text('Please agree to Terms and Privacy Policy to continue'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -93,10 +96,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   Future<void> _signUpWithGoogle() async {
-    if (!_acceptedTerms) {
+    if (!_agreedToTerms || !_agreedToPrivacy) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please accept the Terms of Service and Privacy Policy'),
+          content: Text('Please agree to Terms and Privacy Policy to continue'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -134,10 +137,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   Future<void> _signUpWithApple() async {
-    if (!_acceptedTerms) {
+    if (!_agreedToTerms || !_agreedToPrivacy) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please accept the Terms of Service and Privacy Policy'),
+          content: Text('Please agree to Terms and Privacy Policy to continue'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -411,45 +414,103 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         
                         const SizedBox(height: AppSpacing.md),
                         
-                        // Terms checkbox
+                        // Terms and Conditions Checkbox
                         Row(
                           children: [
                             Checkbox(
-                              value: _acceptedTerms,
+                              value: _agreedToTerms,
                               onChanged: (value) {
-                                setState(() => _acceptedTerms = value ?? false);
+                                setState(() => _agreedToTerms = value ?? false);
                               },
-                              activeColor: AppColors.emerald,
+                              fillColor: MaterialStateProperty.resolveWith((states) {
+                                if (states.contains(MaterialState.selected)) {
+                                  return AppColors.emerald;
+                                }
+                                return Colors.transparent;
+                              }),
+                              side: const BorderSide(color: AppColors.glassBorder),
                             ),
                             Expanded(
-                              child: Text.rich(
-                                TextSpan(
-                                  text: 'I accept the ',
-                                  style: AppTextStyles.captionSmall,
-                                  children: [
-                                    TextSpan(
-                                      text: 'Terms of Service',
-                                      style: AppTextStyles.captionSmall.copyWith(
-                                        color: AppColors.emerald,
-                                        decoration: TextDecoration.underline,
-                                      ),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const TermsScreen(),
                                     ),
-                                    const TextSpan(text: ' and '),
-                                    TextSpan(
-                                      text: 'Privacy Policy',
-                                      style: AppTextStyles.captionSmall.copyWith(
-                                        color: AppColors.emerald,
-                                        decoration: TextDecoration.underline,
-                                      ),
+                                  );
+                                },
+                                child: Text.rich(
+                                  TextSpan(
+                                    text: 'I agree to the ',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppColors.textSecondary,
                                     ),
-                                  ],
+                                    children: [
+                                      TextSpan(
+                                        text: 'Terms and Conditions',
+                                        style: AppTextStyles.caption.copyWith(
+                                          color: AppColors.emerald,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ],
                         ),
                         
-                        const SizedBox(height: AppSpacing.md),
+                        const SizedBox(height: AppSpacing.sm),
+                        
+                        // Privacy Policy Checkbox
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _agreedToPrivacy,
+                              onChanged: (value) {
+                                setState(() => _agreedToPrivacy = value ?? false);
+                              },
+                              fillColor: MaterialStateProperty.resolveWith((states) {
+                                if (states.contains(MaterialState.selected)) {
+                                  return AppColors.emerald;
+                                }
+                                return Colors.transparent;
+                              }),
+                              side: const BorderSide(color: AppColors.glassBorder),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const PrivacyScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Text.rich(
+                                  TextSpan(
+                                    text: 'I agree to the ',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: 'Privacy Policy',
+                                        style: AppTextStyles.caption.copyWith(
+                                          color: AppColors.emerald,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: AppSpacing.lg),
                         
                         // Sign up button
                         ElevatedButton(

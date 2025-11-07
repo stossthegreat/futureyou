@@ -1127,94 +1127,149 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
   }
 
   Widget _buildCustomGoalInput() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF18181B),
-        borderRadius: BorderRadius.circular(AppBorderRadius.xl),
-        border: Border.all(
-          color: AppColors.emerald.withOpacity(0.2),
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Or Start Your Own',
-            style: AppTextStyles.bodySemiBold.copyWith(
-              color: AppColors.emerald,
+    return Column(
+      children: [
+        // AI What-If Simulator Button
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedPreset = 'simulator';
+              _chatExpanded = true;
+            });
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              gradient: AppColors.emeraldGradient,
+              borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.emerald.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                    border: Border.all(
-                      color: AppColors.emerald.withOpacity(0.3),
-                    ),
                   ),
-                  child: TextField(
-                    controller: _customInputController,
-                    style: AppTextStyles.body.copyWith(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'What if I... (e.g., started waking at 5am, learned Spanish)',
-                      hintStyle: AppTextStyles.body.copyWith(
-                        color: AppColors.textQuaternary,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.all(AppSpacing.md),
-                    ),
-                    onSubmitted: (_) => _startCustomChat(),
+                  child: const Text(
+                    '🔮',
+                    style: TextStyle(fontSize: 32),
                   ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              GestureDetector(
-                onTap: _startCustomChat,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: AppColors.emeraldGradient,
-                    borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.emerald.withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Explore',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                        'AI What-If Simulator',
+                        style: AppTextStyles.h3.copyWith(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20,
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      const Icon(
-                        LucideIcons.chevronRight,
-                        color: Colors.white,
-                        size: 20,
+                      const SizedBox(height: 4),
+                      Text(
+                        'See both futures → Choose wisely',
+                        style: AppTextStyles.caption.copyWith(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+                const Icon(
+                  LucideIcons.chevronRight,
+                  color: Colors.black,
+                  size: 28,
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-    ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0);
+        ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
+        
+        const SizedBox(height: AppSpacing.lg),
+        
+        // AI Habit Master Button
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedPreset = 'habit-master';
+              _chatExpanded = true;
+            });
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              gradient: AppColors.emeraldGradient,
+              borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.emerald.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                  ),
+                  child: const Text(
+                    '🧩',
+                    style: TextStyle(fontSize: 32),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AI Habit Master',
+                        style: AppTextStyles.h3.copyWith(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Science-backed habit implementation',
+                        style: AppTextStyles.caption.copyWith(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  LucideIcons.chevronRight,
+                  color: Colors.black,
+                  size: 28,
+                ),
+              ],
+            ),
+          ),
+        ).animate(delay: 300.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
+      ],
+    );
   }
 
   Widget _buildCustomGoalsSection() {
@@ -2200,4 +2255,5 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
     );
   }
 }
+
 
