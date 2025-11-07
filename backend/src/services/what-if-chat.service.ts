@@ -487,6 +487,7 @@ export class WhatIfChatService {
     message: string; 
     chat?: string;
     outputCard?: any;
+    habits?: any[];
     suggestedPlan?: any; 
     splitFutureCard?: string; 
     sources?: string[];
