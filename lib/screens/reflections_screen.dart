@@ -122,6 +122,13 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                             isSelected: _filter == MessageKind.letter,
                             onTap: () => _setFilter(MessageKind.letter),
                           ),
+                          const SizedBox(width: AppSpacing.sm),
+                          _FilterChip(
+                            label: 'Vault',
+                            emoji: '💎',
+                            isSelected: _filter == MessageKind.vault,
+                            onTap: () => _setFilter(MessageKind.vault),
+                          ),
                         ],
                       ),
                     ),
@@ -278,6 +285,8 @@ class _LetterCard extends StatelessWidget {
         return AppColors.emeraldLight;
       case MessageKind.mirror:
         return AppColors.cyan;
+      case MessageKind.vault:
+        return const Color(0xFFFFD700);
       default:
         return AppColors.emerald;
     }

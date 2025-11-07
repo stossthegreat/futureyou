@@ -16,6 +16,8 @@ enum MessageKind {
   letter,
   @HiveField(5)
   chat,
+  @HiveField(6)
+  vault,
 }
 
 @HiveType(typeId: 3)
@@ -95,6 +97,8 @@ class CoachMessage extends HiveObject {
         return MessageKind.letter;
       case 'chat':
         return MessageKind.chat;
+      case 'vault':
+        return MessageKind.vault;
       default:
         return MessageKind.chat;
     }
@@ -114,6 +118,8 @@ class CoachMessage extends HiveObject {
         return '🪞';
       case MessageKind.chat:
         return '💬';
+      case MessageKind.vault:
+        return '💎';
     }
   }
 
@@ -131,6 +137,8 @@ class CoachMessage extends HiveObject {
         return 'Mirror Reflection';
       case MessageKind.chat:
         return 'Chat';
+      case MessageKind.vault:
+        return 'Vault';
     }
   }
 }
