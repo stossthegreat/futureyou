@@ -182,11 +182,7 @@ Use their exact phrases when possible. Make it personal, not generic.`;
 }
 
 function buildPhasePrompt(config: PhaseConfig): string {
-  const basePrompt = config.promptTemplate;
-  
-  // Replace template variables if needed
-  return basePrompt
-    .replace(/\$\{this\?\.questions\?\.join\([^)]+\)\s*\|\|[^}]+\}/g, config.questions.join(" | "));
+  return config.promptTemplate;
 }
 
 export async function getPhaseStatus(userId: string) {
