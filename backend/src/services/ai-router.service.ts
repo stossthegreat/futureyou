@@ -6,7 +6,7 @@ function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
   if (!process.env.OPENAI_API_KEY) return null;
   const apiKey = process.env.OPENAI_API_KEY.trim();
-  return new OpenAI({ apiKey, timeout: 15000 });
+  return new OpenAI({ apiKey, timeout: 60000 }); // 60 seconds for complex What-If responses
 }
 
 interface AIRouterConfig {
@@ -31,9 +31,9 @@ interface AIRouterResponse {
 
 // MODEL TIERS WITH REASONING + VERBOSITY
 const MODEL_TIERS = {
-  futureYou: { model: "gpt-4o", effort: "high", verbosity: "high", maxTokens: 900 },
-  habit: { model: "gpt-4o", effort: "medium", verbosity: "medium", maxTokens: 800 },
-  whatif: { model: "gpt-4o", effort: "medium", verbosity: "high", maxTokens: 800 },
+  futureYou: { model: "gpt-4o", effort: "high", verbosity: "high", maxTokens: 1200 },
+  habit: { model: "gpt-4o", effort: "medium", verbosity: "medium", maxTokens: 1200 },
+  whatif: { model: "gpt-4o", effort: "medium", verbosity: "high", maxTokens: 1500 },
   brief: { model: "gpt-4o-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
   nudge: { model: "gpt-4o-mini", effort: "low", verbosity: "medium", maxTokens: 200 },
   debrief: { model: "gpt-4o-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
