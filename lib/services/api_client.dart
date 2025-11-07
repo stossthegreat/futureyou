@@ -479,15 +479,19 @@ class ApiResponse<T> {
 // Chat related models
 class ChatMessage {
   final String id;
-  final String role; // 'user' or 'future'
+  final String role; // 'user' or 'future' or 'card'
   final String text;
   final DateTime timestamp;
+  final Map<String, dynamic>? outputCard; // NEW: For beautiful output cards
+  final List<dynamic>? habits; // NEW: For habit commit
   
   ChatMessage({
     required this.id,
     required this.role,
     required this.text,
     required this.timestamp,
+    this.outputCard,
+    this.habits,
   });
   
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
@@ -496,6 +500,8 @@ class ChatMessage {
       role: json['role'],
       text: json['text'],
       timestamp: DateTime.parse(json['timestamp']),
+      outputCard: json['outputCard'],
+      habits: json['habits'],
     );
   }
   
@@ -505,6 +511,8 @@ class ChatMessage {
       'role': role,
       'text': text,
       'timestamp': timestamp.toIso8601String(),
+      if (outputCard != null) 'outputCard': outputCard,
+      if (habits != null) 'habits': habits,
     };
   }
 }

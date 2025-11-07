@@ -363,15 +363,24 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
 
         setState(() {
           _messages.add(responseMessage);
+          
+          // If AI generated OUTPUT CARD, add it as a special card message! (NEW!)
+          if (outputCard != null && outputCard is Map) {
+            _messages.add(ChatMessage(
+              id: (DateTime.now().millisecondsSinceEpoch + 2).toString(),
+              role: 'card',
+              text: 'Output Card',
+              timestamp: DateTime.now(),
+              outputCard: Map<String, dynamic>.from(outputCard as Map),
+              habits: habits,
+            ));
+          }
+          
           _isLoading = false;
         });
 
-        // If AI generated OUTPUT CARD, show it! (NEW!)
-        if (outputCard != null && outputCard is Map) {
-          _showOutputCard(Map<String, dynamic>.from(outputCard as Map), habits);
-        }
-        // Fallback: If AI generated a plan (legacy), show it
-        else if (suggestedPlan != null && suggestedPlan is Map) {
+        // Fallback: If AI generated a plan (legacy), show it as dialog
+        if (outputCard == null && suggestedPlan != null && suggestedPlan is Map) {
           _showSuggestedPlanCard(Map<String, dynamic>.from(suggestedPlan as Map));
         }
       } else {
@@ -909,6 +918,56 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
         );
       }
     }
+  }
+
+  // NEW: Save card to Vault
+  Future<void> _saveCardToVault(Map<String, dynamic> card, List<dynamic>? habits) async {
+    try {
+      final response = await ApiClient.saveToVault(
+        content: card['title'] ?? 'What-If Simulation',
+        sections: card['sections'],
+        habits: habits,
+      );
+      
+      if (response.success) {
+        _showToast('💾 Saved to Vault!');
+      } else {
+        throw Exception(response.error ?? 'Failed to save');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // NEW: Copy card to clipboard
+  void _copyCardToClipboard(Map<String, dynamic> card) {
+    final buffer = StringBuffer();
+    buffer.writeln(card['title'] ?? 'Your Simulation');
+    buffer.writeln('');
+    
+    if (card['summary'] != null) {
+      buffer.writeln(card['summary']);
+      buffer.writeln('');
+    }
+    
+    for (var section in (card['sections'] as List? ?? [])) {
+      buffer.writeln(section['content'] ?? '');
+      buffer.writeln('');
+    }
+    
+    if (card['sources'] != null && (card['sources'] as List).isNotEmpty) {
+      buffer.writeln('Sources: ${(card['sources'] as List).join(', ')}');
+    }
+    
+    Clipboard.setData(ClipboardData(text: buffer.toString()));
+    _showToast('📋 Copied to clipboard!');
   }
 
   void _startCustomChat() {
@@ -1736,6 +1795,11 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
   }
 
   Widget _buildMessageBubble(ChatMessage message) {
+    // Special rendering for OUTPUT CARDS!
+    if (message.role == 'card' && message.outputCard != null) {
+      return _buildInlineOutputCard(message.outputCard!, message.habits);
+    }
+    
     final isUser = message.role == 'user';
 
     return Padding(
@@ -1802,6 +1866,292 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // NEW: Beautiful inline output card (stays in chat!)
+  Widget _buildInlineOutputCard(Map<String, dynamic> card, List<dynamic>? habits) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF0F1F0F),
+              Colors.black,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.emerald.withOpacity(0.3), width: 2),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: AppColors.emeraldGradient,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(22),
+                  topRight: Radius.circular(22),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    _selectedPreset == 'simulator' ? '🌗' : '🧩',
+                    style: const TextStyle(fontSize: 32),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      card['title'] ?? 'Your Future Simulation',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Card content
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Summary
+                  if (card['summary'] != null) ...[
+                    SelectableText(
+                      card['summary'],
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 15,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Sections
+                  ...((card['sections'] as List?) ?? []).map((section) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.emerald.withOpacity(0.2),
+                          ),
+                        ),
+                        child: SelectableText(
+                          section['content'] ?? '',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.85),
+                            fontSize: 14,
+                            height: 1.6,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+
+                  // Habits
+                  if (habits != null && habits.isNotEmpty) ...[
+                    Text(
+                      '🎯 HABITS TO COMMIT',
+                      style: TextStyle(
+                        color: AppColors.emerald,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...habits.map((habit) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.emerald.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.emerald.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                habit['emoji'] ?? '✅',
+                                style: const TextStyle(fontSize: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      habit['title'] ?? '',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    if (habit['frequency'] != null)
+                                      Text(
+                                        habit['frequency'],
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.6),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Sources
+                  if (card['sources'] != null && (card['sources'] as List).isNotEmpty) ...[
+                    Text(
+                      '📚 SOURCES CITED',
+                      style: TextStyle(
+                        color: AppColors.emerald,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SelectableText(
+                      (card['sources'] as List).join(' • '),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.6),
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Action buttons (4 buttons now!)
+                  Row(
+                    children: [
+                      // Not Yet button
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            // Just closes the card (no action needed since it's inline)
+                            _showToast('Take your time! 💚');
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Not Yet',
+                            style: TextStyle(
+                              color: AppColors.textTertiary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Save to Vault button
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => _saveCardToVault(card, habits),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            backgroundColor: AppColors.emerald.withOpacity(0.1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            '💾 Vault',
+                            style: TextStyle(
+                              color: AppColors.emerald,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      // Copy button
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => _copyCardToClipboard(card),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            backgroundColor: Colors.white.withOpacity(0.05),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            '📋 Copy',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Commit Habits button (only if habits exist)
+                      if (habits != null && habits.isNotEmpty)
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: () => _commitHabitsFromCard(habits),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.emerald,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Commit 🔥',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
