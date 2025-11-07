@@ -45,7 +45,7 @@ Goal: Write a short, motivating morning brief.
 `;
 
     const ai = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model: process.env.OPENAI_MODEL || "gpt-5-mini",
       max_tokens: 180,
       messages: [
         { role: "system", content: context },
@@ -91,7 +91,7 @@ Acknowledge effort, mention consistency, and inspire readiness for tomorrow.
 `;
 
     const ai = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model: process.env.OPENAI_MODEL || "gpt-5-mini",
       max_tokens: 180,
       messages: [{ role: "user", content: prompt }],
     });

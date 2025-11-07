@@ -31,13 +31,13 @@ interface AIRouterResponse {
 
 // MODEL TIERS WITH REASONING + VERBOSITY
 const MODEL_TIERS = {
-  futureYou: { model: "gpt-4o", effort: "high", verbosity: "high", maxTokens: 1500 },
-  habit: { model: "gpt-4o", effort: "medium", verbosity: "medium", maxTokens: 2500 },
-  whatif: { model: "gpt-4o", effort: "medium", verbosity: "high", maxTokens: 2500 },
-  brief: { model: "gpt-4o-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
-  nudge: { model: "gpt-4o-mini", effort: "low", verbosity: "medium", maxTokens: 200 },
-  debrief: { model: "gpt-4o-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
-  default: { model: "gpt-4o-mini", effort: "low", verbosity: "medium", maxTokens: 500 },
+  futureYou: { model: "gpt-5", effort: "high", verbosity: "high", maxTokens: 1500 },
+  habit: { model: "gpt-5", effort: "medium", verbosity: "medium", maxTokens: 2500 },
+  whatif: { model: "gpt-5", effort: "medium", verbosity: "high", maxTokens: 2500 },
+  brief: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
+  nudge: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 200 },
+  debrief: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
+  default: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 500 },
 };
 
 /**
@@ -93,7 +93,7 @@ export class AIRouterService {
       console.error(`❌ AI call failed (${tier.model}):`, e.message);
       
       // Fallback to mini if primary fails
-      const fallbackModel = tier.model === "gpt-4o" ? "gpt-4o-mini" : "gpt-4o-mini";
+      const fallbackModel = tier.model === "gpt-5" ? "gpt-5-mini" : "gpt-5-mini";
       console.log(`🔄 Falling back to ${fallbackModel}`);
       
       try {

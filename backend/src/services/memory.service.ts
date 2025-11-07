@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import OpenAI from "openai";
 import { MENTOR } from "../config/mentors.config";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
 const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 400);
 const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 10000);
 

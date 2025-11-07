@@ -52,9 +52,9 @@ export async function runPhaseFlow(userId: string, userInput: string) {
   // Add user message
   messages.push({ role: "user", content: userInput });
 
-  // Call gpt-4o-mini for phase coaching (fast, conversational)
+  // Call gpt-5-mini for phase coaching (fast, conversational)
   const coachResponse = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [
       { role: "system", content: buildPhasePrompt(phaseConfig) },
       ...messages
@@ -80,7 +80,7 @@ export async function runPhaseFlow(userId: string, userInput: string) {
                            coachText.toLowerCase().includes("let's commit");
 
   if (userMessages >= 3 || (userMessages >= 2 && signalReadiness)) {
-    // Generate insight card with gpt-4o (powerful synthesis)
+    // Generate insight card with gpt-5 (powerful synthesis)
     card = await generateInsightCard(userId, currentPhase, messages, phaseConfig);
     
     // Advance to next phase
@@ -152,7 +152,7 @@ Use their exact phrases when possible. Make it personal, not generic.`;
 
   try {
     const cardResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5",
       messages: [{ role: "user", content: cardPrompt }],
       response_format: { type: "json_object" },
       temperature: 0.8,
