@@ -37,7 +37,13 @@ function validateEnv() {
 }
 
 const buildServer = () => {
-  const fastify = Fastify({ logger: true });
+  const fastify = Fastify({ 
+    logger: true,
+    bodyLimit: 10485760, // 10MB
+    connectionTimeout: 0, // Disable connection timeout
+    keepAliveTimeout: 120000, // 120 seconds
+    requestTimeout: 120000, // 120 seconds for AI requests!
+  });
 
   fastify.register(cors, {
     origin: true,
