@@ -276,9 +276,9 @@ ${history.slice(-20).map((m: any) => `${m.role}: ${m.content}`).join("\n")}
         payload: { 
           userMessage, 
           aiResponse: aiText,
-          insightCards: newInsights,
+          insightCards: JSON.parse(JSON.stringify(newInsights)),
           contradictions,
-        },
+        } as any,
       },
     });
 
