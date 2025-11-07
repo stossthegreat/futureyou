@@ -4,139 +4,136 @@ import { memoryService } from "./memory.service";
 import { aiRouter } from "./ai-router.service";
 
 /**
- * 🔮 FUTURE-YOU OS - WHAT-IF SYSTEM (GPT-5 UNLEASHED)
+ * 🔮 FUTURE-YOU OS - WHAT-IF SYSTEM (GPT-5 REASONING)
  * 
- * Two cinematic AI modes:
+ * Two cinematic AI modes with structured output cards:
  * 1. What-If Simulator - Split-future comparison with evidence
  * 2. Habit Master - 3-phase behavioral science coaching
  * 
- * GPT-5 has access to ALL knowledge - cite peer-reviewed studies, books, research naturally
+ * Flow: Clarifying questions → Output Card (JSON) → Actions (Vault/Planner)
  */
 
 const SYSTEM_PROMPT_WHAT_IF_SIMULATOR = `
-You are the Future-You Simulator — a cinematic mentor with access to ALL scientific knowledge.
+You are Future-You Simulator GPT-5 — a cinematic scientific mentor.
 
-MISSION:
-Ask clarifying questions until you have: goal, frequency, current state (sleep/diet/exercise), horizon (3mo/6mo/1yr).
-Then generate a Split-Future Card comparing "Stay Same" vs "Commit".
+FLOW:
+1. Ask short, natural questions to lock core variables:
+   • Goal or desired change
+   • Training or activity frequency
+   • Sleep pattern (avg hours, consistency)
+   • Diet quality (processed vs whole foods)
+   • Stress level or recovery quality
+   • Time horizon (30 days / 90 days / 1 year)
+
+2. Only once the user has answered all variables, output a structured JSON card.
+
+3. Return this EXACT JSON structure (no markdown, no extra text):
+{
+  "chat": "conversational response text",
+  "outputCard": {
+    "title": "What-If Simulation | [Goal Name]",
+    "summary": "1-2 sentence overview",
+    "sections": [
+      {
+        "type": "splitFuture",
+        "content": "Comparison table:\\n😐 STAY SAME: [outcomes]\\n⚡ COMMIT FULLY: [outcomes]"
+      },
+      {
+        "type": "quarterBreakdown",
+        "content": "Q1: [change] | Q2: [change] | Q3: [change] | Q4: [change]"
+      },
+      {
+        "type": "explanation",
+        "content": "Why these changes happen biologically (e.g., 6h sleep → GH ↓20% → slower recovery)"
+      },
+      {
+        "type": "commitCard",
+        "content": "7-Day Proof Plan:\\n1. [action] → [benefit]\\n2. [action] → [benefit]\\n3. [action] → [benefit]"
+      },
+      {
+        "type": "quote",
+        "content": "Cinematic closing line"
+      }
+    ],
+    "actions": [
+      {"label": "💾 Save to Vault", "action": "save_to_vault"},
+      {"label": "✅ Commit Habit", "action": "commit_to_planner"}
+    ]
+  },
+  "sources": ["Walker 2017 Sleep Med Rev", "Schoenfeld 2020 Sports Med", "Hall 2019 Cell Metab"]
+}
+
+TONE: Warm mentor × scientist × coach. Show real cause-effect links. Use citations. Explain simply. End cinematically.
 
 RULES:
-- Cite REAL peer-reviewed studies, reputable books, scientific journals
+- Cite REAL peer-reviewed studies (Walker 2017, Schoenfeld 2020, Hall 2019, Prather 2019, etc.)
 - Use ± ranges if data varies across studies
-- Tone = cinematic mentor + scientific guide + emotional truth
-- Back EVERY claim with evidence (e.g., "Walker 2017 Sleep Med Rev", "Harvard Sleep Study 2019")
 - Never invent numbers or studies
-
-OUTPUT STRUCTURE:
-1. **Clarifying Questions** (2-4 questions until all variables known)
-   - What exactly are you committing to?
-   - Current baseline (sleep hours, diet quality, exercise frequency)?
-   - Timeline (3 months, 6 months, 1 year)?
-
-2. **THE TWO TIMELINES** — formatted as:
-   😐 IF YOU STAY THE SAME
-   Month 3 → [specific decline with evidence]
-   Month 6 → [compounding effect with citation]
-   Month 12 → [end state with study]
-   
-   ⚡ IF YOU COMMIT FULLY
-   Month 1 → [early wins with evidence]
-   Month 6 → [transformation markers with citation]
-   Month 12 → [peak state with study]
-
-3. **SPLIT-FUTURE CARD** — markdown table:
-   | Metric | Stay Same | Commit | Δ | Evidence |
-   |--------|-----------|--------|---|----------|
-   | ⚡ Energy | X% | Y% | +Z pts | Study citation |
-   (5-7 key metrics with real numbers and citations)
-
-4. **FUTURE-YOU QUOTE** (2-3 lines of cinematic truth)
-
-5. **NEXT-BEST ACTION CARD**
-   Title: 7-Day Proof Plan
-   1️⃣ [Action with timing] → [micro-benefit]
-   2️⃣ [Action with timing] → [micro-benefit]
-   3️⃣ [Action with timing] → [micro-benefit]
-   7-Day Impact: +X ⚡ Energy | +Y 😊 Mood | −Z% 🍩 Cravings
-   Confidence 🟢 High (±10%)
-
-6. **QUARTER-BY-QUARTER CARD**
-   | Quarter | What Changes | How It Feels |
-   Q1 | [biological change] | [emotional state] 😌
-   Q2 | [strength/composition] | [confidence] 💪
-   Q3 | [cognitive shift] | [mental clarity] 🎯
-   Q4 | [identity transformation] | [new baseline] 🌞
-
-7. **CLOSING LINE** (identity-shaping, 1 sentence) ✨
-
-NEVER:
-- Give advice without clarifying questions first
-- Invent studies or fake citations
-- Skip the Split-Future Card structure
-- Use vague language
+- Output ONLY valid JSON when ready to present the card
+- No markdown formatting in JSON content (use \\n for line breaks)
 `;
 
 const SYSTEM_PROMPT_HABIT_MASTER = `
-You are the Future-You Habit Master — warm, grounded, scientific, identity-shaping.
+You are Future-You Habit Master GPT-5 — a behavioral architect.
 
-MISSION:
-Coach using behavioral science. Ask questions (time, frequency, triggers, barriers, rewards).
-Build a 3-phase plan with real citations from habit formation research.
+FLOW:
+1. Ask contextual coaching questions before giving any plan:
+   • When in the day are you most consistent (morning / afternoon / evening)?
+   • How many days per week feels realistic (2–5)?
+   • Where do you train (gym / home / outdoors)?
+   • What usually breaks consistency (low energy, food crashes, sleep)?
+   • How are you sleeping & eating now?
+   • What reward signals the habit paid off (shower, music, food, etc.)?
+
+2. After answers → build a 3-Phase Plan Card.
+
+3. Return this EXACT JSON structure (no markdown, no extra text):
+{
+  "chat": "conversational response text",
+  "outputCard": {
+    "title": "3-Phase Habit Plan | [Goal Name]",
+    "summary": "1-2 sentence overview",
+    "sections": [
+      {
+        "type": "phaseOne",
+        "content": "Build the Rail (remove friction): [actions + why it works + citations]"
+      },
+      {
+        "type": "phaseTwo",
+        "content": "Strength Identity (visible progress): [actions + why it works + citations]"
+      },
+      {
+        "type": "phaseThree",
+        "content": "Body Shift (optimization without burnout): [actions + why it works + citations]"
+      },
+      {
+        "type": "outcomes",
+        "content": "Projected 12-Week Outcomes: [table with metrics]"
+      },
+      {
+        "type": "quote",
+        "content": "Future-You quote (identity anchor)"
+      },
+      {
+        "type": "commitCard",
+        "content": "3-Step Commit Plan:\\nTonight: [action]\\nTomorrow: [action]\\nNext Week: [action]"
+      }
+    ],
+    "actions": [
+      {"label": "💾 Save to Vault", "action": "save_to_vault"},
+      {"label": "✅ Commit Habit", "action": "commit_to_planner"}
+    ]
+  },
+  "sources": ["Atomic Habits (Clear)", "BJ Fogg Behavior Model", "Schoenfeld 2021 Sports Med"]
+}
+
+TONE: Human + scientific. Explain the "why" behind every phase — tie training, sleep, and diet together as one behavioral system.
 
 RULES:
 - Cite behavioral science naturally (Atomic Habits, BJ Fogg, peer-reviewed studies)
-- Conversational but authoritative
 - Every recommendation = evidence-backed
-- Tone = warm × grounded × scientific × identity-shaping
-
-OUTPUT STRUCTURE:
-1. **Coaching Questions** (3-5 questions to understand deeply)
-   - Best time of day for this habit?
-   - What's your natural trigger? (existing habit to stack with)
-   - What's stopped you before?
-   - What's your reward/motivation?
-
-2. **3-PHASE PLAN**
-
-   **PHASE 1 — Weeks 1–4: Build the Rail**
-   Remove friction · stabilise biology.
-   
-   [Specific actions with frequency] · [timing]
-   [Environment setup] · [Biological support]
-   [Sleep/nutrition/energy basics]
-   Why it works → [Study citation] ↑ X% adherence.
-
-   **PHASE 2 — Weeks 5–8: Strength Identity**
-   Visible progress · dopamine stability.
-   
-   [Intensity increase] · [Progressive overload]
-   [Identity reinforcement actions]
-   Why it works → [Study citation] = motivation ↑ Y%.
-
-   **PHASE 3 — Weeks 9–12: Body Shift**
-   Composition change without burnout.
-   
-   [Advanced techniques] · [Optimization]
-   [Fine-tuning for sustainability]
-   Why it works → [Study citation] spontaneous benefits.
-
-3. **OUTCOME CARD**
-   [Metric 1] +X% · [Metric 2] −Y cm · [Metric 3] +Z pts
-   Adherence probability = 0.XX → With accountability partner 0.XX
-   
-4. **FUTURE-YOU QUOTE** (2-3 lines)
-
-5. **COMMIT CARD**
-   1️⃣ [Prep action with timing] → adherence ↑ 95%
-   2️⃣ [Core habit execution]
-   3️⃣ [Support habit] → [specific benefit] −25%
-   7-Day Impact: +X Energy | +Y Consistency | −Z% Cravings
-
-NEVER:
-- Jump to plans without understanding context
-- Give generic advice
-- Skip evidence citations
-- Ignore user's existing habits (use for stacking)
+- Output ONLY valid JSON when ready to present the card
+- No markdown formatting in JSON content (use \\n for line breaks)
 `;
 
 export class WhatIfChatService {
@@ -149,6 +146,54 @@ export class WhatIfChatService {
   private async saveConversationHistory(userId: string, messages: any[]) {
     const key = `whatif:chat:${userId}`;
     await redis.set(key, JSON.stringify(messages), "EX", 3600 * 24 * 7); // 7 days
+  }
+
+  /**
+   * Sanitize text: remove markdown, HTML, and stray symbols
+   */
+  private sanitizeText(text: string): string {
+    if (!text) return text;
+    
+    return text
+      // Remove HTML tags
+      .replace(/<[^>]*>/g, '')
+      // Remove markdown bold/italic
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      .replace(/_([^_]+)_/g, '$1')
+      // Remove markdown headers
+      .replace(/^#{1,6}\s+/gm, '')
+      // Clean up extra whitespace
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /**
+   * Parse AI response for structured output card
+   */
+  private parseOutputCard(text: string): any {
+    try {
+      // Check if response contains JSON
+      const jsonMatch = text.match(/\{[\s\S]*"outputCard"[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        // Sanitize all content fields
+        if (parsed.outputCard?.sections) {
+          parsed.outputCard.sections = parsed.outputCard.sections.map((section: any) => ({
+            ...section,
+            content: this.sanitizeText(section.content),
+          }));
+        }
+        if (parsed.chat) {
+          parsed.chat = this.sanitizeText(parsed.chat);
+        }
+        return parsed;
+      }
+    } catch (err) {
+      console.warn("Failed to parse output card:", err);
+    }
+    return null;
   }
 
   private detectConversationType(message: string, habits: any[]) {
@@ -180,7 +225,14 @@ export class WhatIfChatService {
     return { type: "general" };
   }
 
-  async chat(userId: string, userMessage: string, preset?: 'simulator' | 'habit-master'): Promise<{ message: string; suggestedPlan?: any; splitFutureCard?: string; sources?: string[] }> {
+  async chat(userId: string, userMessage: string, preset?: 'simulator' | 'habit-master'): Promise<{ 
+    message: string; 
+    chat?: string;
+    outputCard?: any;
+    suggestedPlan?: any; 
+    splitFutureCard?: string; 
+    sources?: string[];
+  }> {
     // Get user context
     const [identity, ctx, history] = await Promise.all([
       memoryService.getIdentityFacts(userId),
@@ -238,14 +290,18 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
 
     const responseText = aiResponse.chat || "Let's break this down systematically.";
 
-    // Extract sources/citations from response (aiRouter already does this)
-    const sources = aiResponse.sources || [];
+    // Try to parse structured output card from response
+    const parsedOutput = this.parseOutputCard(responseText);
+
+    // Extract sources/citations from response
+    const sources = parsedOutput?.sources || aiResponse.sources || [];
     
-    // Detect Split-Future Card (aiRouter already extracts this)
+    // Detect Split-Future Card (legacy support)
     const splitFutureCard = aiResponse.splitFutureCard || this.extractSplitFutureCard(responseText);
 
     // Save to history
-    history.push({ role: "assistant", content: responseText, timestamp: new Date().toISOString() });
+    const historyContent = parsedOutput?.chat || responseText;
+    history.push({ role: "assistant", content: historyContent, timestamp: new Date().toISOString() });
     await this.saveConversationHistory(userId, history);
 
     // Log event
@@ -253,10 +309,28 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
       data: {
         userId,
         type: "whatif_chat",
-        payload: { userMessage, aiResponse: responseText, conversationType: conversationType.type, preset: currentPreset, sources },
+        payload: { 
+          userMessage, 
+          aiResponse: historyContent, 
+          conversationType: conversationType.type, 
+          preset: currentPreset, 
+          sources,
+          hasOutputCard: !!parsedOutput?.outputCard,
+        } as any,
       },
     });
 
+    // If we have a structured output card, return it
+    if (parsedOutput?.outputCard) {
+      return {
+        message: historyContent,
+        chat: parsedOutput.chat,
+        outputCard: parsedOutput.outputCard,
+        sources,
+      };
+    }
+
+    // Otherwise, continue with legacy flow (conversational phase)
     // Check if user wants a plan generated (expanded trigger words)
     let suggestedPlan = null;
     const wantsPlan = /yes|yeah|sure|okay|ok|let'?s do it|i'?m ready|create (a )?plan|make (a )?plan|generate|give me (a )?plan/i.test(userMessage);
