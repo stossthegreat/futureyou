@@ -1,16 +1,7 @@
 import { prisma } from "../utils/db";
 import { redis } from "../utils/redis";
 import { memoryService } from "./memory.service";
-import OpenAI from "openai";
-
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-turbo";
-
-function getOpenAIClient() {
-  if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
-  if (!process.env.OPENAI_API_KEY) return null;
-  const apiKey = process.env.OPENAI_API_KEY.trim();
-  return new OpenAI({ apiKey });
-}
+import { aiRouter } from "./ai-router.service";
 
 /**
  * 🔮 FUTURE-YOU OS - WHAT-IF SYSTEM (GPT-5 UNLEASHED)
@@ -190,9 +181,6 @@ export class WhatIfChatService {
   }
 
   async chat(userId: string, userMessage: string, preset?: 'simulator' | 'habit-master'): Promise<{ message: string; suggestedPlan?: any; splitFutureCard?: string; sources?: string[] }> {
-    const openai = getOpenAIClient();
-    if (!openai) return { message: "What-If Architect is unavailable — try again later." };
-
     // Get user context
     const [identity, ctx, history] = await Promise.all([
       memoryService.getIdentityFacts(userId),
@@ -235,33 +223,29 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
     // Add user message to history with preset
     history.push({ role: "user", content: userMessage, timestamp: new Date().toISOString(), preset: currentPreset });
 
-    // Generate response
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: systemPrompt },
-      { role: "system", content: contextString },
-      ...history.slice(-8).map((m: any) => ({
-        role: m.role === "user" ? "user" as const : "assistant" as const,
-        content: m.content,
-      })),
-    ];
+    // Combine system prompt with context
+    const fullSystemPrompt = `${systemPrompt}\n\n${contextString}`;
 
-    const completion = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      temperature: 0.7,
-      max_tokens: 800,
-      messages,
+    // Call AI Router (whatif = medium reasoning + high verbosity for simulator, habit = medium/medium for coach)
+    const aiRouterPreset = preset === 'simulator' ? 'whatif' : 'habit';
+    const aiResponse = await aiRouter.callAI({
+      preset: aiRouterPreset,
+      systemPrompt: fullSystemPrompt,
+      userInput: userMessage,
+      userId,
+      parseJson: false, // What-If uses markdown, not JSON
     });
 
-    const aiResponse = completion.choices[0]?.message?.content?.trim() || "Let's break this down systematically.";
+    const responseText = aiResponse.chat || "Let's break this down systematically.";
 
-    // Extract sources/citations from response
-    const sources = this.extractSources(aiResponse);
+    // Extract sources/citations from response (aiRouter already does this)
+    const sources = aiResponse.sources || [];
     
-    // Detect Split-Future Card (markdown tables)
-    const splitFutureCard = this.extractSplitFutureCard(aiResponse);
+    // Detect Split-Future Card (aiRouter already extracts this)
+    const splitFutureCard = aiResponse.splitFutureCard || this.extractSplitFutureCard(responseText);
 
     // Save to history
-    history.push({ role: "assistant", content: aiResponse, timestamp: new Date().toISOString() });
+    history.push({ role: "assistant", content: responseText, timestamp: new Date().toISOString() });
     await this.saveConversationHistory(userId, history);
 
     // Log event
@@ -269,7 +253,7 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
       data: {
         userId,
         type: "whatif_chat",
-        payload: { userMessage, aiResponse, conversationType: conversationType.type, preset: currentPreset, sources },
+        payload: { userMessage, aiResponse: responseText, conversationType: conversationType.type, preset: currentPreset, sources },
       },
     });
 
@@ -287,7 +271,7 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
       suggestedPlan = await this.generatePlan(userId, goalContext, history, currentPreset);
     }
 
-    return { message: aiResponse, suggestedPlan, splitFutureCard, sources };
+    return { message: responseText, suggestedPlan, splitFutureCard, sources };
   }
 
   private extractSources(text: string): string[] {
@@ -305,8 +289,6 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
   }
 
   private async generatePlan(userId: string, goalDescription: string, history: any[], preset: string): Promise<any> {
-    const openai = getOpenAIClient();
-    if (!openai) return null;
 
     const identity = await memoryService.getIdentityFacts(userId);
     const ctx = await memoryService.getUserContext(userId);
@@ -368,17 +350,17 @@ Return ONLY valid JSON:
     const prompt = preset === 'simulator' ? simulatorPrompt : habitMasterPrompt;
 
     try {
-      const completion = await openai.chat.completions.create({
-        model: OPENAI_MODEL,
-        temperature: 0.7,
-        max_tokens: 800,
-        messages: [
-          { role: "system", content: "Generate cinematic, evidence-based plans. Cite real peer-reviewed studies. Output valid JSON only." },
-          { role: "user", content: prompt },
-        ],
+      // Call AI Router for plan generation (parse JSON)
+      const aiRouterPreset = preset === 'simulator' ? 'whatif' : 'habit';
+      const aiResponse = await aiRouter.callAI({
+        preset: aiRouterPreset,
+        systemPrompt: "Generate cinematic, evidence-based plans. Cite real peer-reviewed studies. Output valid JSON only.",
+        userInput: prompt,
+        userId,
+        parseJson: true,
       });
 
-      const raw = completion.choices[0]?.message?.content?.trim() || "{}";
+      const raw = aiResponse.rawOutput || "{}";
       const cleaned = raw.replace(/```json|```/g, "").trim();
       const plan = JSON.parse(cleaned);
 
@@ -386,7 +368,7 @@ Return ONLY valid JSON:
         data: {
           userId,
           type: "whatif_plan_generated",
-          payload: { ...plan, preset },
+          payload: { ...plan, preset } as any,
         },
       });
 

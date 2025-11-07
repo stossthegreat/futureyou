@@ -1,23 +1,10 @@
-import OpenAI from "openai";
 import { prisma } from "../utils/db";
 import { memoryService } from "./memory.service";
 import { redis } from "../utils/redis";
 import { MENTOR } from "../config/mentors.config";
+import { aiRouter } from "./ai-router.service";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 450);
-const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 10000);
-
-function getOpenAIClient() {
-  if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
-  if (!process.env.OPENAI_API_KEY) {
-    console.warn("⚠️ OPENAI_API_KEY missing — AI disabled");
-    return null;
-  }
-  // Trim whitespace/newlines from API key (Railway env var issue)
-  const apiKey = process.env.OPENAI_API_KEY.trim();
-  return new OpenAI({ apiKey, timeout: LLM_TIMEOUT_MS });
-}
 
 type GenerateOptions = {
   purpose?: "brief" | "nudge" | "debrief" | "coach" | "letter";
@@ -27,16 +14,13 @@ type GenerateOptions = {
 
 export class AIService {
   async generateFutureYouReply(userId: string, userMessage: string, opts: GenerateOptions = {}) {
-    const openai = getOpenAIClient();
-    if (!openai) return "Future You is silent right now — try again later.";
-
     const [profile, ctx, identity] = await Promise.all([
       memoryService.getProfileForMentor(userId),
       memoryService.getUserContext(userId),
-      memoryService.getIdentityFacts(userId), // NEW
+      memoryService.getIdentityFacts(userId),
     ]);
 
-    const guidelines = this.buildGuidelines(opts.purpose || "coach", profile, identity); // NEW: pass identity
+    const guidelines = this.buildGuidelines(opts.purpose || "coach", profile, identity);
 
     const contextString = identity.discoveryCompleted
       ? `IDENTITY:\nName: ${identity.name}, Age: ${identity.age}
@@ -54,25 +38,33 @@ Note: User hasn't completed purpose discovery yet.
 CONTEXT:
 ${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0, 30) })}`;
 
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: MENTOR.systemPrompt },
-      { role: "system", content: guidelines },
-      { role: "system", content: contextString },
-      { role: "user", content: userMessage },
-    ];
+    // Build full system prompt
+    const fullSystemPrompt = `${MENTOR.systemPrompt}\n\n${guidelines}\n\n${contextString}`;
 
-    const completion = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      temperature: opts.temperature ?? 0.4,
-      max_tokens: LLM_MAX_TOKENS,
-      messages,
+    // Map purpose to AI Router preset (brief/nudge/debrief use mini, coach/letter use default)
+    const presetMap: Record<string, "brief" | "nudge" | "debrief" | "default"> = {
+      brief: "brief",
+      nudge: "nudge",
+      debrief: "debrief",
+      coach: "default",
+      letter: "default",
+    };
+    const preset = presetMap[opts.purpose || "coach"] || "default";
+
+    // Call AI Router
+    const aiResponse = await aiRouter.callAI({
+      preset,
+      systemPrompt: fullSystemPrompt,
+      userInput: userMessage,
+      userId,
+      parseJson: false,
     });
 
-    let text = completion.choices[0]?.message?.content?.trim() || "Keep going.";
+    let text = aiResponse.chat || "Keep going.";
     if (opts.maxChars && text.length > opts.maxChars) text = text.slice(0, opts.maxChars - 1) + "…";
 
     await prisma.event.create({
-      data: { userId, type: opts.purpose || "coach", payload: { text } },
+      data: { userId, type: opts.purpose || "coach", payload: { text } as any },
     });
 
     return text;
@@ -98,9 +90,6 @@ ${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0,
    * 🧠 Extract habit suggestion from conversation
    */
   async extractHabitFromConversation(userId: string, userInput: string, aiResponse: string) {
-    const openai = getOpenAIClient();
-    if (!openai) return null;
-
     const extractionPrompt = `
 CONTEXT:
 User said: "${userInput}"
@@ -121,18 +110,16 @@ Return ONLY valid JSON (no markdown):
 If no clear habit/task, return: {"none": true}
 `;
 
-    const completion = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      temperature: 0.2,
-      max_tokens: 200,
-      messages: [
-        { role: "system", content: "You extract actionable habits from conversations. Output only JSON." },
-        { role: "user", content: extractionPrompt },
-      ],
+    const routerResponse = await aiRouter.callAI({
+      preset: "default",
+      systemPrompt: "You extract actionable habits from conversations. Output only JSON.",
+      userInput: extractionPrompt,
+      userId,
+      parseJson: true,
     });
 
     try {
-      const raw = completion.choices[0]?.message?.content?.trim() || "{}";
+      const raw = routerResponse.rawOutput || "{}";
       const cleaned = raw.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(cleaned);
       

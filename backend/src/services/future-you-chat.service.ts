@@ -1,16 +1,7 @@
 import { prisma } from "../utils/db";
 import { redis } from "../utils/redis";
 import { memoryService } from "./memory.service";
-import OpenAI from "openai";
-
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-turbo";
-
-function getOpenAIClient() {
-  if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
-  if (!process.env.OPENAI_API_KEY) return null;
-  const apiKey = process.env.OPENAI_API_KEY.trim();
-  return new OpenAI({ apiKey });
-}
+import { aiRouter } from "./ai-router.service";
 
 /**
  * 🧠 FUTURE-YOU DEEP DISCOVERY (GPT-5 UNLEASHED)
@@ -166,18 +157,6 @@ export class FutureYouChatService {
   }
 
   async chat(userId: string, userMessage: string): Promise<FutureYouResponse> {
-    const openai = getOpenAIClient();
-    if (!openai) {
-      return {
-        chat: [{ role: "assistant", text: "Future You is silent right now — try again later." }],
-        insightCards: [],
-        commitCard: { title: "Try Again", steps: [], impact: "", note: "" },
-        progress: { insightsCollected: 0, insightsTarget: 20, draftReady: false },
-        nextQuestion: "",
-        lensUsed: [],
-      };
-    }
-
     // Get user context and insights
     const [identity, ctx, history, existingInsights] = await Promise.all([
       memoryService.getIdentityFacts(userId),
@@ -216,33 +195,33 @@ ${history.slice(-20).map((m: any) => `${m.role}: ${m.content}`).join("\n")}
     // Add user message to history
     history.push({ role: "user", content: userMessage, timestamp: new Date().toISOString() });
 
-    // Generate response
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: SYSTEM_PROMPT_FUTURE_YOU },
-      { role: "system", content: contextString },
-      ...history.slice(-10).map((m: any) => ({
-        role: m.role === "user" ? "user" as const : "assistant" as const,
-        content: m.content,
-      })),
-    ];
+    // Combine system prompt with context
+    const fullSystemPrompt = `${SYSTEM_PROMPT_FUTURE_YOU}\n\n${contextString}`;
 
-    const completion = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      temperature: 0.7,
-      max_tokens: 900,
-      messages,
-      response_format: { type: "json_object" },
+    // Call AI Router with GPT-5 high reasoning + high verbosity
+    const aiResponse = await aiRouter.callAI({
+      preset: "futureYou",
+      systemPrompt: fullSystemPrompt,
+      userInput: userMessage,
+      userId,
+      parseJson: true,
     });
-
-    const rawResponse = completion.choices[0]?.message?.content?.trim() || "{}";
     
     let parsedResponse: FutureYouResponse;
     try {
-      parsedResponse = JSON.parse(rawResponse);
-    } catch (err) {
-      console.error("Failed to parse Future-You response:", rawResponse);
+      // aiRouter returns structured data, map to FutureYouResponse
       parsedResponse = {
-        chat: [{ role: "assistant", text: rawResponse }],
+        chat: [{ role: "assistant", text: aiResponse.chat }],
+        insightCards: aiResponse.insightCards || [],
+        commitCard: aiResponse.commitCard || { title: "Keep Going", steps: [], impact: "", note: "" },
+        progress: aiResponse.progress || { insightsCollected: existingInsights.length, insightsTarget: 20, draftReady: false },
+        nextQuestion: aiResponse.nextQuestion || "",
+        lensUsed: aiResponse.lensUsed || [],
+      };
+    } catch (err) {
+      console.error("Failed to parse Future-You response:", err);
+      parsedResponse = {
+        chat: [{ role: "assistant", text: aiResponse.chat || "Keep going." }],
         insightCards: [],
         commitCard: { title: "Keep Going", steps: [], impact: "", note: "" },
         progress: { insightsCollected: existingInsights.length, insightsTarget: 20, draftReady: false },
