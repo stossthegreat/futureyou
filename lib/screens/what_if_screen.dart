@@ -2373,8 +2373,11 @@ class _WhatIfChatScreenState extends State<_WhatIfChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    
     return Scaffold(
       backgroundColor: Colors.black,
+      resizeToAvoidBottomInset: false, // We handle keyboard manually
       body: SafeArea(
         child: Stack(
           children: [
@@ -2383,7 +2386,7 @@ class _WhatIfChatScreenState extends State<_WhatIfChatScreen> {
               top: 0,
               left: 0,
               right: 0,
-              bottom: 80, // Space for input (NO bottom nav!)
+              bottom: 80 + keyboardHeight, // Adjust for keyboard!
               child: CustomScrollView(
                 controller: _scrollController,
                 slivers: [
