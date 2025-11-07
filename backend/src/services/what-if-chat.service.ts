@@ -144,11 +144,21 @@ Example: "Twelve months from now you won't be trying to find the spark again —
 
 ---
 
-🎯 HABITS TO COMMIT (1-3 habits based on their specific inputs)
+🎯 HABITS TO COMMIT
 
-1. 🛏️ Sleep [X]h ([TIME]-[TIME]) → [FREQUENCY]
-2. 🏋️ [THEIR TRAINING TYPE] [DURATION] → [FREQUENCY]/week
-3. 🥗 [NUTRITION HABIT] → [FREQUENCY]
+CRITICAL: Only include habits that are ACTUALLY NECESSARY to achieve their goal at maximum standard level.
+
+- If sleep is the main issue → 1 sleep habit is enough
+- If it's multi-layered (training + sleep + nutrition) → give 2-4 habits
+- Be smart. Don't force 3 habits. Give what's needed.
+
+Examples:
+- If goal = "more energy" and main issue is sleep → 1 habit: 🛏️ Sleep 7.5h (23:00-07:00) → Daily
+- If goal = "build muscle" → 3-4 habits: Training frequency, protein intake, sleep, rest days
+- If goal = "lose fat" → 2-3 habits: Training, calorie deficit strategy, sleep
+
+Format each habit:
+[NUMBER]. [EMOJI] [SPECIFIC HABIT] → [FREQUENCY]
 
 ---
 
@@ -315,11 +325,16 @@ Both cost you 24 hours a day — only one pays dividends.
 "Twelve weeks from now you won't be trying to find the spark again - you'll wake up and realize you became it."
 
 ---
-🎯 HABITS TO COMMIT (1-3 habits)
+🎯 HABITS TO COMMIT
 
-1. 🏋️ Strength Training 40min (20:00) → 3×/week
-2. 🛏️ Sleep 7.5h (23:00-07:00) → Daily
-3. 🥗 Protein at Lunch → Daily
+CRITICAL: Only include habits that are ACTUALLY NECESSARY for this specific plan. Don't force a number.
+
+- Simple habit → 1-2 habits
+- Complex multi-phase plan → 3-5 habits
+- Be accurate and serious. This is not a gimmick.
+
+Format each habit:
+[NUMBER]. [EMOJI] [SPECIFIC HABIT] → [FREQUENCY]
 
 ---
 📚 SOURCES CITED

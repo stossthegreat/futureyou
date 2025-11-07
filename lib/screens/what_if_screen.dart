@@ -884,9 +884,24 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
 
   // NEW: Commit habits from OUTPUT CARD
   Future<void> _commitHabitsFromCard(List<dynamic> habits) async {
+    if (habits.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No habits to commit'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
     try {
+      int successCount = 0;
       for (final habit in habits) {
-        final title = habit['title'] ?? 'Habit';
+        final title = habit['title'] ?? '';
+        if (title.isEmpty) continue;
+
         final emoji = habit['emoji'] ?? '✅';
         final time = habit['time'] ?? '07:00';
         final frequency = habit['frequency'] ?? 'Daily';
@@ -905,9 +920,18 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
           emoji: emoji,
           reminderOn: false,
         );
+        successCount++;
       }
       
-      _showToast('💚 ${habits.length} habit(s) committed!');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Successfully committed $successCount habit${successCount > 1 ? 's' : ''}!'),
+            backgroundColor: AppColors.emerald,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -930,7 +954,15 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
       );
       
       if (response.success) {
-        _showToast('💾 Saved to Vault!');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('💾 Saved to Vault! Check Reflections tab.'),
+              backgroundColor: AppColors.emerald,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       } else {
         throw Exception(response.error ?? 'Failed to save');
       }
@@ -1879,62 +1911,29 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           Flexible(
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                gradient: isUser ? AppColors.emeraldGradient : null,
-                color: isUser ? null : AppColors.glassBackground,
-                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                border: Border.all(
-                  color: isUser
-                      ? AppColors.emerald.withOpacity(0.3)
-                      : AppColors.emerald.withOpacity(0.2),
-                ),
-              ),
-              child: isUser
-                  ? Text(
+            child: isUser
+                ? Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.emeraldGradient,
+                      borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                      border: Border.all(
+                        color: AppColors.emerald.withOpacity(0.3),
+                      ),
+                    ),
+                    child: SelectableText(
                       message.text,
                       style: AppTextStyles.body.copyWith(
-                        color: Colors.white,
+                        color: Colors.black,
                       ),
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SelectableText(
-                          message.text,
-                          style: AppTextStyles.body.copyWith(
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                Clipboard.setData(ClipboardData(text: message.text));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text('Copied!'),
-                                    duration: const Duration(seconds: 1),
-                                    backgroundColor: AppColors.emerald,
-                                  ),
-                                );
-                              },
-                              icon: Icon(
-                                LucideIcons.copy,
-                                size: 14,
-                                color: AppColors.textTertiary.withOpacity(0.6),
-                              ),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                      ],
                     ),
-            ),
+                  )
+                : SelectableText(
+                    message.text,
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -2662,25 +2661,29 @@ class _WhatIfChatScreenState extends State<_WhatIfChatScreen> {
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           Flexible(
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                gradient: isUser ? AppColors.emeraldGradient : null,
-                color: isUser ? null : AppColors.glassBackground,
-                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                border: Border.all(
-                  color: isUser
-                      ? Colors.transparent
-                      : AppColors.emerald.withOpacity(0.2),
-                ),
-              ),
-              child: SelectableText(
-                message.text,
-                style: AppTextStyles.body.copyWith(
-                  color: isUser ? Colors.black : AppColors.textPrimary,
-                ),
-              ),
-            ),
+            child: isUser
+                ? Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.emeraldGradient,
+                      borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                      border: Border.all(
+                        color: AppColors.emerald.withOpacity(0.3),
+                      ),
+                    ),
+                    child: SelectableText(
+                      message.text,
+                      style: AppTextStyles.body.copyWith(
+                        color: Colors.black,
+                      ),
+                    ),
+                  )
+                : SelectableText(
+                    message.text,
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
           ),
         ],
       ),
