@@ -1046,8 +1046,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
           // Toast
           if (_toast != null) _buildToast(),
 
-          // Chat overlay
-          if (_chatExpanded) _buildChatOverlay(),
+          // Chat is now a separate full-screen route (no overlay)
         ],
       ),
     );
@@ -1132,10 +1131,14 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
         // AI What-If Simulator Button
         GestureDetector(
           onTap: () {
-            setState(() {
-              _selectedPreset = 'simulator';
-              _chatExpanded = true;
-            });
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => _WhatIfChatScreen(
+                  preset: 'simulator',
+                  messages: _messages,
+                ),
+              ),
+            );
           },
           child: Container(
             width: double.infinity,
@@ -1203,10 +1206,14 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
         // AI Habit Master Button
         GestureDetector(
           onTap: () {
-            setState(() {
-              _selectedPreset = 'habit-master';
-              _chatExpanded = true;
-            });
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => _WhatIfChatScreen(
+                  preset: 'habit-master',
+                  messages: _messages,
+                ),
+              ),
+            );
           },
           child: Container(
             width: double.infinity,
@@ -2252,6 +2259,481 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
               ),
               textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Full-screen What-If Chat Screen (no bottom nav!)
+class _WhatIfChatScreen extends StatefulWidget {
+  final String preset;
+  final List<ChatMessage> messages;
+
+  const _WhatIfChatScreen({
+    required this.preset,
+    required this.messages,
+  });
+
+  @override
+  State<_WhatIfChatScreen> createState() => _WhatIfChatScreenState();
+}
+
+class _WhatIfChatScreenState extends State<_WhatIfChatScreen> {
+  final _chatInputController = TextEditingController();
+  final _scrollController = ScrollController();
+  late List<ChatMessage> _messages;
+  late String _selectedPreset;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _messages = List.from(widget.messages);
+    _selectedPreset = widget.preset;
+  }
+
+  @override
+  void dispose() {
+    _chatInputController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendChatMessage() async {
+    final text = _chatInputController.text.trim();
+    if (text.isEmpty || _isLoading) return;
+
+    final userMessage = ChatMessage(
+      id: DateTime.now().toString(),
+      role: 'user',
+      text: text,
+      timestamp: DateTime.now(),
+    );
+
+    setState(() {
+      _messages.add(userMessage);
+      _isLoading = true;
+    });
+
+    _chatInputController.clear();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent + 200,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
+
+    try {
+      final response = await ApiClient.sendWhatIfMessage(
+        text,
+        preset: _selectedPreset,
+      );
+
+      if (response.success && response.data != null) {
+        final aiMessage = ChatMessage(
+          id: DateTime.now().toString(),
+          role: response.data!['role'] ?? 'assistant',
+          text: response.data!['message'] ?? '',
+          timestamp: DateTime.now(),
+          outputCard: response.data!['outputCard'],
+          habits: response.data!['habits'],
+        );
+
+        setState(() {
+          _messages.add(aiMessage);
+          _isLoading = false;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent + 200,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
+      } else {
+        throw Exception(response.error ?? 'Unknown error');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send message: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Content
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 80, // Space for input (NO bottom nav!)
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  // Header with back button
+                  SliverAppBar(
+                    expandedHeight: 140,
+                    floating: true,
+                    snap: true,
+                    pinned: false,
+                    backgroundColor: const Color(0xFF18181B),
+                    elevation: 0,
+                    leading: IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
+                    ),
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: Column(
+                        children: [
+                          // Header
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg,
+                              vertical: AppSpacing.md,
+                            ),
+                            margin: const EdgeInsets.only(top: 50),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF18181B),
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: AppColors.emerald.withOpacity(0.2),
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Goal Exploration',
+                                        style: AppTextStyles.h3.copyWith(fontSize: 18),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${_messages.where((m) => m.role == 'user').length} messages',
+                                        style: AppTextStyles.captionSmall.copyWith(
+                                          color: AppColors.textTertiary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Preset Buttons
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg,
+                              vertical: AppSpacing.md,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF18181B),
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: AppColors.emerald.withOpacity(0.1),
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildPresetButton(
+                                    label: '🔮 What-If Simulator',
+                                    preset: 'simulator',
+                                    selected: _selectedPreset == 'simulator',
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                                Expanded(
+                                  child: _buildPresetButton(
+                                    label: '🧩 Habit Master',
+                                    preset: 'habit-master',
+                                    selected: _selectedPreset == 'habit-master',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Messages
+                  SliverPadding(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final message = _messages[index];
+                          return _buildMessageBubble(message);
+                        },
+                        childCount: _messages.length,
+                      ),
+                    ),
+                  ),
+
+                  // Loading indicator
+                  if (_isLoading)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(AppSpacing.md),
+                              decoration: BoxDecoration(
+                                color: AppColors.glassBackground,
+                                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                                border: Border.all(
+                                  color: AppColors.emerald.withOpacity(0.2),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 12,
+                                    height: 12,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.emerald),
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.sm),
+                                  Text(
+                                    'Thinking...',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppColors.textTertiary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // Bottom padding
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                ],
+              ),
+            ),
+
+            // Input (rises with keyboard, NO bottom nav!)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF18181B),
+                  border: Border(
+                    top: BorderSide(color: AppColors.emerald.withOpacity(0.2)),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.glassBackground,
+                          borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+                          border: Border.all(
+                            color: AppColors.emerald.withOpacity(0.2),
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _chatInputController,
+                          style: AppTextStyles.body,
+                          maxLines: null,
+                          decoration: InputDecoration(
+                            hintText: 'Tell me more...',
+                            hintStyle: AppTextStyles.body.copyWith(
+                              color: AppColors.textQuaternary,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.all(AppSpacing.md),
+                          ),
+                          onSubmitted: (_) => _sendChatMessage(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    GestureDetector(
+                      onTap: _sendChatMessage,
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: AppColors.emeraldGradient,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.emerald.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          LucideIcons.send,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPresetButton({required String label, required String preset, required bool selected}) {
+    return GestureDetector(
+      onTap: () => setState(() => _selectedPreset = preset),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.emerald.withOpacity(0.2)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+          border: Border.all(
+            color: selected
+                ? AppColors.emerald
+                : AppColors.glassBorder,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.captionSmall.copyWith(
+            color: selected ? Colors.white : AppColors.textSecondary,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(ChatMessage message) {
+    if (message.role == 'card' && message.outputCard != null) {
+      // Reuse the inline output card from parent
+      return _buildInlineOutputCard(message.outputCard!, message.habits);
+    }
+    
+    final isUser = message.role == 'user';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Row(
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                gradient: isUser ? AppColors.emeraldGradient : null,
+                color: isUser ? null : AppColors.glassBackground,
+                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                border: Border.all(
+                  color: isUser
+                      ? Colors.transparent
+                      : AppColors.emerald.withOpacity(0.2),
+                ),
+              ),
+              child: SelectableText(
+                message.text,
+                style: AppTextStyles.body.copyWith(
+                  color: isUser ? Colors.black : AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Copy the inline output card method from parent (simplified for now)
+  Widget _buildInlineOutputCard(Map<String, dynamic> card, List<dynamic>? habits) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [const Color(0xFF0F1F0F), Colors.black],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.emerald.withOpacity(0.3), width: 2),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: AppColors.emeraldGradient,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(22),
+                  topRight: Radius.circular(22),
+                ),
+              ),
+              child: Text(
+                card['title'] ?? 'Your Simulation',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            // Content (simplified - just show summary)
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: SelectableText(
+                card['summary'] ?? card['title'] ?? 'Generated simulation',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 15,
+                  height: 1.5,
+                ),
+              ),
             ),
           ],
         ),
