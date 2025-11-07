@@ -1489,145 +1489,176 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
       color: Colors.black,
       child: Column(
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xFF18181B),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.emerald.withOpacity(0.2),
-                ),
-              ),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Goal Exploration',
-                        style: AppTextStyles.h3.copyWith(fontSize: 18),
+          // Scrollable content (header + messages)
+          Expanded(
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                // Scrollable Header
+                SliverAppBar(
+                  expandedHeight: 140, // Header + Preset buttons height
+                  floating: true,
+                  snap: true,
+                  pinned: false,
+                  backgroundColor: const Color(0xFF18181B),
+                  elevation: 0,
+                  automaticallyImplyLeading: false,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: SafeArea(
+                      child: Column(
+                        children: [
+                          // Header
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg,
+                              vertical: AppSpacing.md,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF18181B),
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: AppColors.emerald.withOpacity(0.2),
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Goal Exploration',
+                                      style: AppTextStyles.h3.copyWith(fontSize: 18),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${_messages.where((m) => m.role == 'user').length} messages',
+                                      style: AppTextStyles.captionSmall.copyWith(
+                                        color: AppColors.textTertiary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                IconButton(
+                                  onPressed: () => setState(() => _chatExpanded = false),
+                                  icon: const Icon(
+                                    LucideIcons.x,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Preset Buttons
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg,
+                              vertical: AppSpacing.md,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF18181B),
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: AppColors.emerald.withOpacity(0.1),
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildPresetButton(
+                                    label: '🔮 What-If Simulator',
+                                    preset: 'simulator',
+                                    selected: _selectedPreset == 'simulator',
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                                Expanded(
+                                  child: _buildPresetButton(
+                                    label: '🧩 Habit Master',
+                                    preset: 'habit-master',
+                                    selected: _selectedPreset == 'habit-master',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${_messages.where((m) => m.role == 'user').length} messages',
-                        style: AppTextStyles.captionSmall.copyWith(
-                          color: AppColors.textTertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    onPressed: () => setState(() => _chatExpanded = false),
-                    icon: const Icon(
-                      LucideIcons.x,
-                      color: AppColors.textPrimary,
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
+                ),
 
-          // Preset Buttons
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xFF18181B),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.emerald.withOpacity(0.1),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildPresetButton(
-                    label: '🔮 What-If Simulator',
-                    preset: 'simulator',
-                    selected: _selectedPreset == 'simulator',
+                // Messages
+                SliverPadding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final message = _messages[index];
+                        return _buildMessageBubble(message);
+                      },
+                      childCount: _messages.length,
+                    ),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: _buildPresetButton(
-                    label: '🧩 Habit Master',
-                    preset: 'habit-master',
-                    selected: _selectedPreset == 'habit-master',
+
+                // Loading indicator as a sliver
+                if (_isLoading)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: AppSpacing.sm,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.glassBackground,
+                              borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                              border: Border.all(
+                                color: AppColors.emerald.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.emerald,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Text(
+                                  'Thinking...',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppColors.textTertiary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
+
+                // Bottom padding for input field
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: 100),
                 ),
               ],
             ),
           ),
-
-          // Messages
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _buildMessageBubble(message);
-              },
-            ),
-          ),
-
-          // Loading
-          if (_isLoading)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.sm,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.glassBackground,
-                      borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                      border: Border.all(
-                        color: AppColors.emerald.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.emerald,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Text(
-                          'Thinking...',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.textTertiary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
 
           // Input
           Container(
