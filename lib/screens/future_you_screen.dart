@@ -1449,57 +1449,29 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           Flexible(
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                gradient: isUser ? AppColors.emeraldGradient : null,
-                color: isUser ? null : AppColors.glassBackground,
-                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                border: Border.all(
-                  color: isUser
-                      ? Colors.transparent
-                      : AppColors.emerald.withOpacity(0.2),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SelectableText(
+            child: isUser
+                ? Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.emeraldGradient,
+                      borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                      border: Border.all(
+                        color: AppColors.emerald.withOpacity(0.3),
+                      ),
+                    ),
+                    child: SelectableText(
+                      message.text,
+                      style: AppTextStyles.body.copyWith(
+                        color: Colors.black,
+                      ),
+                    ),
+                  )
+                : SelectableText(
                     message.text,
                     style: AppTextStyles.body.copyWith(
-                      color: isUser ? Colors.black : AppColors.textPrimary,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  if (!isUser) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(text: message.text));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text('Copied!'),
-                                duration: const Duration(seconds: 1),
-                                backgroundColor: AppColors.emerald,
-                              ),
-                            );
-                          },
-                          icon: Icon(
-                            LucideIcons.copy,
-                            size: 14,
-                            color: AppColors.textTertiary.withOpacity(0.6),
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
           ),
         ],
       ),
