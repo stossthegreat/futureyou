@@ -1601,10 +1601,14 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
   Widget _buildChatOverlay() {
     return Container(
       color: Colors.black,
-      child: Column(
+      child: Stack(
         children: [
           // Scrollable content (header + messages)
-          Expanded(
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 140, // Space for input at bottom
             child: CustomScrollView(
               controller: _scrollController,
               slivers: [
