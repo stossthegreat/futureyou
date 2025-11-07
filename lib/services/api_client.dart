@@ -449,6 +449,30 @@ class ApiClient {
     }
   }
 
+  // Save What-If output card to Vault
+  static Future<ApiResponse<void>> saveToVault({
+    required String content,
+    List<dynamic>? sections,
+    List<dynamic>? habits,
+  }) async {
+    try {
+      final response = await _post('/api/v1/reflections/vault', {
+        'content': content,
+        'sections': sections,
+        'habits': habits,
+      });
+      
+      if (response.statusCode == 200) {
+        return ApiResponse.success(null);
+      } else {
+        return ApiResponse.error('Failed to save to vault: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Save to vault error: $e');
+      return ApiResponse.error(e.toString());
+    }
+  }
+
   // Delete user account
   static Future<void> deleteAccount() async {
     try {
