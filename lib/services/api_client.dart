@@ -402,13 +402,21 @@ class ApiClient {
   }
 
   // 🔬 NEW: What-If Implementation Coach
-  static Future<ApiResponse<Map<String, dynamic>>> sendWhatIfMessage(String message) async {
+  static Future<ApiResponse<Map<String, dynamic>>> sendWhatIfMessage(
+    String message, {
+    String? preset,
+  }) async {
     try {
-      final response = await _post('/api/v1/what-if/coach', {'message': message});
+      final data = {'message': message};
+      if (preset != null) {
+        data['preset'] = preset;
+      }
+      
+      final response = await _post('/api/v1/what-if/coach', data);
       
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return ApiResponse.success(data);
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(responseData);
       } else {
         return ApiResponse.error('Failed to send message');
       }

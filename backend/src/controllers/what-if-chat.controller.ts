@@ -14,18 +14,23 @@ function getUserIdOr401(req: any) {
  * Context-aware, citation-validated, variable plan generation
  */
 export async function whatIfChatController(fastify: FastifyInstance) {
-  // Chat with What-If implementation coach
+  // Chat with What-If coach (supports both Simulator and Habit Master presets)
   fastify.post("/api/v1/what-if/coach", async (req: any, reply) => {
     try {
       const userId = getUserIdOr401(req);
-      const { message } = req.body;
+      const { message, preset } = req.body;
 
       if (!message || typeof message !== "string") {
         return reply.code(400).send({ error: "Message required" });
       }
 
-      const response = await whatIfChatService.chat(userId, message);
-      return response; // Returns { message, suggestedPlan? }
+      // Validate preset if provided
+      if (preset && preset !== 'simulator' && preset !== 'habit-master') {
+        return reply.code(400).send({ error: "Invalid preset. Must be 'simulator' or 'habit-master'" });
+      }
+
+      const response = await whatIfChatService.chat(userId, message, preset);
+      return response; // Returns { message, suggestedPlan?, splitFutureCard?, sources? }
     } catch (err: any) {
       console.error("What-If coach error:", err);
       return reply.code(err.statusCode || 500).send({ error: err.message });

@@ -55,6 +55,9 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
   // Custom goals state
   List<GoalData> _customGoals = [];
   bool _loadingCustomGoals = true;
+  
+  // Preset mode selection
+  String? _selectedPreset; // 'simulator' or 'habit-master'
 
   @override
   void initState() {
@@ -337,11 +340,17 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
 
     try {
       // Use new What-If implementation coach (context-aware + citations)
-      final result = await ApiClient.sendWhatIfMessage(message);
+      // Pass selected preset to backend for appropriate system prompt
+      final result = await ApiClient.sendWhatIfMessage(
+        message,
+        preset: _selectedPreset,
+      );
 
       if (result.success && result.data != null) {
         final aiMessage = result.data!['message'] as String;
         final suggestedPlan = result.data!['suggestedPlan'];
+        final splitFutureCard = result.data!['splitFutureCard'] as String?;
+        final sources = result.data!['sources'] as List?;
 
         final responseMessage = ChatMessage(
           id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
@@ -1248,6 +1257,41 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
             ),
           ),
 
+          // Preset Buttons
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFF18181B),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.emerald.withOpacity(0.1),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildPresetButton(
+                    label: '🔮 What-If Simulator',
+                    preset: 'simulator',
+                    selected: _selectedPreset == 'simulator',
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _buildPresetButton(
+                    label: '🧩 Habit Master',
+                    preset: 'habit-master',
+                    selected: _selectedPreset == 'habit-master',
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Messages
           Expanded(
             child: ListView.builder(
@@ -1448,6 +1492,72 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPresetButton({
+    required String label,
+    required String preset,
+    required bool selected,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (_selectedPreset != preset) {
+            // Switching presets - clear conversation history
+            _selectedPreset = preset;
+            _messages.clear();
+            
+            // Add welcome message based on preset
+            final welcomeMessage = preset == 'simulator'
+                ? "I'm the Future-You Simulator. I'll help you see both timelines — what happens if you commit vs. if you stay the same. What goal are you considering?"
+                : "I'm the Habit Master. I'll help you build this habit with science-backed strategies. What habit do you want to implement?";
+            
+            _messages.add(ChatMessage(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              text: welcomeMessage,
+              role: 'assistant',
+              timestamp: DateTime.now(),
+            ));
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          gradient: selected
+              ? AppColors.emeraldGradient
+              : null,
+          color: selected
+              ? null
+              : AppColors.glassBackground,
+          borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+          border: Border.all(
+            color: selected
+                ? AppColors.emerald
+                : AppColors.glassBorder,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: AppTextStyles.captionSmall.copyWith(
+                color: selected
+                    ? Colors.white
+                    : AppColors.textSecondary,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

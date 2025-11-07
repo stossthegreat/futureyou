@@ -3,7 +3,7 @@ import { redis } from "../utils/redis";
 import { memoryService } from "./memory.service";
 import OpenAI from "openai";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-turbo";
 
 function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
@@ -13,100 +13,139 @@ function getOpenAIClient() {
 }
 
 /**
- * 🔬 WHAT-IF IMPLEMENTATION COACH
+ * 🔮 FUTURE-YOU OS - WHAT-IF SYSTEM (GPT-5 UNLEASHED)
  * 
- * Scientific authority on habit implementation:
- * - Context detection (new habit vs existing vs multi-step goal)
- * - ONLY cites real studies and books
- * - Variable plan length (1-8 steps based on complexity)
- * - Habit stacking with user's existing habits
- * - Troubleshooting based on actual failure patterns
+ * Two cinematic AI modes:
+ * 1. What-If Simulator - Split-future comparison with evidence
+ * 2. Habit Master - 3-phase behavioral science coaching
+ * 
+ * GPT-5 has access to ALL knowledge - cite peer-reviewed studies, books, research naturally
  */
 
-const APPROVED_SOURCES = {
-  books: [
-    "Atomic Habits (James Clear)",
-    "Tiny Habits (BJ Fogg)",
-    "Deep Work (Cal Newport)",
-    "Power of Habit (Charles Duhigg)",
-    "Willpower Instinct (Kelly McGonigal)",
-    "Good Habits Bad Habits (Wendy Wood)",
-    "Indistractable (Nir Eyal)",
-    "The ONE Thing (Gary Keller)",
-  ],
-  studies: [
-    "Stanford Behavior Lab",
-    "Harvard Medical School",
-    "NIH (National Institutes of Health)",
-    "Mayo Clinic",
-    "Sleep Foundation",
-    "Exercise Science Journal",
-    "Behavioral Economics Research",
-    "Cognitive Psychology Studies",
-    "Neuroscience Journal",
-    "Journal of Applied Psychology",
-  ],
-  researchers: [
-    "BJ Fogg (Stanford)",
-    "James Clear",
-    "Charles Duhigg",
-    "Cal Newport",
-    "Kelly McGonigral",
-    "Wendy Wood (USC)",
-    "Roy Baumeister",
-    "Peter Gollwitzer",
-    "Mihály Csíkszentmihályi",
-  ],
-};
+const SYSTEM_PROMPT_WHAT_IF_SIMULATOR = `
+You are the Future-You Simulator — a cinematic mentor with access to ALL scientific knowledge.
 
-const WHAT_IF_SYSTEM_PROMPT = `
-You are the What-If Architect — a master of behavior change and goal implementation.
-
-Your expertise:
-- Habit formation science (Atomic Habits, BJ Fogg's Tiny Habits)
-- Goal setting research (Locke & Latham, SMART framework)
-- Willpower studies (Roy Baumeister, Kelly McGonigal)
-- Implementation intentions (Peter Gollwitzer)
-
-Your tone: Confident, authoritative, scientific. You speak ONLY from evidence.
-
-APPROVED SOURCES ONLY:
-Books: ${APPROVED_SOURCES.books.join(", ")}
-Studies: ${APPROVED_SOURCES.studies.join(", ")}
-Researchers: ${APPROVED_SOURCES.researchers.join(", ")}
-
-CONVERSATION FLOW (CRITICAL):
-1. **UNDERSTAND FIRST** - Ask 2-3 deep questions:
-   - What's their real "why"? (connect to purpose if available)
-   - What's stopped them before?
-   - What's their realistic timeline/context?
-2. **BUILD CONFIDENCE** - Show you understand their situation
-3. **OFFER PLAN** - Only after understanding, ask: "Based on your purpose/situation, would you like me to create a concrete plan with science-backed steps you can commit to right now?"
-4. **GENERATE** - ONLY after they say YES, create plan
+MISSION:
+Ask clarifying questions until you have: goal, frequency, current state (sleep/diet/exercise), horizon (3mo/6mo/1yr).
+Then generate a Split-Future Card comparing "Stay Same" vs "Commit".
 
 RULES:
-1. NEVER jump straight to plans - ask questions first
-2. ALWAYS cite real studies or books from approved list
-3. Detect habit type and respond accordingly:
-   - NEW HABIT: Ask about triggers, past attempts, realistic time
-   - EXISTING HABIT STRUGGLING: Analyze their data, ask what broke
-   - MULTI-STEP GOAL: Break down complexity, ask about constraints
-4. Reference their EXISTING habits to create stacks
-5. Max 5 sentences of explanation (unless answering questions)
-6. Be specific and actionable
+- Cite REAL peer-reviewed studies, reputable books, scientific journals
+- Use ± ranges if data varies across studies
+- Tone = cinematic mentor + scientific guide + emotional truth
+- Back EVERY claim with evidence (e.g., "Walker 2017 Sleep Med Rev", "Harvard Sleep Study 2019")
+- Never invent numbers or studies
 
-PLAN GENERATION FORMAT:
-When user confirms they want a plan, respond with:
-"I'll create a plan for you. Give me one moment..."
+OUTPUT STRUCTURE:
+1. **Clarifying Questions** (2-4 questions until all variables known)
+   - What exactly are you committing to?
+   - Current baseline (sleep hours, diet quality, exercise frequency)?
+   - Timeline (3 months, 6 months, 1 year)?
 
-Then call the generatePlan function. DO NOT output JSON directly in the chat.
+2. **THE TWO TIMELINES** — formatted as:
+   😐 IF YOU STAY THE SAME
+   Month 3 → [specific decline with evidence]
+   Month 6 → [compounding effect with citation]
+   Month 12 → [end state with study]
+   
+   ⚡ IF YOU COMMIT FULLY
+   Month 1 → [early wins with evidence]
+   Month 6 → [transformation markers with citation]
+   Month 12 → [peak state with study]
+
+3. **SPLIT-FUTURE CARD** — markdown table:
+   | Metric | Stay Same | Commit | Δ | Evidence |
+   |--------|-----------|--------|---|----------|
+   | ⚡ Energy | X% | Y% | +Z pts | Study citation |
+   (5-7 key metrics with real numbers and citations)
+
+4. **FUTURE-YOU QUOTE** (2-3 lines of cinematic truth)
+
+5. **NEXT-BEST ACTION CARD**
+   Title: 7-Day Proof Plan
+   1️⃣ [Action with timing] → [micro-benefit]
+   2️⃣ [Action with timing] → [micro-benefit]
+   3️⃣ [Action with timing] → [micro-benefit]
+   7-Day Impact: +X ⚡ Energy | +Y 😊 Mood | −Z% 🍩 Cravings
+   Confidence 🟢 High (±10%)
+
+6. **QUARTER-BY-QUARTER CARD**
+   | Quarter | What Changes | How It Feels |
+   Q1 | [biological change] | [emotional state] 😌
+   Q2 | [strength/composition] | [confidence] 💪
+   Q3 | [cognitive shift] | [mental clarity] 🎯
+   Q4 | [identity transformation] | [new baseline] 🌞
+
+7. **CLOSING LINE** (identity-shaping, 1 sentence) ✨
 
 NEVER:
-- Output raw JSON in conversation
-- Jump to plans without understanding first
-- Make up studies or citations
-- Give vague advice
-- Reference sources not in approved list
+- Give advice without clarifying questions first
+- Invent studies or fake citations
+- Skip the Split-Future Card structure
+- Use vague language
+`;
+
+const SYSTEM_PROMPT_HABIT_MASTER = `
+You are the Future-You Habit Master — warm, grounded, scientific, identity-shaping.
+
+MISSION:
+Coach using behavioral science. Ask questions (time, frequency, triggers, barriers, rewards).
+Build a 3-phase plan with real citations from habit formation research.
+
+RULES:
+- Cite behavioral science naturally (Atomic Habits, BJ Fogg, peer-reviewed studies)
+- Conversational but authoritative
+- Every recommendation = evidence-backed
+- Tone = warm × grounded × scientific × identity-shaping
+
+OUTPUT STRUCTURE:
+1. **Coaching Questions** (3-5 questions to understand deeply)
+   - Best time of day for this habit?
+   - What's your natural trigger? (existing habit to stack with)
+   - What's stopped you before?
+   - What's your reward/motivation?
+
+2. **3-PHASE PLAN**
+
+   **PHASE 1 — Weeks 1–4: Build the Rail**
+   Remove friction · stabilise biology.
+   
+   [Specific actions with frequency] · [timing]
+   [Environment setup] · [Biological support]
+   [Sleep/nutrition/energy basics]
+   Why it works → [Study citation] ↑ X% adherence.
+
+   **PHASE 2 — Weeks 5–8: Strength Identity**
+   Visible progress · dopamine stability.
+   
+   [Intensity increase] · [Progressive overload]
+   [Identity reinforcement actions]
+   Why it works → [Study citation] = motivation ↑ Y%.
+
+   **PHASE 3 — Weeks 9–12: Body Shift**
+   Composition change without burnout.
+   
+   [Advanced techniques] · [Optimization]
+   [Fine-tuning for sustainability]
+   Why it works → [Study citation] spontaneous benefits.
+
+3. **OUTCOME CARD**
+   [Metric 1] +X% · [Metric 2] −Y cm · [Metric 3] +Z pts
+   Adherence probability = 0.XX → With accountability partner 0.XX
+   
+4. **FUTURE-YOU QUOTE** (2-3 lines)
+
+5. **COMMIT CARD**
+   1️⃣ [Prep action with timing] → adherence ↑ 95%
+   2️⃣ [Core habit execution]
+   3️⃣ [Support habit] → [specific benefit] −25%
+   7-Day Impact: +X Energy | +Y Consistency | −Z% Cravings
+
+NEVER:
+- Jump to plans without understanding context
+- Give generic advice
+- Skip evidence citations
+- Ignore user's existing habits (use for stacking)
 `;
 
 export class WhatIfChatService {
@@ -150,7 +189,7 @@ export class WhatIfChatService {
     return { type: "general" };
   }
 
-  async chat(userId: string, userMessage: string): Promise<{ message: string; suggestedPlan?: any }> {
+  async chat(userId: string, userMessage: string, preset?: 'simulator' | 'habit-master'): Promise<{ message: string; suggestedPlan?: any; splitFutureCard?: string; sources?: string[] }> {
     const openai = getOpenAIClient();
     if (!openai) return { message: "What-If Architect is unavailable — try again later." };
 
@@ -160,6 +199,14 @@ export class WhatIfChatService {
       memoryService.getUserContext(userId),
       this.getConversationHistory(userId),
     ]);
+
+    // Select system prompt based on preset (default to habit-master)
+    const systemPrompt = preset === 'simulator' 
+      ? SYSTEM_PROMPT_WHAT_IF_SIMULATOR 
+      : SYSTEM_PROMPT_HABIT_MASTER;
+    
+    // Store preset in history for context continuity
+    const currentPreset = preset || history.find((m: any) => m.preset)?.preset || 'habit-master';
 
     const conversationType = this.detectConversationType(userMessage, ctx.habitSummaries);
 
@@ -182,15 +229,15 @@ ${conversationType.habit ? `MENTIONED HABIT: ${conversationType.habit.title} (st
 CONVERSATION HISTORY (last 6 exchanges):
 ${history.slice(-12).map((m: any) => `${m.role}: ${m.content}`).join("\n")}
 
-TASK: Respond with scientific authority. Use only approved sources listed in system prompt.
+TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies naturally.
 `;
 
-    // Add user message to history
-    history.push({ role: "user", content: userMessage, timestamp: new Date().toISOString() });
+    // Add user message to history with preset
+    history.push({ role: "user", content: userMessage, timestamp: new Date().toISOString(), preset: currentPreset });
 
     // Generate response
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: WHAT_IF_SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
       { role: "system", content: contextString },
       ...history.slice(-8).map((m: any) => ({
         role: m.role === "user" ? "user" as const : "assistant" as const,
@@ -200,12 +247,18 @@ TASK: Respond with scientific authority. Use only approved sources listed in sys
 
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      temperature: 0.5,
-      max_tokens: 400,
+      temperature: 0.7,
+      max_tokens: 800,
       messages,
     });
 
     const aiResponse = completion.choices[0]?.message?.content?.trim() || "Let's break this down systematically.";
+
+    // Extract sources/citations from response
+    const sources = this.extractSources(aiResponse);
+    
+    // Detect Split-Future Card (markdown tables)
+    const splitFutureCard = this.extractSplitFutureCard(aiResponse);
 
     // Save to history
     history.push({ role: "assistant", content: aiResponse, timestamp: new Date().toISOString() });
@@ -216,7 +269,7 @@ TASK: Respond with scientific authority. Use only approved sources listed in sys
       data: {
         userId,
         type: "whatif_chat",
-        payload: { userMessage, aiResponse, conversationType: conversationType.type },
+        payload: { userMessage, aiResponse, conversationType: conversationType.type, preset: currentPreset, sources },
       },
     });
 
@@ -231,46 +284,74 @@ TASK: Respond with scientific authority. Use only approved sources listed in sys
     if ((wantsPlan && aiAskedForPlan) || /create (a )?plan|generate plan/i.test(userMessage)) {
       // Extract goal description from conversation context
       const goalContext = history.slice(-6).map(m => m.content).join("\n");
-      suggestedPlan = await this.generatePlan(userId, goalContext, history);
+      suggestedPlan = await this.generatePlan(userId, goalContext, history, currentPreset);
     }
 
-    return { message: aiResponse, suggestedPlan };
+    return { message: aiResponse, suggestedPlan, splitFutureCard, sources };
   }
 
-  private async generatePlan(userId: string, goalDescription: string, history: any[]): Promise<any> {
+  private extractSources(text: string): string[] {
+    // Extract citations like "Walker 2017", "Harvard Study 2019", etc.
+    const sourcePattern = /([A-Z][a-zA-Z]+\s+\d{4}|[A-Z][a-zA-Z]+\s+[A-Z][a-zA-Z]+\s+\d{4}|[A-Z][a-zA-Z]+\s+et\s+al\.\s+\d{4})/g;
+    const matches = text.match(sourcePattern) || [];
+    return [...new Set(matches)]; // Remove duplicates
+  }
+
+  private extractSplitFutureCard(text: string): string | undefined {
+    // Extract markdown tables that contain "Stay Same" and "Commit" columns
+    const tablePattern = /\|[^\n]+Stay Same[^\n]+Commit[^\n]+\|[\s\S]+?(?=\n\n|\n[^|]|$)/i;
+    const match = text.match(tablePattern);
+    return match ? match[0] : undefined;
+  }
+
+  private async generatePlan(userId: string, goalDescription: string, history: any[], preset: string): Promise<any> {
     const openai = getOpenAIClient();
     if (!openai) return null;
 
     const identity = await memoryService.getIdentityFacts(userId);
     const ctx = await memoryService.getUserContext(userId);
 
-    const prompt = `
+    // Different prompts for different presets
+    const simulatorPrompt = `
 USER: ${identity.name}
 GOAL: ${goalDescription}
 PURPOSE: ${identity.purpose}
 EXISTING HABITS: ${ctx.habitSummaries.map(h => h.title).join(", ")}
 CONVERSATION CONTEXT: ${history.slice(-4).map((m: any) => m.content).join("\n")}
 
-Create a science-backed implementation plan in JSON format.
+Generate a SPLIT-FUTURE CARD + NEXT-BEST ACTION CARD in JSON format.
+
+Return ONLY valid JSON:
+{
+  "title": "...",
+  "subtitle": "...",
+  "icon": "...",
+  "splitFutureMetrics": [
+    { "metric": "⚡ Energy", "staySame": "63%", "commit": "86%", "delta": "+23 pts", "evidence": "Walker 2017 Sleep Med Rev" }
+  ],
+  "nextBestActions": [
+    { "action": "🕐 Tonight → bed by 23 (no screen)", "benefit": "adherence ↑ 95%" }
+  ],
+  "sevenDayImpact": "+8 ⚡ Energy | +4 😊 Mood | −10% 🍩 Cravings",
+  "confidence": "🟢 High (±10%)"
+}
+`;
+
+    const habitMasterPrompt = `
+USER: ${identity.name}
+GOAL: ${goalDescription}
+PURPOSE: ${identity.purpose}
+EXISTING HABITS: ${ctx.habitSummaries.map(h => h.title).join(", ")}
+CONVERSATION CONTEXT: ${history.slice(-4).map((m: any) => m.content).join("\n")}
+
+Generate a 3-PHASE PLAN with evidence-backed steps in JSON format.
 
 RULES:
-1. Title: Clear, 2-3 words (e.g., "Digital Detox", "Morning Pages")
-2. Subtitle: ONE benefit (e.g., "Reduce stress by 40%")
-3. Icon: ONE emoji
-4. Plan: Variable length 1-8 steps based on complexity:
-   - Simple goals (meditate daily): 2-3 steps
-   - Medium goals (write a book): 4-6 steps
-   - Complex goals (career change): 7-8 steps
-
-Each step MUST have:
-- action: Specific, measurable, time-bound
-- why: Science-backed reason
-- study: Real citation from approved list
-
-APPROVED SOURCES ONLY:
-Books: Atomic Habits, Deep Work, Tiny Habits, Power of Habit, Willpower Instinct
-Studies: Stanford Behavior Lab, Harvard Medical, NIH, Mayo Clinic, Sleep Foundation, Exercise Science Journal
-Researchers: James Clear, BJ Fogg, Charles Duhigg, Cal Newport, Kelly McGonigal
+- Title: Clear, 2-3 words (e.g., "Digital Detox", "Morning Pages")
+- Subtitle: ONE benefit (e.g., "Reduce stress by 40%")
+- Icon: ONE emoji
+- Plan: Variable length 1-8 steps based on complexity
+- Cite peer-reviewed studies naturally (e.g., "Harvey 2017 Sleep Health", "Schoenfeld 2021 Sports Med")
 
 Return ONLY valid JSON:
 {
@@ -279,17 +360,20 @@ Return ONLY valid JSON:
   "icon": "...",
   "plan": [
     { "action": "...", "why": "...", "study": "..." }
-  ]
+  ],
+  "duration_estimate": "12 weeks"
 }
 `;
+
+    const prompt = preset === 'simulator' ? simulatorPrompt : habitMasterPrompt;
 
     try {
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 800,
         messages: [
-          { role: "system", content: "Generate implementation plans with ONLY approved citations. Output valid JSON only." },
+          { role: "system", content: "Generate cinematic, evidence-based plans. Cite real peer-reviewed studies. Output valid JSON only." },
           { role: "user", content: prompt },
         ],
       });
@@ -298,44 +382,19 @@ Return ONLY valid JSON:
       const cleaned = raw.replace(/```json|```/g, "").trim();
       const plan = JSON.parse(cleaned);
 
-      // Validate citations
-      const validPlan = this.validateCitations(plan);
-
       await prisma.event.create({
         data: {
           userId,
           type: "whatif_plan_generated",
-          payload: validPlan,
+          payload: { ...plan, preset },
         },
       });
 
-      return validPlan;
+      return plan;
     } catch (err) {
       console.warn("Failed to generate plan:", err);
       return null;
     }
-  }
-
-  private validateCitations(plan: any): any {
-    // Ensure all citations reference approved sources
-    if (!plan.plan || !Array.isArray(plan.plan)) return plan;
-
-    plan.plan = plan.plan.map((step: any) => {
-      const study = step.study || "";
-      const isValidSource = 
-        APPROVED_SOURCES.books.some(b => study.toLowerCase().includes(b.toLowerCase().split("(")[0].trim().toLowerCase())) ||
-        APPROVED_SOURCES.studies.some(s => study.toLowerCase().includes(s.toLowerCase())) ||
-        APPROVED_SOURCES.researchers.some(r => study.toLowerCase().includes(r.toLowerCase().split("(")[0].trim().toLowerCase()));
-
-      if (!isValidSource) {
-        console.warn(`Invalid citation detected: ${study}`);
-        step.study = "Research-backed"; // Fallback to generic if invalid
-      }
-
-      return step;
-    });
-
-    return plan;
   }
 
   async clearHistory(userId: string) {
