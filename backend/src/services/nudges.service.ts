@@ -163,7 +163,7 @@ Be direct, actionable, and motivating. No fluff.
 
     const ai = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      max_tokens: 150,
+      max_completion_tokens: 150,
       temperature: 0.6,
       messages: [
         { role: "system", content: MENTOR.systemPrompt },

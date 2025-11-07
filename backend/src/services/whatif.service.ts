@@ -47,7 +47,7 @@ Example format:
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: 0.7,
-      max_tokens: 1500,
+      max_completion_tokens: 1500,
       messages: [
         { role: "system", content: "Generate personalized What-If goals. Output only JSON array." },
         { role: "user", content: prompt },

@@ -47,7 +47,7 @@ Return ONLY valid JSON:
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: 0.2,
-      max_tokens: 500,
+      max_completion_tokens: 500,
       messages: [
         { role: "system", content: "Extract identity insights from discovery conversations. Output only JSON." },
         { role: "user", content: prompt },

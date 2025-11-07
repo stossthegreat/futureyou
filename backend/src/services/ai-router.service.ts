@@ -82,7 +82,7 @@ export class AIRouterService {
       // Primary call with selected tier
       result = await openai.chat.completions.create({
         model: tier.model,
-        max_tokens: tier.maxTokens,
+        max_completion_tokens: tier.maxTokens,
         messages: [
           { role: "system", content: config.systemPrompt },
           { role: "user", content: enrichedInput },
@@ -99,7 +99,7 @@ export class AIRouterService {
       try {
         result = await openai.chat.completions.create({
           model: fallbackModel,
-          max_tokens: Math.min(tier.maxTokens, 600),
+          max_completion_tokens: Math.min(tier.maxTokens, 600),
           messages: [
             { role: "system", content: config.systemPrompt },
             { role: "user", content: config.userInput }, // Skip memory on fallback

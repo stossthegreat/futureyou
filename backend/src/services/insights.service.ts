@@ -124,7 +124,7 @@ ${context.recentEvents.slice(0, 100).map((e) => e.type).join(", ")}
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: 0.3,
-      max_tokens: 300,
+      max_completion_tokens: 300,
       messages: [
         {
           role: "system",
@@ -273,7 +273,7 @@ Output JSON:
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
         temperature: 0.7,
-        max_tokens: 150,
+        max_completion_tokens: 150,
         messages: [
           { role: "system", content: "You are a pattern recognition engine for habit tracking." },
           { role: "user", content: prompt },

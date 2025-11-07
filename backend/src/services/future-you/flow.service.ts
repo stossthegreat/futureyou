@@ -60,7 +60,7 @@ export async function runPhaseFlow(userId: string, userInput: string) {
       ...messages
     ],
     temperature: 0.7,
-    max_tokens: 900
+    max_completion_tokens: 900
   });
 
   const coachText = coachResponse.choices[0].message.content || "I'm here to guide you. Tell me more.";
@@ -156,7 +156,7 @@ Use their exact phrases when possible. Make it personal, not generic.`;
       messages: [{ role: "user", content: cardPrompt }],
       response_format: { type: "json_object" },
       temperature: 0.8,
-      max_tokens: 700
+      max_completion_tokens: 700
     });
 
     const cardContent = cardResponse.choices[0].message.content || "{}";

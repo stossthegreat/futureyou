@@ -290,7 +290,7 @@ ${JSON.stringify(contradictions, null, 2)}
     const analystResponse = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: TEMP_ANALYST,
-      max_tokens: 320,
+      max_completion_tokens: 320,
       messages: [
         { role: "system", content: FUTURE_YOU_ANALYST },
         { role: "user", content: analystInput },
@@ -324,7 +324,7 @@ ${JSON.stringify({ name: identity?.name, coreValues: identity?.coreValues, purpo
     const voiceResponse = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: TEMP_VOICE,
-      max_tokens: 260,
+      max_completion_tokens: 260,
       messages: [
         { role: "system", content: FUTURE_YOU_VOICE },
         { role: "user", content: voiceInput },
