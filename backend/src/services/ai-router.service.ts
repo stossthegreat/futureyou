@@ -31,9 +31,9 @@ interface AIRouterResponse {
 
 // MODEL TIERS WITH REASONING + VERBOSITY
 const MODEL_TIERS = {
-  futureYou: { model: "gpt-4o", effort: "high", verbosity: "high", maxTokens: 1200 },
-  habit: { model: "gpt-4o", effort: "medium", verbosity: "medium", maxTokens: 1200 },
-  whatif: { model: "gpt-4o", effort: "medium", verbosity: "high", maxTokens: 1500 },
+  futureYou: { model: "gpt-4o", effort: "high", verbosity: "high", maxTokens: 1500 },
+  habit: { model: "gpt-4o", effort: "medium", verbosity: "medium", maxTokens: 2500 },
+  whatif: { model: "gpt-4o", effort: "medium", verbosity: "high", maxTokens: 2500 },
   brief: { model: "gpt-4o-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
   nudge: { model: "gpt-4o-mini", effort: "low", verbosity: "medium", maxTokens: 200 },
   debrief: { model: "gpt-4o-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
