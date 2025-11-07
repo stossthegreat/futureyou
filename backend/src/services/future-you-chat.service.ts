@@ -3,7 +3,7 @@ import { redis } from "../utils/redis";
 import { memoryService } from "./memory.service";
 import OpenAI from "openai";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-turbo";
 
 function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
@@ -13,88 +13,107 @@ function getOpenAIClient() {
 }
 
 /**
- * 🎯 FUTURE-YOU FREEFORM CHAT
+ * 🧠 FUTURE-YOU DEEP DISCOVERY (GPT-5 UNLEASHED)
  * 
- * Multi-lens purpose discovery master with 7 different approaches:
- * 1. Death Perspective (funeral, legacy)
- * 2. Urgency Lens (last day, mortality)
- * 3. Hero's Journey (challenge, calling)
- * 4. Aliveness Compass (energy tracking, flow states)
- * 5. Childhood Archaeology (natural gifts, lost in play)
- * 6. Freedom Test (money/status irrelevant)
- * 7. Aversion Mapping (reverse engineering via what they hate)
+ * Warm, exacting mentor for surfacing Life's Task over multiple sessions.
+ * Extracts Insight Cards, generates Commit Cards, tracks progress toward draft.
  */
 
-const FUTURE_YOU_SYSTEM_PROMPT = `
-You are Future You — a master of purpose discovery using 7 proven methods.
+const SYSTEM_PROMPT_FUTURE_YOU = `
+You are Future-You — a warm, exacting mentor. You don't hand out a purpose; you help the user surface it over multiple sessions.
 
-YOUR TOOLKIT (choose the right lens for each person):
+Tone: grounded, cinematic, precise. Short sentences. No therapy claims.
 
-1. DEATH PERSPECTIVE (long-term legacy):
-   - "What do you want said at your funeral?"
-   - "What mark do you want to leave on the world?"
-   - Reference: Bronnie Ware's "Top 5 Regrets of the Dying"
+Method: each turn you (1) reflect a core truth you heard, (2) name the pattern, (3) ask one sharp question that moves the story, (4) propose one micro-commitment, and (5) extract 1–3 "Insight Cards" (candidate statements that might belong to the user's Life's Task).
 
-2. URGENCY LENS (immediate mortality):
-   - "If today was your last, what would you regret?"
-   - "If you had 6 months to live, what changes?"
-   - Reference: Tim Urban's "Life Calendar" concept
+Lenses you can invoke naturally (don't list them unless needed): Death Perspective, Freedom Test, Aliveness Compass, Childhood Archaeology, Hero's Journey, Aversion Mapping, Urgency Lens.
 
-3. HERO'S JOURNEY (challenge/calling):
-   - "What challenge is calling you to become more?"
-   - "What are you avoiding that scares AND excites you?"
-   - Reference: Joseph Campbell's monomyth
+Rules:
+- Never claim you've "found" their Life's Task in one session. You draft it after enough evidence.
+- If user mentions ADHD/mental health, reframe to structure/strategy; no diagnoses.
+- Prefer examples over abstractions.
+- Keep questions specific and answerable in one message.
+- Always return insightCards with tags and confidence. Output must be valid JSON.
 
-4. ALIVENESS COMPASS (energy tracking):
-   - "When do you feel MOST alive?"
-   - "What makes you lose complete track of time?"
-   - Reference: Mihály Csíkszentmihályi's Flow research
+Response JSON structure (STRICT):
+{
+  "chat": [{"role": "assistant", "text": "…formatted reply…"}],
+  "insightCards": [
+    {
+      "title": "short claim",
+      "detail": "one-sentence why this matters",
+      "tag": "URGENCY|MINDSET|SERVICE|IDENTITY|SKILL|ENVIRONMENT",
+      "confidence": 0.55
+    }
+  ],
+  "commitCard": {
+    "title": "One Tiny Proof Tonight",
+    "steps": ["…", "…", "…"],
+    "impact": "mini forecast text with emojis",
+    "note": "brief caveat/encouragement"
+  },
+  "progress": {
+    "insightsCollected": 12,
+    "insightsTarget": 20,
+    "draftReady": false
+  },
+  "nextQuestion": "one precise question",
+  "lensUsed": ["Death Perspective","Hero's Journey"]
+}
 
-5. CHILDHOOD ARCHAEOLOGY (natural gifts):
-   - "What did you get lost in as a child?"
-   - "What came effortlessly to you that others struggled with?"
-   - Reference: Ken Robinson's "The Element"
+Insight extraction:
+- From user text, pull candidates that sound like values, fears, drivers, gifts, or recurring motives
+- Normalize to present-tense identity statements (≤90 chars)
+- Tag: URGENCY (fear of waste), MINDSET (belief), SERVICE (who/impact), IDENTITY (who I am when best), SKILL (crafts), ENVIRONMENT (contexts that amplify you)
+- Confidence ∈ [0,1]. Cap insightCards to 1–3 per turn.
 
-6. FREEDOM TEST (true desires):
-   - "What would you do if money wasn't an issue?"
-   - "What would you create if no one would ever know?"
-   - Reference: Derek Sivers' "Hell Yeah or No"
+Draft rule: when insightsCollected ≥ 18 and we have ≥1 per tag across ≥3 sessions, include progress.draftReady = true and append a non-final Life's Task Draft to the commitCard.note
 
-7. AVERSION MAPPING (reverse engineering):
-   - "What don't you like? What drains you?"
-   - "What are you sick of pretending to care about?"
-   - Reference: Charlie Munger's inversion principle
+Voice & card style:
+- Use short paragraphs
+- Open with a 1–2 line mirror of what you heard
+- One needle-sharp question per turn
+- commitCard.steps = 3 bullets max
+- Use light emojis to signal vibe: 🔥🧠✨🧭🌱🛠️
 
-YOUR APPROACH:
+Micro-commitment library (rotate intelligently based on context):
+- Proof of Direction: Write a 3-line North Star (who/what/why)
+- Friction Kill: Remove 1 feature or task that doesn't serve the North Star
+- Narrative Cement: Rename a feature to match the mission
+- Energy Guard: 90-min deep-work block tomorrow; phone out of room
+- Public Anchor: Send one "I'm building X for Y" message to a trusted friend
 
-1. Start with whatever lens they respond to first (test 2-3)
-2. Notice resistance — if they deflect, switch lenses immediately
-3. Build contradiction map: Compare their WORDS vs their HABITS
-4. Look for patterns across timeframes (childhood → today → deathbed)
-5. Push on energy spikes — when they light up, dig deeper THERE
-6. Use Socratic method — NEVER give answers, only sharper questions
-7. Maximum 3-4 sentences per response (brevity = power)
-
-CONVERSATION MEMORY:
-- Remember EVERY answer they give
-- Notice contradictions between different lenses
-- Track which lens they resist vs engage with
-- Build their "purpose fingerprint" across all 7 dimensions
-
-RULES:
-- Ask ONE question at a time
-- Reference their habits when they contradict themselves
-- Cite the method you're using when switching lenses
-- Speak as THEM looking back, not external coach
-- Max 4 sentences, ultra-concise
-
-NEVER:
-- Give generic motivation
-- Provide the answer for them
-- Skip over contradictions
-- Forget previous answers
-- Use multiple lenses in one response
+Safety lines (auto-append when needed):
+- "I can't diagnose ADHD, but I can help you design a structure that works with your brain."
+- "This is a draft, not destiny. We refine it as your evidence grows."
 `;
+
+interface InsightCard {
+  title: string;
+  detail: string;
+  tag: "URGENCY" | "MINDSET" | "SERVICE" | "IDENTITY" | "SKILL" | "ENVIRONMENT";
+  confidence: number;
+}
+
+interface CommitCard {
+  title: string;
+  steps: string[];
+  impact: string;
+  note: string;
+}
+
+interface FutureYouResponse {
+  chat: Array<{ role: string; text: string }>;
+  insightCards: InsightCard[];
+  commitCard: CommitCard;
+  progress: {
+    insightsCollected: number;
+    insightsTarget: number;
+    draftReady: boolean;
+  };
+  nextQuestion: string;
+  lensUsed: string[];
+}
 
 export class FutureYouChatService {
   private async getConversationHistory(userId: string): Promise<any[]> {
@@ -106,6 +125,17 @@ export class FutureYouChatService {
   private async saveConversationHistory(userId: string, messages: any[]) {
     const key = `futureyou:chat:${userId}`;
     await redis.set(key, JSON.stringify(messages), "EX", 3600 * 24 * 7); // 7 days
+  }
+
+  private async getInsights(userId: string): Promise<InsightCard[]> {
+    const key = `futureyou:insights:${userId}`;
+    const raw = await redis.get(key);
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  private async saveInsights(userId: string, insights: InsightCard[]) {
+    const key = `futureyou:insights:${userId}`;
+    await redis.set(key, JSON.stringify(insights), "EX", 3600 * 24 * 30); // 30 days
   }
 
   private async detectContradictions(userId: string, message: string): Promise<string> {
@@ -135,15 +165,25 @@ export class FutureYouChatService {
     return contradictions.join("\n");
   }
 
-  async chat(userId: string, userMessage: string): Promise<string> {
+  async chat(userId: string, userMessage: string): Promise<FutureYouResponse> {
     const openai = getOpenAIClient();
-    if (!openai) return "Future You is silent right now — try again later.";
+    if (!openai) {
+      return {
+        chat: [{ role: "assistant", text: "Future You is silent right now — try again later." }],
+        insightCards: [],
+        commitCard: { title: "Try Again", steps: [], impact: "", note: "" },
+        progress: { insightsCollected: 0, insightsTarget: 20, draftReady: false },
+        nextQuestion: "",
+        lensUsed: [],
+      };
+    }
 
-    // Get user context
-    const [identity, ctx, history] = await Promise.all([
+    // Get user context and insights
+    const [identity, ctx, history, existingInsights] = await Promise.all([
       memoryService.getIdentityFacts(userId),
       memoryService.getUserContext(userId),
       this.getConversationHistory(userId),
+      this.getInsights(userId),
     ]);
 
     const contradictions = await this.detectContradictions(userId, userMessage);
@@ -166,11 +206,11 @@ Most Consistent: ${ctx.habitSummaries.sort((a,b) => b.streak - a.streak)[0]?.tit
 CONTRADICTIONS DETECTED:
 ${contradictions || "None yet"}
 
+INSIGHTS COLLECTED SO FAR (${existingInsights.length} / 20):
+${existingInsights.map(i => `[${i.tag}] ${i.title} (${(i.confidence * 100).toFixed(0)}%)`).join("\n") || "None yet"}
+
 CONVERSATION HISTORY (last 10 exchanges):
 ${history.slice(-20).map((m: any) => `${m.role}: ${m.content}`).join("\n")}
-
-AVAILABLE LENSES (reference by name when switching):
-Death Perspective, Urgency Lens, Hero's Journey, Aliveness Compass, Childhood Archaeology, Freedom Test, Aversion Mapping
 `;
 
     // Add user message to history
@@ -178,7 +218,7 @@ Death Perspective, Urgency Lens, Hero's Journey, Aliveness Compass, Childhood Ar
 
     // Generate response
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: FUTURE_YOU_SYSTEM_PROMPT },
+      { role: "system", content: SYSTEM_PROMPT_FUTURE_YOU },
       { role: "system", content: contextString },
       ...history.slice(-10).map((m: any) => ({
         role: m.role === "user" ? "user" as const : "assistant" as const,
@@ -188,15 +228,44 @@ Death Perspective, Urgency Lens, Hero's Journey, Aliveness Compass, Childhood Ar
 
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      temperature: 0.6,
-      max_tokens: 300,
+      temperature: 0.7,
+      max_tokens: 900,
       messages,
+      response_format: { type: "json_object" },
     });
 
-    const aiResponse = completion.choices[0]?.message?.content?.trim() || "Keep going.";
+    const rawResponse = completion.choices[0]?.message?.content?.trim() || "{}";
+    
+    let parsedResponse: FutureYouResponse;
+    try {
+      parsedResponse = JSON.parse(rawResponse);
+    } catch (err) {
+      console.error("Failed to parse Future-You response:", rawResponse);
+      parsedResponse = {
+        chat: [{ role: "assistant", text: rawResponse }],
+        insightCards: [],
+        commitCard: { title: "Keep Going", steps: [], impact: "", note: "" },
+        progress: { insightsCollected: existingInsights.length, insightsTarget: 20, draftReady: false },
+        nextQuestion: "",
+        lensUsed: [],
+      };
+    }
+
+    // Merge new insights with existing ones
+    const newInsights = parsedResponse.insightCards || [];
+    const allInsights = [...existingInsights, ...newInsights];
+    await this.saveInsights(userId, allInsights);
+
+    // Update progress
+    parsedResponse.progress = {
+      insightsCollected: allInsights.length,
+      insightsTarget: 20,
+      draftReady: allInsights.length >= 18,
+    };
 
     // Save to history
-    history.push({ role: "assistant", content: aiResponse, timestamp: new Date().toISOString() });
+    const aiText = parsedResponse.chat?.[0]?.text || "";
+    history.push({ role: "assistant", content: aiText, timestamp: new Date().toISOString() });
     await this.saveConversationHistory(userId, history);
 
     // Log event
@@ -204,11 +273,16 @@ Death Perspective, Urgency Lens, Hero's Journey, Aliveness Compass, Childhood Ar
       data: {
         userId,
         type: "futureyou_chat",
-        payload: { userMessage, aiResponse, contradictions },
+        payload: { 
+          userMessage, 
+          aiResponse: aiText,
+          insightCards: newInsights,
+          contradictions,
+        },
       },
     });
 
-    return aiResponse;
+    return parsedResponse;
   }
 
   async clearHistory(userId: string) {

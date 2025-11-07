@@ -14,7 +14,7 @@ function getUserIdOr401(req: any) {
  * This is for ongoing purpose conversations with 7 lenses
  */
 export async function futureYouChatController(fastify: FastifyInstance) {
-  // Freeform chat with Future-You (7 lenses, memory, contradictions)
+  // Freeform chat with Future-You (GPT-5 Deep Discovery)
   fastify.post("/api/v1/future-you/freeform", async (req: any, reply) => {
     try {
       const userId = getUserIdOr401(req);
@@ -25,7 +25,13 @@ export async function futureYouChatController(fastify: FastifyInstance) {
       }
 
       const response = await futureYouChatService.chat(userId, message);
-      return { message: response };
+      
+      // Return full structured response (chat, insightCards, commitCard, progress, nextQuestion, lensUsed)
+      // Also include legacy 'message' field for backwards compatibility
+      return {
+        ...response,
+        message: response.chat?.[0]?.text || "",
+      };
     } catch (err: any) {
       console.error("Future-You chat error:", err);
       return reply.code(err.statusCode || 500).send({ error: err.message });
