@@ -80,6 +80,8 @@ class MessageKindAdapter extends TypeAdapter<MessageKind> {
         return MessageKind.letter;
       case 5:
         return MessageKind.chat;
+      case 6:
+        return MessageKind.vault;
       default:
         return MessageKind.nudge;
     }
@@ -105,6 +107,9 @@ class MessageKindAdapter extends TypeAdapter<MessageKind> {
         break;
       case MessageKind.chat:
         writer.writeByte(5);
+        break;
+      case MessageKind.vault:
+        writer.writeByte(6);
         break;
     }
   }
