@@ -47,5 +47,37 @@ export async function whatIfChatController(fastify: FastifyInstance) {
       return reply.code(err.statusCode || 500).send({ error: err.message });
     }
   });
+
+  // Save What-If output card to Vault
+  fastify.post("/api/v1/reflections/vault", async (req: any, reply) => {
+    try {
+      const userId = getUserIdOr401(req);
+      const { content, sections, habits } = req.body;
+
+      if (!content) {
+        return reply.code(400).send({ error: "Content required" });
+      }
+
+      // Save to database as an event
+      const { prisma } = await import("../utils/db");
+      await prisma.event.create({
+        data: {
+          userId,
+          type: "vault",
+          payload: {
+            title: content,
+            sections,
+            habits,
+            savedAt: new Date().toISOString(),
+          } as any,
+        },
+      });
+
+      return { success: true };
+    } catch (err: any) {
+      console.error("Vault save error:", err);
+      return reply.code(500).send({ error: err.message });
+    }
+  });
 }
 

@@ -1719,23 +1719,27 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
             ),
           ),
 
-          // Input
-          Container(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              140, // Extra space above nav tabs
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xFF18181B),
-              border: Border(
-                top: BorderSide(
-                  color: AppColors.emerald.withOpacity(0.2),
+          // Input (moves with keyboard, nav stays fixed)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: MediaQuery.of(context).viewInsets.bottom, // Rises with keyboard
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                140, // Extra space above nav tabs
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFF18181B),
+                border: Border(
+                  top: BorderSide(
+                    color: AppColors.emerald.withOpacity(0.2),
+                  ),
                 ),
               ),
-            ),
-            child: Row(
+              child: Row(
                 children: [
                   Expanded(
                     child: Container(
@@ -1787,6 +1791,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                     ),
                   ),
                 ],
+              ),
             ),
           ),
         ],
@@ -2048,38 +2053,15 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                     const SizedBox(height: 20),
                   ],
 
-                  // Action buttons (4 buttons now!)
+                  // Action buttons (3 buttons: Vault, Copy, Commit)
                   Row(
                     children: [
-                      // Not Yet button
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () {
-                            // Just closes the card (no action needed since it's inline)
-                            _showToast('Take your time! 💚');
-                          },
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Not Yet',
-                            style: TextStyle(
-                              color: AppColors.textTertiary,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       // Save to Vault button
                       Expanded(
                         child: TextButton(
                           onPressed: () => _saveCardToVault(card, habits),
                           style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             backgroundColor: AppColors.emerald.withOpacity(0.1),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -2089,23 +2071,19 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                             '💾 Vault',
                             style: TextStyle(
                               color: AppColors.emerald,
-                              fontSize: 13,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
+                      const SizedBox(width: 8),
                       // Copy button
                       Expanded(
                         child: TextButton(
                           onPressed: () => _copyCardToClipboard(card),
                           style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             backgroundColor: Colors.white.withOpacity(0.05),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -2115,7 +2093,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                             '📋 Copy',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 13,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -2130,7 +2108,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                             onPressed: () => _commitHabitsFromCard(habits),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.emerald,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),

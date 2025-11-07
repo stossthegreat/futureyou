@@ -701,23 +701,27 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
             ),
           ),
 
-          // Input area - positioned just above nav tabs
-          Container(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              140, // Extra space above nav tabs
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xFF18181B),
-              border: Border(
-                top: BorderSide(
-                  color: AppColors.emerald.withOpacity(0.2),
+          // Input area (moves with keyboard, nav stays fixed)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: MediaQuery.of(context).viewInsets.bottom, // Rises with keyboard
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                140, // Extra space above nav tabs
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFF18181B),
+                border: Border(
+                  top: BorderSide(
+                    color: AppColors.emerald.withOpacity(0.2),
+                  ),
                 ),
               ),
-            ),
-            child: Row(
+              child: Row(
                 children: [
                   Expanded(
                     child: Container(
@@ -772,6 +776,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
                     ),
                   ),
                 ],
+              ),
             ),
           ),
         ],
