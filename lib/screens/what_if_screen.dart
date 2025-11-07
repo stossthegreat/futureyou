@@ -351,6 +351,8 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
         final suggestedPlan = result.data!['suggestedPlan'];
         final splitFutureCard = result.data!['splitFutureCard'] as String?;
         final sources = result.data!['sources'] as List?;
+        final outputCard = result.data!['outputCard']; // NEW!
+        final habits = result.data!['habits'] as List?; // NEW!
 
         final responseMessage = ChatMessage(
           id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
@@ -364,8 +366,12 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
           _isLoading = false;
         });
 
-        // If AI generated a plan, show it as a beautiful card!
-        if (suggestedPlan != null && suggestedPlan is Map) {
+        // If AI generated OUTPUT CARD, show it! (NEW!)
+        if (outputCard != null && outputCard is Map) {
+          _showOutputCard(Map<String, dynamic>.from(outputCard as Map), habits);
+        }
+        // Fallback: If AI generated a plan (legacy), show it
+        else if (suggestedPlan != null && suggestedPlan is Map) {
           _showSuggestedPlanCard(Map<String, dynamic>.from(suggestedPlan as Map));
         }
       } else {
@@ -630,6 +636,279 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
   int _parseDurationDays(String durationStr) {
     final match = RegExp(r'(\d+)').firstMatch(durationStr);
     return match != null ? int.parse(match.group(1)!) : 21;
+  }
+
+  // NEW: Show beautiful OUTPUT CARD from GPT-5!
+  void _showOutputCard(Map<String, dynamic> card, List<dynamic>? habits) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF0F1F0F),
+                Colors.black,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.emerald.withOpacity(0.3), width: 2),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: AppColors.emeraldGradient,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(22),
+                    topRight: Radius.circular(22),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      _selectedPreset == 'simulator' ? '🌗' : '🧩',
+                      style: const TextStyle(fontSize: 32),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        card['title'] ?? 'Your Future Simulation',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Card content (all sections)
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Summary
+                      if (card['summary'] != null) ...[
+                        Text(
+                          card['summary'],
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 15,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Sections (timelines, comparison, explanation, commit card, quote, etc.)
+                      ...((card['sections'] as List?) ?? []).map((section) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.emerald.withOpacity(0.2),
+                              ),
+                            ),
+                            child: SelectableText(
+                              section['content'] ?? '',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.85),
+                                fontSize: 14,
+                                height: 1.6,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+
+                      // Habits to commit (if any)
+                      if (habits != null && habits.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          '🎯 HABITS TO COMMIT',
+                          style: TextStyle(
+                            color: AppColors.emerald,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...habits.map((habit) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.emerald.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.emerald.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    habit['emoji'] ?? '✅',
+                                    style: const TextStyle(fontSize: 20),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          habit['title'] ?? '',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        if (habit['frequency'] != null)
+                                          Text(
+                                            habit['frequency'],
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(0.6),
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ],
+
+                      // Sources (if any)
+                      if (card['sources'] != null && (card['sources'] as List).isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        Text(
+                          '📚 SOURCES CITED',
+                          style: TextStyle(
+                            color: AppColors.emerald,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          (card['sources'] as List).join(' • '),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+
+              // Action buttons
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'Not Yet',
+                          style: TextStyle(color: AppColors.textTertiary),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    if (habits != null && habits.isNotEmpty)
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _commitHabitsFromCard(habits);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.emerald,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Commit Habits 🔥',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // NEW: Commit habits from OUTPUT CARD
+  Future<void> _commitHabitsFromCard(List<dynamic> habits) async {
+    try {
+      for (final habit in habits) {
+        final title = habit['title'] ?? 'Habit';
+        final emoji = habit['emoji'] ?? '✅';
+        final time = habit['time'] ?? '07:00';
+        final frequency = habit['frequency'] ?? 'Daily';
+        
+        // Parse frequency to repeatDays (simple version - all days for now)
+        final repeatDays = [1, 2, 3, 4, 5, 6, 0]; // Daily
+        
+        await ref.read(habitEngineProvider).createHabit(
+          title: title,
+          type: 'habit',
+          time: time,
+          startDate: DateTime.now(),
+          endDate: DateTime.now().add(const Duration(days: 90)), // 90 days default
+          repeatDays: repeatDays,
+          color: AppColors.emerald,
+          emoji: emoji,
+          reminderOn: false,
+        );
+      }
+      
+      _showToast('💚 ${habits.length} habit(s) committed!');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to commit: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   void _startCustomChat() {
