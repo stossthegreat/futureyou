@@ -401,6 +401,57 @@ class ApiClient {
     }
   }
 
+  // 🧠 NEW: 7-Phase Discovery Flow
+  static Future<ApiResponse<Map<String, dynamic>>> sendPhaseFlowMessage(String message) async {
+    try {
+      final response = await _post('/api/v1/future-you/flow', {'message': message});
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      } else {
+        return ApiResponse.error('Failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Phase flow error: $e');
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  // Get phase status
+  static Future<ApiResponse<Map<String, dynamic>>> getPhaseStatus() async {
+    try {
+      final response = await _get('/api/v1/future-you/phase-status');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      } else {
+        return ApiResponse.error('Failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Phase status error: $e');
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  // Get vault items
+  static Future<ApiResponse<List<dynamic>>> getVaultItems({int limit = 20}) async {
+    try {
+      final response = await _get('/api/v1/future-you/vault?limit=$limit');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data['items'] ?? []);
+      } else {
+        return ApiResponse.error('Failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Vault items error: $e');
+      return ApiResponse.error(e.toString());
+    }
+  }
+
   // 🔬 NEW: What-If Implementation Coach
   static Future<ApiResponse<Map<String, dynamic>>> sendWhatIfMessage(
     String message, {

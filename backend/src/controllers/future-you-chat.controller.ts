@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { futureYouChatService } from "../services/future-you-chat.service";
+import { runPhaseFlow, getPhaseStatus, getUserVaultItems } from "../services/future-you/flow.service";
 
 function getUserIdOr401(req: any) {
   const uid = req?.user?.id || req.headers["x-user-id"];
@@ -44,6 +45,47 @@ export async function futureYouChatController(fastify: FastifyInstance) {
       const userId = getUserIdOr401(req);
       const result = await futureYouChatService.clearHistory(userId);
       return result;
+    } catch (err: any) {
+      return reply.code(err.statusCode || 500).send({ error: err.message });
+    }
+  });
+
+  // NEW: 7-Phase Discovery Flow
+  fastify.post("/api/v1/future-you/flow", async (req: any, reply) => {
+    try {
+      const userId = getUserIdOr401(req);
+      const { message } = req.body;
+
+      if (!message || typeof message !== "string") {
+        return reply.code(400).send({ error: "Message required" });
+      }
+
+      const response = await runPhaseFlow(userId, message);
+      return response;
+    } catch (err: any) {
+      console.error("Future-You flow error:", err);
+      return reply.code(err.statusCode || 500).send({ error: err.message });
+    }
+  });
+
+  // Get phase status
+  fastify.get("/api/v1/future-you/phase-status", async (req: any, reply) => {
+    try {
+      const userId = getUserIdOr401(req);
+      const status = await getPhaseStatus(userId);
+      return status;
+    } catch (err: any) {
+      return reply.code(err.statusCode || 500).send({ error: err.message });
+    }
+  });
+
+  // Get user's vault items
+  fastify.get("/api/v1/future-you/vault", async (req: any, reply) => {
+    try {
+      const userId = getUserIdOr401(req);
+      const limit = parseInt(req.query.limit || "20");
+      const items = await getUserVaultItems(userId, limit);
+      return { items };
     } catch (err: any) {
       return reply.code(err.statusCode || 500).send({ error: err.message });
     }

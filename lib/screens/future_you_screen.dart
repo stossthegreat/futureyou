@@ -1095,11 +1095,28 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
   final _scrollController = ScrollController();
   late List<ChatMessage> _messages;
   bool _isLoading = false;
+  
+  // 🧠 Phase tracking
+  int _currentPhase = 0;
+  String _phaseName = "On-Ramp";
+  int _totalPhases = 7;
 
   @override
   void initState() {
     super.initState();
     _messages = List.from(widget.messages);
+    _loadPhaseStatus();
+  }
+  
+  Future<void> _loadPhaseStatus() async {
+    final response = await ApiClient.getPhaseStatus();
+    if (response.success && response.data != null) {
+      setState(() {
+        _currentPhase = response.data!['currentPhase'] ?? 0;
+        _phaseName = response.data!['phaseName'] ?? 'On-Ramp';
+        _totalPhases = response.data!['totalPhases'] ?? 7;
+      });
+    }
   }
 
   @override
@@ -1136,7 +1153,7 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
     });
 
     try {
-      final response = await ApiClient.sendFutureYouMessage(text);
+      final response = await ApiClient.sendPhaseFlowMessage(text);
 
       if (response.success && response.data != null) {
         final aiMessage = ChatMessage(
@@ -1148,6 +1165,26 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
 
         setState(() {
           _messages.add(aiMessage);
+          
+          // 🧠 Check for insight card
+          if (response.data!['card'] != null) {
+            final cardMessage = ChatMessage(
+              id: DateTime.now().toString() + '_card',
+              role: 'card',
+              text: '',
+              timestamp: DateTime.now(),
+              outputCard: response.data!['card'],
+            );
+            _messages.add(cardMessage);
+            
+            // Update phase status
+            _currentPhase = response.data!['phase'] ?? _currentPhase;
+            _phaseName = response.data!['phaseName'] ?? _phaseName;
+            if (response.data!['phaseComplete'] == true) {
+              _currentPhase = _currentPhase + 1;
+            }
+          }
+          
           _isLoading = false;
         });
 
@@ -1226,15 +1263,31 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    'Deep Discovery Session',
-                                    style: AppTextStyles.h3.copyWith(fontSize: 18),
+                                    'Phase ${_currentPhase + 1}/$_totalPhases: $_phaseName',
+                                    style: AppTextStyles.h3.copyWith(fontSize: 16),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${_messages.where((m) => m.role == 'user').length} messages',
-                                    style: AppTextStyles.captionSmall.copyWith(
-                                      color: AppColors.textTertiary,
-                                    ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Life\'s Task Discovery',
+                                        style: AppTextStyles.captionSmall.copyWith(
+                                          color: AppColors.emerald,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(2),
+                                          child: LinearProgressIndicator(
+                                            value: _currentPhase / _totalPhases,
+                                            backgroundColor: AppColors.textTertiary.withOpacity(0.2),
+                                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.emerald),
+                                            minHeight: 3,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -1383,6 +1436,13 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
 
   Widget _buildMessageBubble(ChatMessage message) {
     final isUser = message.role == 'user';
+    final isCard = message.role == 'card';
+    
+    // 🧠 Insight Card rendering
+    if (isCard && message.outputCard != null) {
+      return _buildInsightCard(message.outputCard!);
+    }
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
@@ -1401,17 +1461,278 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
                       : AppColors.emerald.withOpacity(0.2),
                 ),
               ),
-              child: SelectableText(
-                message.text,
-                style: AppTextStyles.body.copyWith(
-                  color: isUser ? Colors.black : AppColors.textPrimary,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SelectableText(
+                    message.text,
+                    style: AppTextStyles.body.copyWith(
+                      color: isUser ? Colors.black : AppColors.textPrimary,
+                    ),
+                  ),
+                  if (!isUser) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: message.text));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Copied!'),
+                                duration: const Duration(seconds: 1),
+                                backgroundColor: AppColors.emerald,
+                              ),
+                            );
+                          },
+                          icon: Icon(
+                            LucideIcons.copy,
+                            size: 14,
+                            color: AppColors.textTertiary.withOpacity(0.6),
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
         ],
       ),
     );
+  }
+  
+  // 🧠 Insight Card Widget (Beautiful Phase Completion Card)
+  Widget _buildInsightCard(Map<String, dynamic> card) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1A1F2E), Colors.black],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.emerald.withOpacity(0.4), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header with phase name
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: AppColors.emeraldGradient,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(22),
+                topRight: Radius.circular(22),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  '🧠',
+                  style: const TextStyle(fontSize: 32),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    card['title'] ?? 'Phase Insight',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Summary
+                if (card['summary'] != null) ...[
+                  SelectableText(
+                    card['summary'],
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 15,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                
+                // Bullets
+                if (card['bullets'] != null) ...[
+                  ...((card['bullets'] as List?) ?? []).map((bullet) => 
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('• ', style: TextStyle(color: AppColors.emerald, fontSize: 16)),
+                          Expanded(
+                            child: SelectableText(
+                              bullet.toString(),
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.85),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                
+                // Next step
+                if (card['nextStep'] != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.emerald.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text('🎯 ', style: const TextStyle(fontSize: 16)),
+                        Expanded(
+                          child: SelectableText(
+                            card['nextStep'],
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                
+                // Sources
+                if (card['sources'] != null && (card['sources'] as List).isNotEmpty) ...[
+                  Text(
+                    '📚 SOURCES',
+                    style: TextStyle(
+                      color: AppColors.emerald,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  SelectableText(
+                    (card['sources'] as List).join(' • '),
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                
+                // Action buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _saveToVault(card),
+                        icon: const Text('💾', style: TextStyle(fontSize: 16)),
+                        label: const Text('Save to Vault'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.emerald.withOpacity(0.2),
+                          foregroundColor: AppColors.emerald,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _copyCard(card),
+                        icon: const Text('📋', style: TextStyle(fontSize: 16)),
+                        label: const Text('Copy'),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColors.emerald.withOpacity(0.3)),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Future<void> _saveToVault(Map<String, dynamic> card) async {
+    final cardText = '${card['title']}\n\n${card['summary']}\n\n${(card['bullets'] as List?)?.join('\n• ') ?? ''}';
+    final response = await ApiClient.saveToVault(
+      content: cardText,
+      sections: [card],
+      habits: null,
+    );
+    
+    if (response.success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Saved to Vault! 💚'),
+            backgroundColor: AppColors.emerald,
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: ${response.error}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+  
+  void _copyCard(Map<String, dynamic> card) {
+    final cardText = '${card['title']}\n\n${card['summary']}\n\n${(card['bullets'] as List?)?.join('\n• ') ?? ''}';
+    Clipboard.setData(ClipboardData(text: cardText));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Copied to clipboard! 📋'),
+          duration: const Duration(seconds: 1),
+          backgroundColor: AppColors.emerald,
+        ),
+      );
+    }
   }
 }
 
