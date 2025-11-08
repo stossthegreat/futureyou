@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import OpenAI from "openai";
 import { MENTOR } from "../config/mentors.config";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 400);
 const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 10000);
 
@@ -108,7 +108,7 @@ Keep JSON valid and concise.
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: 0.2,
-      max_completion_tokens: LLM_MAX_TOKENS,
+      max_tokens: LLM_MAX_TOKENS,
       messages: [
         { role: "system", content: system },
         { role: "user", content: JSON.stringify(user) },

@@ -1,6 +1,5 @@
 import { FastifyInstance } from "fastify";
 import { futureYouChatService } from "../services/future-you-chat.service";
-import { runPhaseFlow, getPhaseStatus, getUserVaultItems } from "../services/future-you/flow.service";
 
 function getUserIdOr401(req: any) {
   const uid = req?.user?.id || req.headers["x-user-id"];
@@ -15,36 +14,7 @@ function getUserIdOr401(req: any) {
  * This is for ongoing purpose conversations with 7 lenses
  */
 export async function futureYouChatController(fastify: FastifyInstance) {
-  // 🌊 STREAMING Freeform chat with Future-You
-  fastify.post("/api/v1/future-you/freeform/stream", async (req: any, reply) => {
-    try {
-      const userId = getUserIdOr401(req);
-      const { message } = req.body;
-
-      if (!message || typeof message !== "string") {
-        return reply.code(400).send({ error: "Message required" });
-      }
-
-      // Set SSE headers
-      reply.raw.setHeader('Content-Type', 'text/event-stream');
-      reply.raw.setHeader('Cache-Control', 'no-cache');
-      reply.raw.setHeader('Connection', 'keep-alive');
-
-      // Stream response
-      await futureYouChatService.chatStream(userId, message, (chunk: string) => {
-        reply.raw.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
-      });
-
-      reply.raw.write('data: [DONE]\n\n');
-      reply.raw.end();
-    } catch (err: any) {
-      console.error("Future-You stream error:", err);
-      reply.raw.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
-      reply.raw.end();
-    }
-  });
-
-  // Freeform chat with Future-You (GPT-5 Deep Discovery)
+  // Freeform chat with Future-You (7 lenses, memory, contradictions)
   fastify.post("/api/v1/future-you/freeform", async (req: any, reply) => {
     try {
       const userId = getUserIdOr401(req);
@@ -55,13 +25,7 @@ export async function futureYouChatController(fastify: FastifyInstance) {
       }
 
       const response = await futureYouChatService.chat(userId, message);
-      
-      // Return full structured response (chat, insightCards, commitCard, progress, nextQuestion, lensUsed)
-      // Also include legacy 'message' field for backwards compatibility
-      return {
-        ...response,
-        message: response.chat?.[0]?.text || "",
-      };
+      return { message: response };
     } catch (err: any) {
       console.error("Future-You chat error:", err);
       return reply.code(err.statusCode || 500).send({ error: err.message });
@@ -74,47 +38,6 @@ export async function futureYouChatController(fastify: FastifyInstance) {
       const userId = getUserIdOr401(req);
       const result = await futureYouChatService.clearHistory(userId);
       return result;
-    } catch (err: any) {
-      return reply.code(err.statusCode || 500).send({ error: err.message });
-    }
-  });
-
-  // NEW: 7-Phase Discovery Flow
-  fastify.post("/api/v1/future-you/flow", async (req: any, reply) => {
-    try {
-      const userId = getUserIdOr401(req);
-      const { message } = req.body;
-
-      if (!message || typeof message !== "string") {
-        return reply.code(400).send({ error: "Message required" });
-      }
-
-      const response = await runPhaseFlow(userId, message);
-      return response;
-    } catch (err: any) {
-      console.error("Future-You flow error:", err);
-      return reply.code(err.statusCode || 500).send({ error: err.message });
-    }
-  });
-
-  // Get phase status
-  fastify.get("/api/v1/future-you/phase-status", async (req: any, reply) => {
-    try {
-      const userId = getUserIdOr401(req);
-      const status = await getPhaseStatus(userId);
-      return status;
-    } catch (err: any) {
-      return reply.code(err.statusCode || 500).send({ error: err.message });
-    }
-  });
-
-  // Get user's vault items
-  fastify.get("/api/v1/future-you/vault", async (req: any, reply) => {
-    try {
-      const userId = getUserIdOr401(req);
-      const limit = parseInt(req.query.limit || "20");
-      const items = await getUserVaultItems(userId, limit);
-      return { items };
     } catch (err: any) {
       return reply.code(err.statusCode || 500).send({ error: err.message });
     }

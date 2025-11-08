@@ -14,56 +14,18 @@ function getUserIdOr401(req: any) {
  * Context-aware, citation-validated, variable plan generation
  */
 export async function whatIfChatController(fastify: FastifyInstance) {
-  // 🌊 STREAMING Chat with What-If coach
-  fastify.post("/api/v1/what-if/coach/stream", async (req: any, reply) => {
-    try {
-      const userId = getUserIdOr401(req);
-      const { message, preset } = req.body;
-
-      if (!message || typeof message !== "string") {
-        return reply.code(400).send({ error: "Message required" });
-      }
-
-      if (preset && preset !== 'simulator' && preset !== 'habit-master') {
-        return reply.code(400).send({ error: "Invalid preset" });
-      }
-
-      // Set SSE headers
-      reply.raw.setHeader('Content-Type', 'text/event-stream');
-      reply.raw.setHeader('Cache-Control', 'no-cache');
-      reply.raw.setHeader('Connection', 'keep-alive');
-
-      // Stream response
-      await whatIfChatService.chatStream(userId, message, preset, (chunk: string) => {
-        reply.raw.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
-      });
-
-      reply.raw.write('data: [DONE]\n\n');
-      reply.raw.end();
-    } catch (err: any) {
-      console.error("What-If stream error:", err);
-      reply.raw.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
-      reply.raw.end();
-    }
-  });
-
-  // Chat with What-If coach (supports both Simulator and Habit Master presets)
+  // Chat with What-If implementation coach
   fastify.post("/api/v1/what-if/coach", async (req: any, reply) => {
     try {
       const userId = getUserIdOr401(req);
-      const { message, preset } = req.body;
+      const { message } = req.body;
 
       if (!message || typeof message !== "string") {
         return reply.code(400).send({ error: "Message required" });
       }
 
-      // Validate preset if provided
-      if (preset && preset !== 'simulator' && preset !== 'habit-master') {
-        return reply.code(400).send({ error: "Invalid preset. Must be 'simulator' or 'habit-master'" });
-      }
-
-      const response = await whatIfChatService.chat(userId, message, preset);
-      return response; // Returns { message, suggestedPlan?, splitFutureCard?, sources? }
+      const response = await whatIfChatService.chat(userId, message);
+      return response; // Returns { message, suggestedPlan? }
     } catch (err: any) {
       console.error("What-If coach error:", err);
       return reply.code(err.statusCode || 500).send({ error: err.message });
@@ -78,38 +40,6 @@ export async function whatIfChatController(fastify: FastifyInstance) {
       return result;
     } catch (err: any) {
       return reply.code(err.statusCode || 500).send({ error: err.message });
-    }
-  });
-
-  // Save What-If output card to Vault
-  fastify.post("/api/v1/reflections/vault", async (req: any, reply) => {
-    try {
-      const userId = getUserIdOr401(req);
-      const { content, sections, habits } = req.body;
-
-      if (!content) {
-        return reply.code(400).send({ error: "Content required" });
-      }
-
-      // Save to database as an event
-      const { prisma } = await import("../utils/db");
-      await prisma.event.create({
-        data: {
-          userId,
-          type: "vault",
-          payload: {
-            title: content,
-            sections,
-            habits,
-            savedAt: new Date().toISOString(),
-          } as any,
-        },
-      });
-
-      return { success: true };
-    } catch (err: any) {
-      console.error("Vault save error:", err);
-      return reply.code(500).send({ error: err.message });
     }
   });
 }

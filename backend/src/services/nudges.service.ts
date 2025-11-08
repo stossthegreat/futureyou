@@ -4,7 +4,7 @@ import { memoryService } from "./memory.service";
 import { VoiceService } from "./voice.service";
 import { MENTOR } from "../config/mentors.config";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
@@ -163,7 +163,7 @@ Be direct, actionable, and motivating. No fluff.
 
     const ai = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      max_completion_tokens: 150,
+      max_tokens: 150,
       temperature: 0.6,
       messages: [
         { role: "system", content: MENTOR.systemPrompt },

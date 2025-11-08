@@ -11,9 +11,6 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# Firebase service account (SECRET - never commit!)
-firebase-service-account.json
-
 # Build output
 # dist/  # Commented out - needed for Railway deployment
 build/

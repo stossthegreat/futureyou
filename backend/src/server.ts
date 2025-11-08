@@ -6,8 +6,6 @@ import dotenv from "dotenv";
 import { prisma } from "./utils/db";
 import { getRedis } from "./utils/redis";
 import { bootstrapSchedulers } from "./jobs/scheduler";
-import { initializeFirebaseAdmin } from "./utils/firebase-admin";
-import { authMiddleware, optionalAuthMiddleware } from "./middleware/auth.middleware";
 
 import { nudgesController } from "./controllers/nudges.controller";
 import coachController from "./modules/coach/coach.controller";
@@ -24,26 +22,12 @@ import { whatIfChatControllerV2 } from "./controllers/what-if-v2.controller";
 
 dotenv.config();
 
-// Initialize Firebase Admin on startup
-try {
-  initializeFirebaseAdmin();
-} catch (error) {
-  console.error('❌ Failed to initialize Firebase Admin:', error);
-  console.warn('⚠️  Continuing without Firebase - auth will not work properly');
-}
-
 function validateEnv() {
   console.log("✅ Core env vars check: (lenient for Railway)");
 }
 
 const buildServer = () => {
-  const fastify = Fastify({ 
-    logger: true,
-    bodyLimit: 10485760, // 10MB
-    connectionTimeout: 0, // Disable connection timeout
-    keepAliveTimeout: 200000, // 🔥 3.3 minutes - longer than OpenAI timeout!
-    requestTimeout: 200000, // 🔥 3.3 minutes - let AI finish output cards!
-  });
+  const fastify = Fastify({ logger: true });
 
   fastify.register(cors, {
     origin: true,
@@ -61,56 +45,34 @@ const buildServer = () => {
   });
   fastify.register(swaggerUI, { routePrefix: "/docs", uiConfig: { docExpansion: "full" } });
 
-  // Public routes (no auth required)
   fastify.get("/", async () => ({
     message: "Future You OS Brain running",
     docs: "/docs",
     health: "/health",
     status: "ok",
   }));
-  
   fastify.get("/health", async () => ({
     ok: true,
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   }));
-  
-  // Debug endpoint to check Firebase initialization
-  fastify.get("/debug/firebase", async () => {
-    const { getFirebaseAdmin } = await import("./utils/firebase-admin");
-    const firebaseApp = getFirebaseAdmin();
-    return {
-      firebase_initialized: firebaseApp !== null,
-      has_service_account_env: !!process.env.FIREBASE_SERVICE_ACCOUNT,
-      env_length: process.env.FIREBASE_SERVICE_ACCOUNT?.length || 0,
-    };
-  });
 
-  // Protected routes (Firebase auth required)
-  // Apply auth middleware to all controllers
-  fastify.register(async (protectedRoutes) => {
-    // Add auth middleware hook for all routes in this scope
-    protectedRoutes.addHook('preHandler', authMiddleware);
-    
-    // Register all protected controllers
-    protectedRoutes.register(chatController);
-    protectedRoutes.register(nudgesController);
-    protectedRoutes.register(coachController);
-    protectedRoutes.register(systemController);
-    protectedRoutes.register(userController);
-    protectedRoutes.register(insightsController); // Pattern analysis & insights
-    protectedRoutes.register(whatIfController); // Purpose-aligned goals
-    
-    // V1 Chat (structured discovery + simple coach)
-    protectedRoutes.register(futureYouChatController); // Future-You freeform chat (7 lenses)
-    protectedRoutes.register(whatIfChatController); // What-If implementation coach
-    
-    // V2 Chat (hybrid dual-brain architecture)
-    protectedRoutes.register(futureYouChatControllerV2); // Future-You v2 - emotion + contradiction aware
-    protectedRoutes.register(whatIfChatControllerV2); // What-If v2 - readiness + plan generation
-  });
+  fastify.register(chatController);
+  fastify.register(nudgesController);
+  fastify.register(coachController);
+  fastify.register(systemController);
+  fastify.register(userController);
+  fastify.register(insightsController); // Pattern analysis & insights
+  fastify.register(whatIfController); // Purpose-aligned goals
   
-  // Test routes (optional - can be public or protected based on needs)
+  // V1 Chat (structured discovery + simple coach)
+  fastify.register(futureYouChatController); // Future-You freeform chat (7 lenses)
+  fastify.register(whatIfChatController); // What-If implementation coach
+  
+  // V2 Chat (hybrid dual-brain architecture)
+  fastify.register(futureYouChatControllerV2); // Future-You v2 - emotion + contradiction aware
+  fastify.register(whatIfChatControllerV2); // What-If v2 - readiness + plan generation
+  
   fastify.register(testController); // For manual testing
 
   return fastify;

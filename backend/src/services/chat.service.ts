@@ -5,7 +5,7 @@ import { memoryService } from "./memory.service";
 import { purposePrompts } from "../modules/purpose/prompt.templates";
 import OpenAI from "openai";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
@@ -47,7 +47,7 @@ Return ONLY valid JSON:
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: 0.2,
-      max_completion_tokens: 500,
+      max_tokens: 500,
       messages: [
         { role: "system", content: "Extract identity insights from discovery conversations. Output only JSON." },
         { role: "user", content: prompt },

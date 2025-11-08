@@ -3,7 +3,7 @@ import { prisma } from "../utils/db";
 import { redis } from "../utils/redis";
 import { memoryService } from "./memory.service";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 const CITATIONS = {
   books: [
@@ -219,7 +219,7 @@ Classify conversation type, assess readiness, generate questions.
     const a = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: 0.25,
-      max_completion_tokens: 300,
+      max_tokens: 300,
       messages: [
         { role: "system", content: WHAT_IF_ANALYST },
         { role: "user", content: analystInput }
@@ -281,7 +281,7 @@ Speak as the What-If Architect. Ask questions, show understanding, cite ONE sour
     const v = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: 0.6,
-      max_completion_tokens: 250,
+      max_tokens: 250,
       messages: [
         { role: "system", content: WHAT_IF_VOICE },
         { role: "user", content: voiceInput }
@@ -352,7 +352,7 @@ Return JSON ONLY.
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: 0.3,
-      max_completion_tokens: 800,
+      max_tokens: 800,
       messages: [
         { role: "system", content: PLAN_GENERATOR_PROMPT },
         { role: "user", content: planInput }
