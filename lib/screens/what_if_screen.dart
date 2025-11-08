@@ -2012,25 +2012,76 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
 
                   // Sections
                   ...((card['sections'] as List?) ?? []).map((section) {
+                    final content = section['content'] ?? '';
+                    final title = section['title'] ?? '';
+                    
+                    // Check if this is chart/comparison data (contains pipes |)
+                    final isChartData = content.contains('|') && content.split('\n').length > 2;
+                    
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 20),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.emerald.withOpacity(0.2),
-                          ),
-                        ),
-                        child: SelectableText(
-                          section['content'] ?? '',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.85),
-                            fontSize: 14,
-                            height: 1.6,
-                          ),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Section title (if exists)
+                          if (title.isNotEmpty) ...[
+                            Text(
+                              title.toUpperCase(),
+                              style: TextStyle(
+                                color: AppColors.emerald,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          
+                          // Chart data = horizontal scroll
+                          if (isChartData)
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.emerald.withOpacity(0.2),
+                                ),
+                              ),
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.all(16),
+                                child: SelectableText(
+                                  content,
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.85),
+                                    fontSize: 13,
+                                    height: 1.8,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            // Regular text = normal box
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.emerald.withOpacity(0.2),
+                                ),
+                              ),
+                              child: SelectableText(
+                                content,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.85),
+                                  fontSize: 14,
+                                  height: 1.6,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     );
                   }).toList(),
@@ -2327,36 +2378,51 @@ class _WhatIfChatScreenState extends State<_WhatIfChatScreen> {
       );
     });
 
+    // 🌊 STREAMING: Create placeholder AI message
+    final aiMessageId = DateTime.now().toString();
+    final aiMessage = ChatMessage(
+      id: aiMessageId,
+      role: 'assistant',
+      text: '',
+      timestamp: DateTime.now(),
+    );
+
+    setState(() {
+      _messages.add(aiMessage);
+      _isLoading = false; // No loading indicator, text appears live!
+    });
+
     try {
-      final response = await ApiClient.sendWhatIfMessage(
+      // Stream response word by word
+      await for (final chunk in ApiClient.sendWhatIfMessageStream(
         text,
         preset: _selectedPreset,
-      );
+      )) {
+        if (mounted) {
+          setState(() {
+            // Find the message and append text
+            final index = _messages.indexWhere((m) => m.id == aiMessageId);
+            if (index != -1) {
+              _messages[index] = ChatMessage(
+                id: aiMessageId,
+                role: 'assistant',
+                text: _messages[index].text + chunk,
+                timestamp: _messages[index].timestamp,
+              );
+            }
+          });
 
-      if (response.success && response.data != null) {
-        final aiMessage = ChatMessage(
-          id: DateTime.now().toString(),
-          role: response.data!['role'] ?? 'assistant',
-          text: response.data!['message'] ?? '',
-          timestamp: DateTime.now(),
-          outputCard: response.data!['outputCard'],
-          habits: response.data!['habits'],
-        );
-
-        setState(() {
-          _messages.add(aiMessage);
-          _isLoading = false;
-        });
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent + 200,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        });
-      } else {
-        throw Exception(response.error ?? 'Unknown error');
+          // Auto-scroll as text appears
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_scrollController.hasClients) {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 100),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -2366,8 +2432,12 @@ class _WhatIfChatScreenState extends State<_WhatIfChatScreen> {
             backgroundColor: AppColors.error,
           ),
         );
+        // Remove failed AI message
+        setState(() {
+          _messages.removeWhere((m) => m.id == aiMessageId);
+          _isLoading = false;
+        });
       }
-      setState(() => _isLoading = false);
     }
   }
 

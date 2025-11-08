@@ -14,6 +14,39 @@ function getUserIdOr401(req: any) {
  * Context-aware, citation-validated, variable plan generation
  */
 export async function whatIfChatController(fastify: FastifyInstance) {
+  // 🌊 STREAMING Chat with What-If coach
+  fastify.post("/api/v1/what-if/coach/stream", async (req: any, reply) => {
+    try {
+      const userId = getUserIdOr401(req);
+      const { message, preset } = req.body;
+
+      if (!message || typeof message !== "string") {
+        return reply.code(400).send({ error: "Message required" });
+      }
+
+      if (preset && preset !== 'simulator' && preset !== 'habit-master') {
+        return reply.code(400).send({ error: "Invalid preset" });
+      }
+
+      // Set SSE headers
+      reply.raw.setHeader('Content-Type', 'text/event-stream');
+      reply.raw.setHeader('Cache-Control', 'no-cache');
+      reply.raw.setHeader('Connection', 'keep-alive');
+
+      // Stream response
+      await whatIfChatService.chatStream(userId, message, preset, (chunk: string) => {
+        reply.raw.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+      });
+
+      reply.raw.write('data: [DONE]\n\n');
+      reply.raw.end();
+    } catch (err: any) {
+      console.error("What-If stream error:", err);
+      reply.raw.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+      reply.raw.end();
+    }
+  });
+
   // Chat with What-If coach (supports both Simulator and Habit Master presets)
   fastify.post("/api/v1/what-if/coach", async (req: any, reply) => {
     try {

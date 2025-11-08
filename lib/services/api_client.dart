@@ -11,7 +11,7 @@ class ApiClient {
   // Future-You OS Backend Integration
   static const String _baseUrl = 'https://futureyou-production.up.railway.app'; // Railway URL
   static const String _localUrl = 'http://localhost:8080'; // For local development
-  static const Duration _timeout = Duration(seconds: 30);
+  static const Duration _timeout = Duration(seconds: 60); // 60 seconds for AI responses!
   
   // Firebase Authentication
   static Future<String?> _getFirebaseToken() async {
@@ -401,6 +401,46 @@ class ApiClient {
     }
   }
 
+  // 🌊 STREAMING: Future-You Chat (word by word)
+  static Stream<String> sendFutureYouMessageStream(String message) async* {
+    try {
+      final request = await _client.send(http.Request(
+        'POST',
+        Uri.parse('$_baseUrl/api/v1/future-you/freeform/stream'),
+      )
+        ..headers.addAll({
+          'Content-Type': 'application/json',
+          'Authorization': _token != null ? 'Bearer $_token' : '',
+        })
+        ..body = jsonEncode({'message': message}));
+
+      final response = await request.stream.bytesToString();
+      
+      // Parse SSE stream
+      final lines = response.split('\n');
+      for (final line in lines) {
+        if (line.startsWith('data: ')) {
+          final data = line.substring(6);
+          if (data == '[DONE]') break;
+          
+          try {
+            final json = jsonDecode(data);
+            if (json['text'] != null) {
+              yield json['text'] as String;
+            } else if (json['error'] != null) {
+              throw Exception(json['error']);
+            }
+          } catch (_) {
+            // Skip malformed JSON
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Future-You stream error: $e');
+      yield '❌ Error: ${e.toString()}';
+    }
+  }
+
   // 🧠 NEW: 7-Phase Discovery Flow
   static Future<ApiResponse<Map<String, dynamic>>> sendPhaseFlowMessage(String message) async {
     try {
@@ -474,6 +514,54 @@ class ApiClient {
     } catch (e) {
       debugPrint('What-If coach error: $e');
       return ApiResponse.error(e.toString());
+    }
+  }
+
+  // 🌊 STREAMING: What-If Chat (word by word)
+  static Stream<String> sendWhatIfMessageStream(
+    String message, {
+    String? preset,
+  }) async* {
+    try {
+      final data = {'message': message};
+      if (preset != null) {
+        data['preset'] = preset;
+      }
+
+      final request = await _client.send(http.Request(
+        'POST',
+        Uri.parse('$_baseUrl/api/v1/what-if/coach/stream'),
+      )
+        ..headers.addAll({
+          'Content-Type': 'application/json',
+          'Authorization': _token != null ? 'Bearer $_token' : '',
+        })
+        ..body = jsonEncode(data));
+
+      final response = await request.stream.bytesToString();
+      
+      // Parse SSE stream
+      final lines = response.split('\n');
+      for (final line in lines) {
+        if (line.startsWith('data: ')) {
+          final data = line.substring(6);
+          if (data == '[DONE]') break;
+          
+          try {
+            final json = jsonDecode(data);
+            if (json['text'] != null) {
+              yield json['text'] as String;
+            } else if (json['error'] != null) {
+              throw Exception(json['error']);
+            }
+          } catch (_) {
+            // Skip malformed JSON
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('What-If stream error: $e');
+      yield '❌ Error: ${e.toString()}';
     }
   }
 

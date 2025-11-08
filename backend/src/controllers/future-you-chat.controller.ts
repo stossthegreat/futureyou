@@ -15,6 +15,35 @@ function getUserIdOr401(req: any) {
  * This is for ongoing purpose conversations with 7 lenses
  */
 export async function futureYouChatController(fastify: FastifyInstance) {
+  // 🌊 STREAMING Freeform chat with Future-You
+  fastify.post("/api/v1/future-you/freeform/stream", async (req: any, reply) => {
+    try {
+      const userId = getUserIdOr401(req);
+      const { message } = req.body;
+
+      if (!message || typeof message !== "string") {
+        return reply.code(400).send({ error: "Message required" });
+      }
+
+      // Set SSE headers
+      reply.raw.setHeader('Content-Type', 'text/event-stream');
+      reply.raw.setHeader('Cache-Control', 'no-cache');
+      reply.raw.setHeader('Connection', 'keep-alive');
+
+      // Stream response
+      await futureYouChatService.chatStream(userId, message, (chunk: string) => {
+        reply.raw.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
+      });
+
+      reply.raw.write('data: [DONE]\n\n');
+      reply.raw.end();
+    } catch (err: any) {
+      console.error("Future-You stream error:", err);
+      reply.raw.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+      reply.raw.end();
+    }
+  });
+
   // Freeform chat with Future-You (GPT-5 Deep Discovery)
   fastify.post("/api/v1/future-you/freeform", async (req: any, reply) => {
     try {

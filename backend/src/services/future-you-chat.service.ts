@@ -264,6 +264,76 @@ ${history.slice(-20).map((m: any) => `${m.role}: ${m.content}`).join("\n")}
     return parsedResponse;
   }
 
+  /**
+   * 🌊 STREAMING version of chat - sends text word-by-word
+   */
+  async chatStream(
+    userId: string,
+    userMessage: string,
+    onChunk: (text: string) => void
+  ): Promise<void> {
+    // Get user context
+    const [identity, ctx, history] = await Promise.all([
+      memoryService.getIdentityFacts(userId),
+      memoryService.getUserContext(userId),
+      this.getConversationHistory(userId),
+    ]);
+
+    // Build context string
+    const contextString = `
+USER PROFILE:
+Name: ${identity.name}
+Purpose: ${identity.purpose || "discovering"}
+Core Values: ${identity.coreValues?.join(", ") || "not defined"}
+Burning Question: ${identity.burningQuestion}
+
+CURRENT HABITS & GOALS:
+${ctx.habitSummaries.map((h: any) => `- ${h.title}: ${h.streak} days`).join("\n")}
+
+CONVERSATION HISTORY (last 4 turns):
+${history.slice(-8).map((m: any) => `${m.role}: ${m.content.slice(0, 150)}`).join("\n")}
+
+USER MESSAGE:
+${userMessage}
+`;
+
+    // Build messages array
+    const messages = [
+      { role: "system" as const, content: SYSTEM_PROMPT_FUTURE_YOU },
+      { role: "user" as const, content: contextString },
+    ];
+
+    // Call OpenAI with streaming
+    const openai = await import("openai").then(m => m.default);
+    const client = new openai({ apiKey: process.env.OPENAI_API_KEY });
+
+    const stream = await client.chat.completions.create({
+      model: "gpt-5-mini",
+      messages,
+      temperature: 0.7,
+      max_completion_tokens: 900,
+      stream: true, // Enable streaming!
+    });
+
+    let fullText = "";
+    
+    // Stream chunks to client
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      if (content) {
+        fullText += content;
+        onChunk(content); // Send chunk to client
+      }
+    }
+
+    // Save conversation history
+    history.push(
+      { role: "user", content: userMessage },
+      { role: "assistant", content: fullText }
+    );
+    await this.saveConversationHistory(userId, history.slice(-20)); // Keep last 20 messages
+  }
+
   async clearHistory(userId: string) {
     const key = `futureyou:chat:${userId}`;
     await redis.del(key);

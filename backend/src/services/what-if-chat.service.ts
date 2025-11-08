@@ -785,6 +785,123 @@ Return ONLY valid JSON:
     }
   }
 
+  /**
+   * 🌊 STREAMING version of chat - sends text word-by-word
+   */
+  async chatStream(
+    userId: string, 
+    userMessage: string, 
+    preset: 'simulator' | 'habit-master' | undefined,
+    onChunk: (text: string) => void
+  ): Promise<void> {
+    // Get user context (with fallback if Redis fails)
+    let identity, ctx, history;
+    try {
+      [identity, ctx, history] = await Promise.all([
+        memoryService.getIdentityFacts(userId),
+        memoryService.getUserContext(userId),
+        this.getConversationHistory(userId),
+      ]);
+    } catch (error) {
+      console.error("⚠️  Memory/Redis error, using defaults:", error);
+      identity = { name: "User", purpose: "", coreValues: [], burningQuestion: "" };
+      ctx = { habitSummaries: [], events: [], recentGoals: [] };
+      history = [];
+    }
+
+    // Select system prompt based on preset
+    const systemPrompt = preset === 'simulator' 
+      ? SYSTEM_PROMPT_WHAT_IF_SIMULATOR 
+      : SYSTEM_PROMPT_HABIT_MASTER;
+    
+    const currentPreset = preset || history.find((m: any) => m.preset)?.preset || 'habit-master';
+    
+    // 🎯 WELCOME MESSAGE: If this is first message with a preset, send welcome
+    if (history.length === 0 && preset) {
+      const welcomeMessages = {
+        'simulator': `🔮 **What-If Simulator Activated**
+
+I'm your personal Future-Simulator, powered by the latest behavioral science and longitudinal health studies.
+
+My job: Ask sharp questions, collect your reality (training, sleep, food, timeline), then show you **two futures**—one where you stay the same, one where you commit fully—with real evidence for what changes, why it works, and how it feels at 3, 6, and 12 months.
+
+Let's start simple. **What's the goal or change you're exploring?** (e.g., "build muscle," "more energy," "lose fat")`,
+        'habit-master': `🧩 **Habit Master Activated**
+
+I'm your behavioral architect, trained on implementation science from Fogg, Clear, Duhigg, and decades of habit formation research.
+
+My job: Understand your reality (schedule, energy, environment, existing habits), then design a **3-phase plan** that removes friction, builds momentum, and creates lasting change—backed by studies and real-world proof.
+
+First question: **What habit or goal are you trying to build?** Be specific.`
+      };
+      
+      const welcome = welcomeMessages[preset];
+      // Stream welcome message word by word
+      const words = welcome.split(' ');
+      for (const word of words) {
+        onChunk(word + ' ');
+        await new Promise(resolve => setTimeout(resolve, 30)); // 30ms delay between words
+      }
+      return;
+    }
+
+    const conversationType = this.detectConversationType(userMessage, ctx.habitSummaries);
+
+    // Build context
+    const contextString = `
+USER PROFILE:
+Name: ${identity.name}
+Purpose: ${identity.purpose || "discovering"}
+Core Values: ${identity.coreValues?.join(", ") || "not defined"}
+Burning Question: ${identity.burningQuestion}
+
+CURRENT HABITS:
+${ctx.habitSummaries.map((h: any) => `- ${h.title}: ${h.streak} days`).join("\n")}
+
+CONVERSATION HISTORY (last 4 turns):
+${history.slice(-8).map((m: any) => `${m.role}: ${m.content.slice(0, 150)}`).join("\n")}
+
+USER MESSAGE:
+${userMessage}
+`;
+
+    // Build messages array
+    const messages = [
+      { role: "system" as const, content: systemPrompt },
+      { role: "user" as const, content: contextString },
+    ];
+
+    // Call OpenAI with streaming
+    const openai = await import("openai").then(m => m.default);
+    const client = new openai({ apiKey: process.env.OPENAI_API_KEY });
+
+    const stream = await client.chat.completions.create({
+      model: "gpt-5-mini",
+      messages,
+      temperature: 0.7,
+      max_completion_tokens: 900,
+      stream: true, // Enable streaming!
+    });
+
+    let fullText = "";
+    
+    // Stream chunks to client
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      if (content) {
+        fullText += content;
+        onChunk(content); // Send chunk to client
+      }
+    }
+
+    // Save conversation history
+    history.push(
+      { role: "user", content: userMessage, preset: currentPreset },
+      { role: "assistant", content: fullText }
+    );
+    await this.saveConversationHistory(userId, history.slice(-20)); // Keep last 20 messages
+  }
+
   async clearHistory(userId: string) {
     const key = `whatif:chat:${userId}`;
     await redis.del(key);
