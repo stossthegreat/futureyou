@@ -353,6 +353,16 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
         final sources = result.data!['sources'] as List?;
         final outputCard = result.data!['outputCard']; // NEW!
         final habits = result.data!['habits'] as List?; // NEW!
+        
+        // 🔥 DEBUG: Check what we received
+        debugPrint('🔍 FRONTEND RECEIVED:');
+        debugPrint('- outputCard is null: ${outputCard == null}');
+        debugPrint('- outputCard type: ${outputCard.runtimeType}');
+        if (outputCard != null && outputCard is Map) {
+          debugPrint('- outputCard title: ${outputCard['title']}');
+          debugPrint('- outputCard sections: ${outputCard['sections']?.length ?? 0}');
+        }
+        debugPrint('- habits count: ${habits?.length ?? 0}');
 
         final responseMessage = ChatMessage(
           id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
@@ -2013,7 +2023,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                   // Sections
                   ...((card['sections'] as List?) ?? []).map((section) {
                     final content = section['content'] ?? '';
-                    final title = section['title'] ?? '';
+                    final sectionType = section['type'] ?? ''; // 🔥 Backend sends 'type' not 'title'!
                     
                     // Check if this is chart/comparison data (contains pipes |)
                     final isChartData = content.contains('|') && content.split('\n').length > 2;
@@ -2023,20 +2033,6 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Section title (if exists)
-                          if (title.isNotEmpty) ...[
-                            Text(
-                              title.toUpperCase(),
-                              style: TextStyle(
-                                color: AppColors.emerald,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                          
                           // Chart data = horizontal scroll
                           if (isChartData)
                             Container(
