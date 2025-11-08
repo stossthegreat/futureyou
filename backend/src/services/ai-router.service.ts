@@ -127,6 +127,14 @@ export class AIRouterService {
     }
 
     const rawOutput = result.choices[0]?.message?.content?.trim() || "";
+    
+    // 🔥 DEBUG: Log if OpenAI returns empty
+    if (!rawOutput) {
+      console.error("⚠️  OpenAI returned EMPTY content!");
+      console.error("Model:", tier.model);
+      console.error("Result:", JSON.stringify(result).slice(0, 500));
+      console.error("Choices:", JSON.stringify(result.choices).slice(0, 500));
+    }
 
     // Parse response based on format
     let data: AIRouterResponse;
