@@ -381,7 +381,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
           }
           
           // 🔥 FALLBACK: If response is long and contains "Locked", force show as card
-          else if (aiMessage.length > 1000 && (aiMessage.contains('Locked') || aiMessage.contains('THE TWO FUTURES') || aiMessage.contains('PHASE 1'))) {
+          if (outputCard == null && aiMessage.length > 1000 && (aiMessage.contains('Locked') || aiMessage.contains('THE TWO FUTURES') || aiMessage.contains('PHASE 1'))) {
             _messages.add(ChatMessage(
               id: (DateTime.now().millisecondsSinceEpoch + 2).toString(),
               role: 'card',
