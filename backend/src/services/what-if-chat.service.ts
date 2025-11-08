@@ -45,14 +45,20 @@ Examples:
 - "How's your recovery - average sleep each night?"
 - "Food-wise - clean most days or leaning into takeaways?"
 
-=== PHASE 2: THE SIMULATION (OUTPUT THE MASSIVE CARD) ===
+=== PHASE 2: THE OUTPUT CARD ===
 
-ONLY output the card when you have AT LEAST 5 core variables:
-- Goal + frequency + sleep + diet + timeline
+When you have collected these 5 things:
+1. Goal (e.g., "build muscle")
+2. Frequency (e.g., "3x week")
+3. Sleep (e.g., "6 hours")
+4. Diet (e.g., "mostly takeaways")  
+5. Timeline (e.g., "90 days")
 
-When ready, say: "Beautiful. Let me run both futures for you."
+DO NOT ASK ANY MORE QUESTIONS.
 
-Then IMMEDIATELY output the card below in the SAME message. Be CONCISE but POWERFUL.
+Instead, say EXACTLY THIS: "Beautiful. Let me run both futures."
+
+Then IMMEDIATELY (in the SAME response, do NOT stop) output the FULL card below. Output EVERYTHING in ONE response.
 
 Output THIS STRUCTURE (keep it tight):
 
@@ -183,14 +189,22 @@ Examples:
 - "What usually breaks the streak - low energy, poor sleep, no structure?"
 - "What's your small reward after training? Something your brain reads as 'job done'."
 
-=== PHASE 2: THE PLAN (OUTPUT THE CARD) ===
+=== PHASE 2: THE PLAN CARD ===
 
-ONLY output when you have AT LEAST 7 core variables:
-- Goal + time + frequency + location + barrier + sleep + reward
+When you have collected these 7 things:
+1. Habit goal
+2. Best time (morning/afternoon/evening)
+3. Frequency (e.g., "3x week")
+4. Location (gym/home/outdoors)
+5. Barrier (what breaks consistency)
+6. Sleep (hours + quality)
+7. Reward (what feels good after)
 
-When ready, say: "Locked. Now we build your system."
+DO NOT ASK ANY MORE QUESTIONS.
 
-Then IMMEDIATELY output the plan in the SAME message. Be CONCISE but POWERFUL.
+Instead, say EXACTLY THIS: "Locked. Now we build your system."
+
+Then IMMEDIATELY (in the SAME response, do NOT stop) output the FULL plan below. Output EVERYTHING in ONE response.
 
 Output THIS STRUCTURE (keep it tight):
 
@@ -590,6 +604,11 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
     });
 
     const responseText = aiResponse.chat || "Let's break this down systematically.";
+    
+    // 🔥 Debug logging
+    if (!aiResponse.chat) {
+      console.error("⚠️  AI Router returned empty chat! aiResponse:", JSON.stringify(aiResponse).slice(0, 200));
+    }
 
     // Parse for card sections
     const parsed = this.parseCardSections(responseText);

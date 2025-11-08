@@ -1139,17 +1139,8 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
       final response = await ApiClient.sendFutureYouMessage(text);
 
       if (response.success && response.data != null) {
-        // 🔥 Handle both array and string formats from backend
-        String aiText = '';
-        final chatData = response.data!['chat'];
-        if (chatData is List && chatData.isNotEmpty) {
-          // Backend returns chat as array: [{role: "assistant", text: "..."}]
-          aiText = chatData[0]['text'] ?? '';
-        } else if (chatData is String) {
-          aiText = chatData;
-        } else {
-          aiText = response.data!['message'] ?? 'No response';
-        }
+        // 🔥 Use 'message' field (string) from backend, NOT 'chat' (array)
+        final aiText = response.data!['message'] as String? ?? 'No response';
         
         final aiMessage = ChatMessage(
           id: DateTime.now().toString(),
