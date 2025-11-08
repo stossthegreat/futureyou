@@ -344,10 +344,21 @@ export class WhatIfChatService {
                     text.includes('SPLIT-FUTURE COMPARISON') ||
                     text.includes('12-WEEK OUTCOMES');
     
+    // 🔥 DEBUG: Log card detection
+    console.log("🔍 parseCardSections:");
+    console.log("- Has card markers:", hasCard);
+    console.log("- THE TWO FUTURES:", text.includes('THE TWO FUTURES'));
+    console.log("- PHASE 1:", text.includes('PHASE 1'));
+    console.log("- SPLIT-FUTURE:", text.includes('SPLIT-FUTURE COMPARISON'));
+    console.log("- 12-WEEK:", text.includes('12-WEEK OUTCOMES'));
+    
     if (!hasCard) {
       // Still in conversational phase
+      console.log("❌ No card detected - returning message only");
       return { message: text };
     }
+    
+    console.log("✅ Card detected! Parsing sections...");
 
     // Parse sections by detecting markdown headers
     const sections: any[] = [];
@@ -466,6 +477,13 @@ export class WhatIfChatService {
       : isHabitMaster 
       ? 'Habit Master Plan'
       : 'Your Future Plan';
+    
+    // 🔥 DEBUG: Log parsing results
+    console.log("📊 Parsed card:");
+    console.log("- Title:", title);
+    console.log("- Sections found:", sections.length);
+    console.log("- Section types:", sections.map((s: any) => s.type).join(', '));
+    console.log("- Habits found:", habits.length);
 
     return {
       message,
@@ -886,3 +904,4 @@ ${userMessage}
 
 export const whatIfChatService = new WhatIfChatService();
 
+I
