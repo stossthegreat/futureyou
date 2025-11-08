@@ -131,7 +131,16 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
       final result = await ApiClient.sendFutureYouMessage(message);
 
       if (result.success && result.data != null) {
-        final aiMessage = result.data!['message'] as String;
+        // 🔥 Safe extraction: handle both String and List formats
+        String aiMessage;
+        final messageData = result.data!['message'];
+        if (messageData is String) {
+          aiMessage = messageData;
+        } else if (messageData is List && messageData.isNotEmpty) {
+          aiMessage = messageData[0].toString();
+        } else {
+          aiMessage = 'No response';
+        }
 
         final responseMessage = ChatMessage(
           id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
