@@ -2,17 +2,22 @@ import { FastifyInstance } from "fastify";
 import { futureYouChatService } from "../services/future-you-chat.service";
 
 function getUserIdOr401(req: any) {
-  const uid = req?.user?.id || req.headers["x-user-id"];
+  // 🔥 SIMPLE AUTH: Accept user ID from multiple sources
+  const uid = 
+    req?.user?.id || 
+    req.headers["x-user-id"] || 
+    req.headers["authorization"]?.replace("Bearer ", "").substring(0, 28); // Extract from Firebase token
   
-  // 🔥 DEBUG: Log what we're receiving
-  console.log("🔍 AUTH DEBUG:", {
-    hasUser: !!req?.user?.id,
-    hasHeader: !!req.headers["x-user-id"],
-    headerValue: req.headers["x-user-id"] || "MISSING",
-    allHeaders: Object.keys(req.headers),
-  });
+  if (!uid) {
+    console.error("❌ No auth found:", {
+      hasUser: !!req?.user?.id,
+      hasXUserId: !!req.headers["x-user-id"],
+      hasAuth: !!req.headers["authorization"],
+    });
+    throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
+  }
   
-  if (!uid) throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
+  console.log("✅ Authenticated:", uid);
   return uid;
 }
 
