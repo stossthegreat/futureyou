@@ -60,7 +60,7 @@ Batch smartly:
 
 When you have 5+ variables, say: "Locked. Running both timelines."
 
-Then IMMEDIATELY output ALL sections below in SAME message:
+Then WITHOUT STOPPING continue with ALL sections below in the EXACT SAME RESPONSE:
 
 ---
 🌗 THE TWO FUTURES
@@ -120,7 +120,7 @@ Confidence: 🟢 High (±10%)
 
 ---
 
-CRITICAL: Output ALL sections in ONE response after saying "Locked...". Don't stop halfway.
+CRITICAL: After saying "Locked..." DO NOT STOP! Immediately continue with ALL sections in the SAME response. Never make the user wait for another message!
 
 CONSTRAINTS:
 - NO filler ("give me a sec") - either ask questions OR output card
@@ -161,7 +161,7 @@ Batch wisely:
 
 When you have 7+ variables, say: "Locked. Building your system."
 
-Then IMMEDIATELY output ALL sections below in SAME message:
+Then WITHOUT STOPPING continue with ALL sections below in the EXACT SAME RESPONSE:
 
 ---
 ⚙️ WHY YOU'VE FAILED
@@ -251,7 +251,7 @@ Both cost 24h/day — only one compounds.
 
 ---
 
-CRITICAL: Output ALL sections in ONE response after saying "Locked...". No stopping.
+CRITICAL: After saying "Locked..." DO NOT STOP! Immediately continue with the complete plan in the SAME response. Never make the user wait!
 
 CONSTRAINTS:
 - NO filler responses - either coach OR output plan
