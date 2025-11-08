@@ -873,13 +873,13 @@ ${userMessage}
     ];
 
     // Call OpenAI with streaming
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 180000 });
 
     const stream = await client.chat.completions.create({
       model: "gpt-5-mini",
       messages,
       temperature: 0.7,
-      max_completion_tokens: 900,
+      max_completion_tokens: 8000, // 🔥 NO LIMITS! Let it finish the full output card!
       stream: true, // Enable streaming!
     });
 

@@ -11,7 +11,7 @@ class ApiClient {
   // Future-You OS Backend Integration
   static const String _baseUrl = 'https://futureyou-production.up.railway.app'; // Railway URL
   static const String _localUrl = 'http://localhost:8080'; // For local development
-  static const Duration _timeout = Duration(seconds: 60); // 60 seconds for AI responses!
+  static const Duration _timeout = Duration(seconds: 180); // 🔥 3 MINUTES! Let AI finish output cards!
   
   // Firebase Authentication
   static Future<String?> _getFirebaseToken() async {

@@ -6,7 +6,7 @@ function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
   if (!process.env.OPENAI_API_KEY) return null;
   const apiKey = process.env.OPENAI_API_KEY.trim();
-  return new OpenAI({ apiKey, timeout: 60000 }); // 60 seconds for complex What-If responses
+  return new OpenAI({ apiKey, timeout: 180000 }); // 🔥 3 MINUTES! No more timeouts!
 }
 
 interface AIRouterConfig {
@@ -30,10 +30,11 @@ interface AIRouterResponse {
 }
 
 // MODEL TIERS WITH REASONING + VERBOSITY
+// 🔥 NO LIMITS! Let GPT-5 finish the full output card!
 const MODEL_TIERS = {
-  futureYou: { model: "gpt-5", effort: "high", verbosity: "high", maxTokens: 1500 },
-  habit: { model: "gpt-5", effort: "medium", verbosity: "medium", maxTokens: 2500 },
-  whatif: { model: "gpt-5", effort: "medium", verbosity: "high", maxTokens: 2500 },
+  futureYou: { model: "gpt-5-mini", effort: "high", verbosity: "high", maxTokens: 8000 },
+  habit: { model: "gpt-5-mini", effort: "medium", verbosity: "medium", maxTokens: 8000 },
+  whatif: { model: "gpt-5-mini", effort: "medium", verbosity: "high", maxTokens: 8000 },
   brief: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
   nudge: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 200 },
   debrief: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
@@ -99,7 +100,7 @@ export class AIRouterService {
       try {
         result = await openai.chat.completions.create({
           model: fallbackModel,
-          max_completion_tokens: Math.min(tier.maxTokens, 600),
+          max_completion_tokens: tier.maxTokens, // 🔥 NO LIMITS on fallback either!
           messages: [
             { role: "system", content: config.systemPrompt },
             { role: "user", content: config.userInput }, // Skip memory on fallback
