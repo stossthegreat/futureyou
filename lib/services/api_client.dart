@@ -404,20 +404,23 @@ class ApiClient {
   // 🌊 STREAMING: Future-You Chat (word by word)
   static Stream<String> sendFutureYouMessageStream(String message) async* {
     try {
-      final request = await _client.send(http.Request(
+      final headers = await _headers;
+      final client = http.Client();
+      
+      final request = http.Request(
         'POST',
         Uri.parse('$_baseUrl/api/v1/future-you/freeform/stream'),
       )
-        ..headers.addAll({
-          'Content-Type': 'application/json',
-          'Authorization': _token != null ? 'Bearer $_token' : '',
-        })
-        ..body = jsonEncode({'message': message}));
+        ..headers.addAll(headers)
+        ..body = jsonEncode({'message': message});
 
-      final response = await request.stream.bytesToString();
+      final response = await client.send(request);
+      final responseText = await response.stream.bytesToString();
+      
+      client.close();
       
       // Parse SSE stream
-      final lines = response.split('\n');
+      final lines = responseText.split('\n');
       for (final line in lines) {
         if (line.startsWith('data: ')) {
           final data = line.substring(6);
@@ -528,20 +531,23 @@ class ApiClient {
         data['preset'] = preset;
       }
 
-      final request = await _client.send(http.Request(
+      final headers = await _headers;
+      final client = http.Client();
+      
+      final request = http.Request(
         'POST',
         Uri.parse('$_baseUrl/api/v1/what-if/coach/stream'),
       )
-        ..headers.addAll({
-          'Content-Type': 'application/json',
-          'Authorization': _token != null ? 'Bearer $_token' : '',
-        })
-        ..body = jsonEncode(data));
+        ..headers.addAll(headers)
+        ..body = jsonEncode(data);
 
-      final response = await request.stream.bytesToString();
+      final response = await client.send(request);
+      final responseText = await response.stream.bytesToString();
+      
+      client.close();
       
       // Parse SSE stream
-      final lines = response.split('\n');
+      final lines = responseText.split('\n');
       for (final line in lines) {
         if (line.startsWith('data: ')) {
           final data = line.substring(6);
