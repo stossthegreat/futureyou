@@ -424,7 +424,16 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
       "Let's think this through. What matters most here?";
 
     // Parse for output card
+    // 🔥 DEBUG: Log AI response
+    console.log("🤖 AI Response Length:", aiText.length);
+    console.log("🤖 AI Response Preview:", aiText.substring(0, 500));
+    console.log("�� Contains TWO FUTURES?", aiText.includes("🌗 THE TWO FUTURES"));
+    console.log("🤖 Contains COMPARISON?", aiText.includes("📊 COMPARISON"));
     const parsed = this.parseOutputCard(aiText);
+    // 🔥 DEBUG: Log parsing results
+    console.log("🎯 Parsed outputCard?", !!parsed.outputCard);
+    console.log("🎯 Habits count:", parsed.habits?.length || 0);
+    console.log("🎯 Sources count:", parsed.sources?.length || 0);
 
     // Save to history
     history.push({
@@ -463,10 +472,14 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
   } {
     // Check if this is a full output card
     const hasCard = 
-      text.includes("🌗 THE TWO FUTURES") ||
-      text.includes("🟢 PHASE 1") ||
-      text.includes("📊 COMPARISON") ||
-      text.includes("📈 12-WEEK OUTCOMES");
+      text.includes("THE TWO FUTURES") ||
+      text.includes("PHASE 1") ||
+      text.includes("COMPARISON") ||
+      text.includes("12-WEEK OUTCOMES") ||
+      text.includes("WHY IT WORKS") ||
+      text.includes("WHY YOU'VE FAILED") ||
+      text.includes("NEXT 7 DAYS") ||
+      (text.includes("Locked") && text.length > 1000);
 
     if (!hasCard) {
       return { message: text }; // Still in conversation phase
