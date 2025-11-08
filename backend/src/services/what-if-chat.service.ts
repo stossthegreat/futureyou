@@ -458,7 +458,15 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
       }
     });
 
-    return parsed;
+    // Return structure matching old service for frontend compatibility
+    return {
+      message: parsed.message || aiText,
+      chat: parsed.message || aiText, // Legacy field
+      outputCard: parsed.outputCard,
+      habits: parsed.habits,
+      sources: parsed.sources || [],
+      splitFutureCard: parsed.outputCard ? "Generated card" : undefined, // Legacy field
+    };
   }
 
   /**

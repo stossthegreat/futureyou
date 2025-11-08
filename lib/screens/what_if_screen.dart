@@ -366,6 +366,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
           
           // If AI generated OUTPUT CARD, add it as a special card message! (NEW!)
           if (outputCard != null && outputCard is Map) {
+            debugPrint('🎯 FRONTEND: Creating card message with ${(outputCard as Map).keys.toList()}');
             _messages.add(ChatMessage(
               id: (DateTime.now().millisecondsSinceEpoch + 2).toString(),
               role: 'card',
@@ -374,6 +375,9 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
               outputCard: Map<String, dynamic>.from(outputCard as Map),
               habits: habits,
             ));
+            debugPrint('🎯 FRONTEND: Card message added, total messages: ${_messages.length}');
+          } else {
+            debugPrint('🎯 FRONTEND: No outputCard found - outputCard: $outputCard, habits: $habits');
           }
           
           // 🔥 FALLBACK: If response is long and contains "Locked", force show as card
@@ -1913,8 +1917,11 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
   }
 
   Widget _buildMessageBubble(ChatMessage message) {
+    debugPrint('🎨 FRONTEND: Building message bubble - role: ${message.role}, hasOutputCard: ${message.outputCard != null}');
+    
     // Special rendering for OUTPUT CARDS!
     if (message.role == 'card' && message.outputCard != null) {
+      debugPrint('🎨 FRONTEND: Rendering output card with sections: ${message.outputCard!['sections']?.length ?? 0}');
       return _buildInlineOutputCard(message.outputCard!, message.habits);
     }
     
