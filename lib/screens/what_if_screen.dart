@@ -1969,10 +1969,9 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
     debugPrint('- Card sections type: ${card['sections'].runtimeType}');
     debugPrint('- Card sections length: ${(card['sections'] as List?)?.length ?? 0}');
     
-    try {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-        child: Container(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
