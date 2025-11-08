@@ -353,16 +353,6 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
         final sources = result.data!['sources'] as List?;
         final outputCard = result.data!['outputCard']; // NEW!
         final habits = result.data!['habits'] as List?; // NEW!
-        
-        // 🔥 DEBUG: Check what we received
-        debugPrint('🔍 FRONTEND RECEIVED:');
-        debugPrint('- outputCard is null: ${outputCard == null}');
-        debugPrint('- outputCard type: ${outputCard.runtimeType}');
-        if (outputCard != null && outputCard is Map) {
-          debugPrint('- outputCard title: ${outputCard['title']}');
-          debugPrint('- outputCard sections: ${outputCard['sections']?.length ?? 0}');
-        }
-        debugPrint('- habits count: ${habits?.length ?? 0}');
 
         final responseMessage = ChatMessage(
           id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
@@ -1908,16 +1898,6 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
   }
 
   Widget _buildMessageBubble(ChatMessage message) {
-    // 🔥 DEBUG: Check if we're rendering a card
-    if (message.role == 'card') {
-      debugPrint('🔍 RENDERING CARD MESSAGE:');
-      debugPrint('- outputCard is null: ${message.outputCard == null}');
-      if (message.outputCard != null) {
-        debugPrint('- outputCard keys: ${message.outputCard!.keys.toList()}');
-        debugPrint('- outputCard title: ${message.outputCard!['title']}');
-      }
-    }
-    
     // Special rendering for OUTPUT CARDS!
     if (message.role == 'card' && message.outputCard != null) {
       return _buildInlineOutputCard(message.outputCard!, message.habits);
@@ -1962,13 +1942,6 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
 
   // NEW: Beautiful inline output card (stays in chat!)
   Widget _buildInlineOutputCard(Map<String, dynamic> card, List<dynamic>? habits) {
-    // 🔥 DEBUG: Log what we're trying to render
-    debugPrint('🎨 BUILDING OUTPUT CARD:');
-    debugPrint('- Card keys: ${card.keys.toList()}');
-    debugPrint('- Card title: ${card['title']}');
-    debugPrint('- Card sections type: ${card['sections'].runtimeType}');
-    debugPrint('- Card sections length: ${(card['sections'] as List?)?.length ?? 0}');
-    
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.lg),
       child: Container(

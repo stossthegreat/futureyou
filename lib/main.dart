@@ -162,9 +162,17 @@ class _AppRouterState extends State<AppRouter> {
       final prefs = await SharedPreferences.getInstance();
       final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
       
-      // Check auth status
-      final user = FirebaseAuth.instance.currentUser;
-      final isAuthenticated = user != null;
+      // Check auth status (with fallback if Firebase failed)
+      bool isAuthenticated = false;
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        isAuthenticated = user != null;
+      } catch (e) {
+        debugPrint('⚠️  Firebase Auth not available: $e');
+        // Fallback: check if user ID is stored locally
+        final userId = prefs.getString('user_id');
+        isAuthenticated = userId != null && userId.isNotEmpty;
+      }
       
       debugPrint('📱 Onboarding: $hasSeenOnboarding | Auth: $isAuthenticated');
       
