@@ -429,8 +429,13 @@ export class WhatIfChatService {
         // Parse: "1. 🛏️ Sleep 7.5h (23:00-07:00) → 6×/week"
         const match = line.match(/\d+\.\s+(.*?)\s+→\s+(.*)/);
         if (match) {
+          const fullTitle = match[1].trim();
+          // Extract emoji from title (if present)
+          const emojiMatch = fullTitle.match(/^([\p{Emoji_Presentation}\p{Extended_Pictographic}])\s*(.*)/u);
+          
           return {
-            title: match[1].trim(),
+            emoji: emojiMatch ? emojiMatch[1] : '✅', // 🔥 FIXED: Frontend needs emoji field!
+            title: emojiMatch ? emojiMatch[2].trim() : fullTitle,
             frequency: match[2].trim(),
           };
         }
@@ -452,9 +457,20 @@ export class WhatIfChatService {
     const introMatch = text.match(/^([\s\S]*?)(?=\n---|\n🌗|\n⚙️)/);
     const message = introMatch ? introMatch[0].trim() : text.substring(0, 200);
 
+    // Determine card type based on sections
+    const isSimulator = sections.some((s: any) => s.type === 'futures' || s.type === 'comparison');
+    const isHabitMaster = sections.some((s: any) => s.type === 'phase1' || s.type === 'phase2');
+    
+    const title = isSimulator 
+      ? 'What-If Simulation'
+      : isHabitMaster 
+      ? 'Habit Master Plan'
+      : 'Your Future Plan';
+
     return {
       message,
       outputCard: {
+        title, // 🔥 FIXED: Frontend needs this!
         sections,
         fullText: text,
       },
