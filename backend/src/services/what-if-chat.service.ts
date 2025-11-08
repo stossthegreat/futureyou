@@ -334,8 +334,10 @@ export class WhatIfChatService {
   ): Promise<{
     message: string;
     outputCard?: any;
+    chat?: string;
     habits?: any[];
     sources?: string[];
+    splitFutureCard?: string;
   }> {
     const openai = getOpenAIClient();
     if (!openai) {
