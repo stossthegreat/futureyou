@@ -44,6 +44,12 @@ class ApiClient {
       debugPrint('⚠️ Making API call without authentication token');
     }
     
+    // 🔥 FALLBACK: Send user ID as header (for backends without Firebase Admin)
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      headers['x-user-id'] = uid;
+    }
+    
     return headers;
   }
   
