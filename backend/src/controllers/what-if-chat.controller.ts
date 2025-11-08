@@ -3,6 +3,15 @@ import { whatIfChatService } from "../services/what-if-chat.service";
 
 function getUserIdOr401(req: any) {
   const uid = req?.user?.id || req.headers["x-user-id"];
+  
+  // 🔥 DEBUG: Log what we're receiving
+  console.log("🔍 AUTH DEBUG:", {
+    hasUser: !!req?.user?.id,
+    hasHeader: !!req.headers["x-user-id"],
+    headerValue: req.headers["x-user-id"] || "MISSING",
+    allHeaders: Object.keys(req.headers),
+  });
+  
   if (!uid) throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
   return uid;
 }
