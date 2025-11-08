@@ -2343,6 +2343,21 @@ class _WhatIfChatScreenState extends State<_WhatIfChatScreen> {
     super.initState();
     _messages = List.from(widget.messages);
     _selectedPreset = widget.preset;
+    
+    // Add welcome message if no messages yet
+    if (_messages.isEmpty) {
+      final welcomeMessages = {
+        'simulator': '🔮 **What-If Simulator**\n\nI\'m your personal future-simulator, powered by the latest behavioral science and health studies.\n\nI\'ll ask you sharp questions about your goal, training, sleep, diet, and timeline—then show you **two futures**: one where you stay the same, and one where you commit fully.\n\nLet\'s start. **What goal or change are you exploring?** (e.g., "build muscle," "more energy," "lose fat")',
+        'habit-master': '🧩 **Habit Master**\n\nI\'m your behavioral architect, trained on implementation science from Fogg, Clear, Duhigg, and decades of habit research.\n\nI\'ll understand your reality (schedule, energy, environment), then design a **3-phase plan** that removes friction, builds momentum, and creates lasting change—backed by studies and real proof.\n\n**What habit or goal are you trying to build?** Be specific.',
+      };
+      
+      _messages.add(ChatMessage(
+        id: 'welcome',
+        role: 'assistant',
+        text: welcomeMessages[_selectedPreset] ?? welcomeMessages['habit-master']!,
+        timestamp: DateTime.now(),
+      ));
+    }
   }
 
   @override
@@ -2378,51 +2393,36 @@ class _WhatIfChatScreenState extends State<_WhatIfChatScreen> {
       );
     });
 
-    // 🌊 STREAMING: Create placeholder AI message
-    final aiMessageId = DateTime.now().toString();
-    final aiMessage = ChatMessage(
-      id: aiMessageId,
-      role: 'assistant',
-      text: '',
-      timestamp: DateTime.now(),
-    );
-
-    setState(() {
-      _messages.add(aiMessage);
-      _isLoading = false; // No loading indicator, text appears live!
-    });
-
     try {
-      // Stream response word by word
-      await for (final chunk in ApiClient.sendWhatIfMessageStream(
+      final response = await ApiClient.sendWhatIfMessage(
         text,
         preset: _selectedPreset,
-      )) {
-        if (mounted) {
-          setState(() {
-            // Find the message and append text
-            final index = _messages.indexWhere((m) => m.id == aiMessageId);
-            if (index != -1) {
-              _messages[index] = ChatMessage(
-                id: aiMessageId,
-                role: 'assistant',
-                text: _messages[index].text + chunk,
-                timestamp: _messages[index].timestamp,
-              );
-            }
-          });
+      );
 
-          // Auto-scroll as text appears
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_scrollController.hasClients) {
-              _scrollController.animateTo(
-                _scrollController.position.maxScrollExtent,
-                duration: const Duration(milliseconds: 100),
-                curve: Curves.easeOut,
-              );
-            }
-          });
-        }
+      if (response.success && response.data != null) {
+        final aiMessage = ChatMessage(
+          id: DateTime.now().toString(),
+          role: response.data!['role'] ?? 'assistant',
+          text: response.data!['message'] ?? '',
+          timestamp: DateTime.now(),
+          outputCard: response.data!['outputCard'],
+          habits: response.data!['habits'],
+        );
+
+        setState(() {
+          _messages.add(aiMessage);
+          _isLoading = false;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent + 200,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
+      } else {
+        throw Exception(response.error ?? 'Unknown error');
       }
     } catch (e) {
       if (mounted) {
@@ -2432,12 +2432,8 @@ class _WhatIfChatScreenState extends State<_WhatIfChatScreen> {
             backgroundColor: AppColors.error,
           ),
         );
-        // Remove failed AI message
-        setState(() {
-          _messages.removeWhere((m) => m.id == aiMessageId);
-          _isLoading = false;
-        });
       }
+      setState(() => _isLoading = false);
     }
   }
 

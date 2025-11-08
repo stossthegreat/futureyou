@@ -1135,48 +1135,31 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
       );
     });
 
-    // 🌊 STREAMING: Create placeholder AI message
-    final aiMessageId = DateTime.now().toString();
-    final aiMessage = ChatMessage(
-      id: aiMessageId,
-      role: 'future',
-      text: '',
-      timestamp: DateTime.now(),
-    );
-
-    setState(() {
-      _messages.add(aiMessage);
-      _isLoading = false; // No loading indicator, text appears live!
-    });
-
     try {
-      // Stream response word by word
-      await for (final chunk in ApiClient.sendFutureYouMessageStream(text)) {
-        if (mounted) {
-          setState(() {
-            // Find the message and append text
-            final index = _messages.indexWhere((m) => m.id == aiMessageId);
-            if (index != -1) {
-              _messages[index] = ChatMessage(
-                id: aiMessageId,
-                role: 'future',
-                text: _messages[index].text + chunk,
-                timestamp: _messages[index].timestamp,
-              );
-            }
-          });
+      final response = await ApiClient.sendFutureYouMessage(text);
 
-          // Auto-scroll as text appears
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_scrollController.hasClients) {
-              _scrollController.animateTo(
-                _scrollController.position.maxScrollExtent,
-                duration: const Duration(milliseconds: 100),
-                curve: Curves.easeOut,
-              );
-            }
-          });
-        }
+      if (response.success && response.data != null) {
+        final aiMessage = ChatMessage(
+          id: DateTime.now().toString(),
+          role: 'future',
+          text: response.data!['chat'] ?? response.data!['message'] ?? '',
+          timestamp: DateTime.now(),
+        );
+
+        setState(() {
+          _messages.add(aiMessage);
+          _isLoading = false;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent + 200,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
+      } else {
+        throw Exception(response.error ?? 'Unknown error');
       }
     } catch (e) {
       if (mounted) {
@@ -1186,12 +1169,8 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
             backgroundColor: AppColors.error,
           ),
         );
-        // Remove failed AI message
-        setState(() {
-          _messages.removeWhere((m) => m.id == aiMessageId);
-          _isLoading = false;
-        });
       }
+      setState(() => _isLoading = false);
     }
   }
 
