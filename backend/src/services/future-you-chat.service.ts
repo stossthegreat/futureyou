@@ -211,8 +211,15 @@ ${history.slice(-20).map((m: any) => `${m.role}: ${m.content}`).join("\n")}
     let parsedResponse: FutureYouResponse;
     try {
       // aiRouter returns structured data, map to FutureYouResponse
+      // 🔥 Safety: ensure chat is always a string
+      const chatText = typeof aiResponse.chat === 'string' 
+        ? aiResponse.chat 
+        : (Array.isArray(aiResponse.chat) 
+          ? aiResponse.chat[0]?.text || aiResponse.chat[0] || "Keep going."
+          : String(aiResponse.chat || "Keep going."));
+      
       parsedResponse = {
-        chat: [{ role: "assistant", text: aiResponse.chat }],
+        chat: [{ role: "assistant", text: chatText }],
         insightCards: aiResponse.insightCards || [],
         commitCard: aiResponse.commitCard || { title: "Keep Going", steps: [], impact: "", note: "" },
         progress: aiResponse.progress || { insightsCollected: existingInsights.length, insightsTarget: 20, draftReady: false },
@@ -221,8 +228,11 @@ ${history.slice(-20).map((m: any) => `${m.role}: ${m.content}`).join("\n")}
       };
     } catch (err) {
       console.error("Failed to parse Future-You response:", err);
+      const fallbackText = typeof aiResponse.chat === 'string' 
+        ? aiResponse.chat 
+        : "Keep going.";
       parsedResponse = {
-        chat: [{ role: "assistant", text: aiResponse.chat || "Keep going." }],
+        chat: [{ role: "assistant", text: fallbackText }],
         insightCards: [],
         commitCard: { title: "Keep Going", steps: [], impact: "", note: "" },
         progress: { insightsCollected: existingInsights.length, insightsTarget: 20, draftReady: false },

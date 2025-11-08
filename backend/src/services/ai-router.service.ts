@@ -123,8 +123,22 @@ export class AIRouterService {
     if (config.parseJson) {
       try {
         const parsed = JSON.parse(rawOutput);
+        // 🔥 ALWAYS extract chat as STRING (not array!)
+        let chatText = rawOutput;
+        if (parsed.chat) {
+          if (Array.isArray(parsed.chat)) {
+            chatText = parsed.chat[0]?.text || parsed.chat[0] || rawOutput;
+          } else if (typeof parsed.chat === 'object' && parsed.chat.text) {
+            chatText = parsed.chat.text;
+          } else if (typeof parsed.chat === 'string') {
+            chatText = parsed.chat;
+          }
+        } else if (parsed.message) {
+          chatText = parsed.message;
+        }
+        
         data = {
-          chat: parsed.chat?.[0]?.text || parsed.message || rawOutput,
+          chat: chatText, // Always a string!
           splitFutureCard: parsed.splitFutureCard,
           commitCard: parsed.commitCard,
           insightCards: parsed.insightCards,
