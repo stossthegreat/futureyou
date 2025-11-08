@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import { prisma } from "./utils/db";
 import { getRedis } from "./utils/redis";
 import { bootstrapSchedulers } from "./jobs/scheduler";
+import { initializeFirebaseAdmin } from "./utils/firebase-admin";
+import { authMiddleware } from "./middleware/auth.middleware";
 
 import { nudgesController } from "./controllers/nudges.controller";
 import coachController from "./modules/coach/coach.controller";
@@ -35,6 +37,9 @@ const buildServer = () => {
     allowedHeaders: ["Content-Type", "Authorization", "x-user-id", "idempotency-key"],
     credentials: true,
   });
+
+  // 🔒 Auth middleware - verify Firebase tokens
+  fastify.addHook('preHandler', authMiddleware);
 
   fastify.register(swagger, {
     openapi: {
@@ -82,6 +87,10 @@ const start = async () => {
   try {
     console.log("🚀 Starting Future You OS Brain...");
     validateEnv();
+    
+    // 🔥 Initialize Firebase Admin SDK
+    initializeFirebaseAdmin();
+    
     const server = buildServer();
 
     const port = Number(process.env.PORT || 8080);
