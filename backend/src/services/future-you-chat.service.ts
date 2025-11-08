@@ -212,11 +212,19 @@ ${history.slice(-20).map((m: any) => `${m.role}: ${m.content}`).join("\n")}
     try {
       // aiRouter returns structured data, map to FutureYouResponse
       // 🔥 Safety: ensure chat is always a string
-      const chatText = typeof aiResponse.chat === 'string' 
-        ? aiResponse.chat 
-        : (Array.isArray(aiResponse.chat) 
-          ? aiResponse.chat[0]?.text || aiResponse.chat[0] || "Keep going."
-          : String(aiResponse.chat || "Keep going."));
+      let chatText = "Keep going.";
+      if (typeof aiResponse.chat === 'string') {
+        chatText = aiResponse.chat;
+      } else if (Array.isArray(aiResponse.chat) && aiResponse.chat.length > 0) {
+        const firstItem = aiResponse.chat[0];
+        if (typeof firstItem === 'string') {
+          chatText = firstItem;
+        } else if (firstItem && typeof firstItem === 'object' && 'text' in firstItem) {
+          chatText = (firstItem as any).text || "Keep going.";
+        }
+      } else if (aiResponse.chat) {
+        chatText = String(aiResponse.chat);
+      }
       
       parsedResponse = {
         chat: [{ role: "assistant", text: chatText }],
