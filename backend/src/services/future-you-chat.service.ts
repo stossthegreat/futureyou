@@ -213,17 +213,18 @@ ${history.slice(-20).map((m: any) => `${m.role}: ${m.content}`).join("\n")}
       // aiRouter returns structured data, map to FutureYouResponse
       // 🔥 Safety: ensure chat is always a string
       let chatText = "Keep going.";
-      if (typeof aiResponse.chat === 'string') {
-        chatText = aiResponse.chat;
-      } else if (Array.isArray(aiResponse.chat) && aiResponse.chat.length > 0) {
-        const firstItem = aiResponse.chat[0];
+      const chat: any = aiResponse.chat; // Type assertion to fix TypeScript narrowing
+      if (typeof chat === 'string') {
+        chatText = chat;
+      } else if (Array.isArray(chat) && chat.length > 0) {
+        const firstItem = chat[0];
         if (typeof firstItem === 'string') {
           chatText = firstItem;
         } else if (firstItem && typeof firstItem === 'object' && 'text' in firstItem) {
-          chatText = (firstItem as any).text || "Keep going.";
+          chatText = firstItem.text || "Keep going.";
         }
-      } else if (aiResponse.chat) {
-        chatText = String(aiResponse.chat);
+      } else if (chat) {
+        chatText = String(chat);
       }
       
       parsedResponse = {
