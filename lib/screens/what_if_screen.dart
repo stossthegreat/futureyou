@@ -57,7 +57,7 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
   bool _loadingCustomGoals = true;
   
   // Preset mode selection
-  String? _selectedPreset; // 'simulator' or 'habit-master'
+  String _selectedPreset = 'habit-master'; // Default to 'habit-master'
 
   @override
   void initState() {

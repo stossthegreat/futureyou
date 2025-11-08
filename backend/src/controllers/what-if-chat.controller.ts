@@ -38,12 +38,12 @@ export async function whatIfChatController(fastify: FastifyInstance) {
         return reply.code(400).send({ error: "Message required" });
       }
 
-      // Validate preset
-      if (!preset || (preset !== 'simulator' && preset !== 'habit-master')) {
-        return reply.code(400).send({ error: "preset required ('simulator' or 'habit-master')" });
-      }
+      // Use preset or default to 'habit-master'
+      const effectivePreset = preset && (preset === 'simulator' || preset === 'habit-master') 
+        ? preset 
+        : 'habit-master';
 
-      const response = await whatIfChatService.chat(userId, message, preset);
+      const response = await whatIfChatService.chat(userId, message, effectivePreset);
       return response; // Returns { message, outputCard?, habits?, sources? }
     } catch (err: any) {
       console.error("What-If coach error:", err);
