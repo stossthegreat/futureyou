@@ -109,25 +109,43 @@ interface FutureYouResponse {
 
 export class FutureYouChatService {
   private async getConversationHistory(userId: string): Promise<any[]> {
-    const key = `futureyou:chat:${userId}`;
-    const raw = await redis.get(key);
-    return raw ? JSON.parse(raw) : [];
+    try {
+      const key = `futureyou:chat:${userId}`;
+      const raw = await redis.get(key);
+      return raw ? JSON.parse(raw) : [];
+    } catch (error) {
+      // Silent fail - Redis errors handled gracefully
+      return [];
+    }
   }
 
   private async saveConversationHistory(userId: string, messages: any[]) {
-    const key = `futureyou:chat:${userId}`;
-    await redis.set(key, JSON.stringify(messages), "EX", 3600 * 24 * 7); // 7 days
+    try {
+      const key = `futureyou:chat:${userId}`;
+      await redis.set(key, JSON.stringify(messages), "EX", 3600 * 24 * 7); // 7 days
+    } catch (error) {
+      // Silent fail - Redis errors handled gracefully
+    }
   }
 
   private async getInsights(userId: string): Promise<InsightCard[]> {
-    const key = `futureyou:insights:${userId}`;
-    const raw = await redis.get(key);
-    return raw ? JSON.parse(raw) : [];
+    try {
+      const key = `futureyou:insights:${userId}`;
+      const raw = await redis.get(key);
+      return raw ? JSON.parse(raw) : [];
+    } catch (error) {
+      // Silent fail - Redis errors handled gracefully
+      return [];
+    }
   }
 
   private async saveInsights(userId: string, insights: InsightCard[]) {
-    const key = `futureyou:insights:${userId}`;
-    await redis.set(key, JSON.stringify(insights), "EX", 3600 * 24 * 30); // 30 days
+    try {
+      const key = `futureyou:insights:${userId}`;
+      await redis.set(key, JSON.stringify(insights), "EX", 3600 * 24 * 30); // 30 days
+    } catch (error) {
+      // Silent fail - Redis errors handled gracefully
+    }
   }
 
   private async detectContradictions(userId: string, message: string): Promise<string> {
