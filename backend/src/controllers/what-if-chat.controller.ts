@@ -32,14 +32,19 @@ export async function whatIfChatController(fastify: FastifyInstance) {
   fastify.post("/api/v1/what-if/coach", async (req: any, reply) => {
     try {
       const userId = getUserIdOr401(req);
-      const { message } = req.body;
+      const { message, preset } = req.body;
 
       if (!message || typeof message !== "string") {
         return reply.code(400).send({ error: "Message required" });
       }
 
-      const response = await whatIfChatService.chat(userId, message);
-      return response; // Returns { message, suggestedPlan? }
+      // Validate preset
+      if (!preset || (preset !== 'simulator' && preset !== 'habit-master')) {
+        return reply.code(400).send({ error: "preset required ('simulator' or 'habit-master')" });
+      }
+
+      const response = await whatIfChatService.chat(userId, message, preset);
+      return response; // Returns { message, outputCard?, habits?, sources? }
     } catch (err: any) {
       console.error("What-If coach error:", err);
       return reply.code(err.statusCode || 500).send({ error: err.message });
