@@ -21,7 +21,7 @@ function getOpenAIClient() {
   if (!process.env.OPENAI_API_KEY) return null;
   return new OpenAI({ 
     apiKey: process.env.OPENAI_API_KEY.trim(),
-    timeout: 300000, // 🔥 5 MINUTES for output card generation!
+    timeout: 900000, // NUCLEAR - 15 MINUTES timeout!
   });
 }
 
@@ -414,7 +414,7 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       // temperature: removed - GPT-5-mini only supports default (1)
-      max_completion_tokens: 12000, // 🔥 UNLIMITED for output card generation!
+      // max_completion_tokens: REMOVED - Let AI generate FULL response!
       messages: [
         { role: "system", content: systemPrompt },
         { role: "system", content: contextBlock },
@@ -429,6 +429,11 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
     // 🔥 DEBUG: Log AI response
     console.log("🤖 AI Response Length:", aiText.length);
     console.log("🤖 AI Response Preview:", aiText.substring(0, 500));
+    console.log("🤖 FINISH REASON:", response.choices[0]?.finish_reason);
+    console.log("🤖 FULL AI RESPONSE:");
+    console.log(aiText);
+    console.log("🤖 END OF AI RESPONSE");
+
     console.log("�� Contains TWO FUTURES?", aiText.includes("🌗 THE TWO FUTURES"));
     console.log("🤖 Contains COMPARISON?", aiText.includes("📊 COMPARISON"));
     const parsed = this.parseOutputCard(aiText);
@@ -459,6 +464,11 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
         } as any
       }
     });
+
+    console.log("🚀 FINAL RESPONSE TO FRONTEND:");
+    console.log("outputCard:", !!parsed.outputCard);
+    console.log("habits:", parsed.habits?.length || 0);
+    console.log("message length:", (parsed.message || aiText).length);
 
     // Return structure matching old service for frontend compatibility
     return {

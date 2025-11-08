@@ -41,8 +41,8 @@ const buildServer = () => {
     logger: true,
     bodyLimit: 10485760, // 10MB
     connectionTimeout: 0, // Disable connection timeout
-    keepAliveTimeout: 200000, // 🔥 3.3 minutes - longer than OpenAI timeout!
-    requestTimeout: 200000, // 🔥 3.3 minutes - let AI finish output cards!
+    keepAliveTimeout: 1200000, // 🔥 20 MINUTES - NUCLEAR timeout!
+    requestTimeout: 1200000, // 🔥 20 MINUTES - let AI generate FULL cards!
   });
 
   fastify.register(cors, {
