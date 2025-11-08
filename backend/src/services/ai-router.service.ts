@@ -60,19 +60,29 @@ export class AIRouterService {
       };
     }
 
-    // Cost-aware caching (12 hour expiry)
+    // Cost-aware caching (12 hour expiry) - WITH ERROR HANDLING!
     const cacheKey = this.getCacheKey(config.preset, config.userInput);
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      console.log(`💚 Cache HIT for ${config.preset}`);
-      return JSON.parse(cached);
+    let cached = null;
+    try {
+      cached = await redis.get(cacheKey);
+      if (cached) {
+        console.log(`💚 Cache HIT for ${config.preset}`);
+        return JSON.parse(cached);
+      }
+    } catch (redisErr) {
+      console.warn("⚠️  Redis cache read failed, continuing without cache:", redisErr);
     }
 
     // Get tier config
     const tier = MODEL_TIERS[config.preset] || MODEL_TIERS.default;
 
-    // Get previous conversation memory for chaining
-    const memory = await this.getMemory(config.userId, config.preset);
+    // Get previous conversation memory for chaining - WITH ERROR HANDLING!
+    let memory = null;
+    try {
+      memory = await this.getMemory(config.userId, config.preset);
+    } catch (redisErr) {
+      console.warn("⚠️  Redis memory read failed, continuing without memory:", redisErr);
+    }
     const enrichedInput = memory 
       ? `[Context from previous conversation]\n${memory}\n\n[Current message]\n${config.userInput}`
       : config.userInput;
@@ -163,11 +173,19 @@ export class AIRouterService {
       };
     }
 
-    // Save condensed memory for next turn
-    await this.saveMemory(config.userId, config.preset, rawOutput);
+    // Save condensed memory for next turn - WITH ERROR HANDLING!
+    try {
+      await this.saveMemory(config.userId, config.preset, rawOutput);
+    } catch (redisErr) {
+      console.warn("⚠️  Redis memory save failed:", redisErr);
+    }
 
-    // Cache result (12 hours)
-    await redis.set(cacheKey, JSON.stringify(data), "EX", 60 * 60 * 12);
+    // Cache result (12 hours) - WITH ERROR HANDLING!
+    try {
+      await redis.set(cacheKey, JSON.stringify(data), "EX", 60 * 60 * 12);
+    } catch (redisErr) {
+      console.warn("⚠️  Redis cache save failed:", redisErr);
+    }
 
     return data;
   }
