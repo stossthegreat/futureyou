@@ -606,6 +606,11 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
     });
 
     const responseText = aiResponse.chat || "Let's break this down systematically.";
+    
+    // 🔥 DEBUG: Log AI response
+    console.log("🤖 AI RAW RESPONSE (first 300 chars):");
+    console.log(responseText.substring(0, 300));
+    console.log("...");
 
     // Parse for card sections
     const parsed = this.parseCardSections(responseText);
@@ -631,6 +636,14 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
       },
     });
 
+    // 🔥 DEBUG: Log what we're returning
+    console.log("🔍 WHAT-IF RESPONSE DEBUG:");
+    console.log("- Has outputCard:", !!parsed.outputCard);
+    console.log("- outputCard title:", parsed.outputCard?.title);
+    console.log("- Sections count:", parsed.outputCard?.sections?.length);
+    console.log("- Habits count:", parsed.habits?.length);
+    console.log("- Message:", parsed.message?.substring(0, 100));
+    
     // Return parsed structure
     return {
       message: parsed.message || responseText,
