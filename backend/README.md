@@ -98,6 +98,13 @@ JWT_SECRET="your_jwt_secret_here"
 
 # BullMQ
 BULLMQ_REDIS_URL="redis://localhost:6379"
+
+# Future-You Unified Engine
+FUTUREYOU_ENABLED=false
+FUTUREYOU_AI_MODEL=gpt-5-mini
+FUTUREYOU_MAX_TOKENS=900
+FUTUREYOU_TEMPERATURE=0.7
+FUTUREYOU_CACHE_TTL_SEC=86400
 ```
 
 ## 🚀 Running the Application

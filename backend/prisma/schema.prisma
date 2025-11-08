@@ -200,4 +200,62 @@ model CoachMessage {
   @@index([userId])
 }
 
+model FutureYouPurposeProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  lifeTask      String?
+  strengths     String[] @default([])
+  valuesRank    String[] @default([])
+  sdtAutonomy   Int?
+  sdtCompetence Int?
+  sdtRelatedness Int?
+  flowContexts  String[] @default([])
+  redTags       String[] @default([])
+  odysseyPlans  Json?
+  keystones     String[] @default([])
+  antiHabits    String[] @default([])
+  lastReviewAt  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model FutureYouChapter {
+  id         String   @id @default(cuid())
+  userId     String
+  phase      String
+  title      String
+  bodyMd     String
+  words      Int
+  draftHash  String
+  status     String   @default("final")
+  createdAt  DateTime @default(now())
+  @@index([userId])
+  @@index([userId, phase])
+  @@index([draftHash])
+}
+
+model FutureYouBookEdition {
+  id         String   @id @default(cuid())
+  userId     String
+  version    Int
+  title      String
+  bodyMd     String
+  chapterIds String[]
+  createdAt  DateTime @default(now())
+  @@index([userId])
+}
+
+model FutureYouJob {
+  id         String   @id @default(cuid())
+  userId     String
+  type       String
+  payload    Json
+  status     String   @default("queued")
+  error      String?
+  insertedAt DateTime @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+  idemKey    String   @unique
+  @@index([userId])
+}
 

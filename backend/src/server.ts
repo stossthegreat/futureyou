@@ -21,6 +21,7 @@ import { futureYouChatController } from "./controllers/future-you-chat.controlle
 import { whatIfChatController } from "./controllers/what-if-chat.controller";
 import { futureYouChatControllerV2 } from "./controllers/future-you-v2.controller";
 import { whatIfChatControllerV2 } from "./controllers/what-if-v2.controller";
+import { futureYouRouter } from "./modules/futureyou/router";
 
 dotenv.config();
 
@@ -108,6 +109,9 @@ const buildServer = () => {
     // V2 Chat (hybrid dual-brain architecture)
     protectedRoutes.register(futureYouChatControllerV2); // Future-You v2 - emotion + contradiction aware
     protectedRoutes.register(whatIfChatControllerV2); // What-If v2 - readiness + plan generation
+    
+    // Future-You Unified Engine (Phase 1: Coaching + Chapters)
+    protectedRoutes.register(futureYouRouter); // 7-phase purpose coaching
   });
   
   // Test routes (optional - can be public or protected based on needs)
