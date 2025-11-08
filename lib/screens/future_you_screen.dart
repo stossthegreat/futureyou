@@ -1095,28 +1095,11 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
   final _scrollController = ScrollController();
   late List<ChatMessage> _messages;
   bool _isLoading = false;
-  
-  // 🧠 Phase tracking
-  int _currentPhase = 0;
-  String _phaseName = "On-Ramp";
-  int _totalPhases = 7;
 
   @override
   void initState() {
     super.initState();
     _messages = List.from(widget.messages);
-    _loadPhaseStatus();
-  }
-  
-  Future<void> _loadPhaseStatus() async {
-    final response = await ApiClient.getPhaseStatus();
-    if (response.success && response.data != null) {
-      setState(() {
-        _currentPhase = response.data!['currentPhase'] ?? 0;
-        _phaseName = response.data!['phaseName'] ?? 'On-Ramp';
-        _totalPhases = response.data!['totalPhases'] ?? 7;
-      });
-    }
   }
 
   @override
@@ -1153,7 +1136,8 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
     });
 
     try {
-      final response = await ApiClient.sendPhaseFlowMessage(text);
+      // 🔄 Using old endpoint until Phase Flow tables are migrated
+      final response = await ApiClient.sendFutureYouMessage(text);
 
       if (response.success && response.data != null) {
         final aiMessage = ChatMessage(
@@ -1165,26 +1149,6 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
 
         setState(() {
           _messages.add(aiMessage);
-          
-          // 🧠 Check for insight card
-          if (response.data!['card'] != null) {
-            final cardMessage = ChatMessage(
-              id: DateTime.now().toString() + '_card',
-              role: 'card',
-              text: '',
-              timestamp: DateTime.now(),
-              outputCard: response.data!['card'],
-            );
-            _messages.add(cardMessage);
-            
-            // Update phase status
-            _currentPhase = response.data!['phase'] ?? _currentPhase;
-            _phaseName = response.data!['phaseName'] ?? _phaseName;
-            if (response.data!['phaseComplete'] == true) {
-              _currentPhase = _currentPhase + 1;
-            }
-          }
-          
           _isLoading = false;
         });
 
@@ -1266,31 +1230,15 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    'Phase ${_currentPhase + 1}/$_totalPhases: $_phaseName',
-                                    style: AppTextStyles.h3.copyWith(fontSize: 16),
+                                    'Future-You Discovery',
+                                    style: AppTextStyles.h3.copyWith(fontSize: 18),
                                   ),
                                   const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        'Life\'s Task Discovery',
-                                        style: AppTextStyles.captionSmall.copyWith(
-                                          color: AppColors.emerald,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(2),
-                                          child: LinearProgressIndicator(
-                                            value: _currentPhase / _totalPhases,
-                                            backgroundColor: AppColors.textTertiary.withOpacity(0.2),
-                                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.emerald),
-                                            minHeight: 3,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    'Uncover your true calling through deep reflection',
+                                    style: AppTextStyles.captionSmall.copyWith(
+                                      color: AppColors.emerald,
+                                    ),
                                   ),
                                 ],
                               ),
