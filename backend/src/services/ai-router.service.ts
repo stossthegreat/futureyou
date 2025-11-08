@@ -70,7 +70,7 @@ export class AIRouterService {
         return JSON.parse(cached);
       }
     } catch (redisErr) {
-      console.warn("⚠️  Redis cache read failed, continuing without cache:", redisErr);
+      // Silent fail - don't spam logs
     }
 
     // Get tier config
@@ -81,7 +81,7 @@ export class AIRouterService {
     try {
       memory = await this.getMemory(config.userId, config.preset);
     } catch (redisErr) {
-      console.warn("⚠️  Redis memory read failed, continuing without memory:", redisErr);
+      // Silent fail - don't spam logs
     }
     const enrichedInput = memory 
       ? `[Context from previous conversation]\n${memory}\n\n[Current message]\n${config.userInput}`
@@ -185,14 +185,14 @@ export class AIRouterService {
     try {
       await this.saveMemory(config.userId, config.preset, rawOutput);
     } catch (redisErr) {
-      console.warn("⚠️  Redis memory save failed:", redisErr);
+      // Silent fail - don't spam logs
     }
 
     // Cache result (12 hours) - WITH ERROR HANDLING!
     try {
       await redis.set(cacheKey, JSON.stringify(data), "EX", 60 * 60 * 12);
     } catch (redisErr) {
-      console.warn("⚠️  Redis cache save failed:", redisErr);
+      // Silent fail - don't spam logs
     }
 
     return data;

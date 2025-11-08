@@ -314,7 +314,7 @@ export class WhatIfChatService {
       const raw = await redis.get(key);
       return raw ? JSON.parse(raw) : [];
     } catch (error) {
-      console.error("⚠️  Redis get error (conversation history):", error);
+      // Silent fail - Redis errors are handled gracefully
       return []; // Return empty history if Redis fails
     }
   }
@@ -324,7 +324,7 @@ export class WhatIfChatService {
       const key = `whatif:chat:${userId}`;
       await redis.set(key, JSON.stringify(messages), "EX", 3600 * 24 * 7); // 7 days
     } catch (error) {
-      console.error("⚠️  Redis set error (conversation history):", error);
+      // Silent fail - Redis errors are handled gracefully
       // Don't throw - allow conversation to continue even if history can't be saved
     }
   }
@@ -510,7 +510,7 @@ export class WhatIfChatService {
         this.getConversationHistory(userId),
       ]);
     } catch (error) {
-      console.error("⚠️  Memory/Redis error, using defaults:", error);
+      // Silent fail - Redis errors are handled gracefully
       identity = { name: "User", purpose: "", coreValues: [], burningQuestion: "" };
       ctx = { habitSummaries: [], events: [], recentGoals: [] };
       history = [];
@@ -755,7 +755,7 @@ Return ONLY valid JSON:
         this.getConversationHistory(userId),
       ]);
     } catch (error) {
-      console.error("⚠️  Memory/Redis error, using defaults:", error);
+      // Silent fail - Redis errors are handled gracefully
       identity = { name: "User", purpose: "", coreValues: [], burningQuestion: "" };
       ctx = { habitSummaries: [], events: [], recentGoals: [] };
       history = [];
