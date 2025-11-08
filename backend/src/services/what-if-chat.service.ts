@@ -2,6 +2,7 @@ import { prisma } from "../utils/db";
 import { redis } from "../utils/redis";
 import { memoryService } from "./memory.service";
 import { aiRouter } from "./ai-router.service";
+import OpenAI from "openai";
 
 /**
  * 🔮 FUTURE-YOU OS - WHAT-IF SYSTEM (GPT-5 REASONING)
@@ -872,8 +873,7 @@ ${userMessage}
     ];
 
     // Call OpenAI with streaming
-    const openai = await import("openai").then(m => m.default);
-    const client = new openai({ apiKey: process.env.OPENAI_API_KEY });
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const stream = await client.chat.completions.create({
       model: "gpt-5-mini",
