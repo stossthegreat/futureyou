@@ -30,11 +30,11 @@ interface AIRouterResponse {
 }
 
 // MODEL TIERS WITH REASONING + VERBOSITY
-// 🔥 NO LIMITS! Let GPT-5 finish the full output card!
+// 🔥 Balanced: Enough for full cards, not too slow!
 const MODEL_TIERS = {
-  futureYou: { model: "gpt-5-mini", effort: "high", verbosity: "high", maxTokens: 8000 },
-  habit: { model: "gpt-5-mini", effort: "medium", verbosity: "medium", maxTokens: 8000 },
-  whatif: { model: "gpt-5-mini", effort: "medium", verbosity: "high", maxTokens: 8000 },
+  futureYou: { model: "gpt-5-mini", effort: "high", verbosity: "high", maxTokens: 2000 },
+  habit: { model: "gpt-5-mini", effort: "medium", verbosity: "medium", maxTokens: 2500 },
+  whatif: { model: "gpt-5-mini", effort: "medium", verbosity: "high", maxTokens: 2500 },
   brief: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
   nudge: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 200 },
   debrief: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 450 },

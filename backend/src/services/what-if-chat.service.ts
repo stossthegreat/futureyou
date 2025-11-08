@@ -339,10 +339,10 @@ export class WhatIfChatService {
     sources?: string[];
   } {
     // Check if this is a full card output (contains section markers)
-    const hasCard = text.includes('THE TWO TIMELINES') || 
-                    text.includes('THE TWO FUTURES') ||
+    const hasCard = text.includes('THE TWO FUTURES') ||
                     text.includes('PHASE 1') ||
-                    text.includes('SPLIT-FUTURE COMPARISON');
+                    text.includes('SPLIT-FUTURE COMPARISON') ||
+                    text.includes('12-WEEK OUTCOMES');
     
     if (!hasCard) {
       // Still in conversational phase
@@ -352,16 +352,16 @@ export class WhatIfChatService {
     // Parse sections by detecting markdown headers
     const sections: any[] = [];
     
-    // Extract THE TWO TIMELINES
-    const timelinesMatch = text.match(/🌗 THE TWO TIMELINES[\s\S]*?(?=\n---|\n📊|\n🟢|\n⚙️|$)/);
-    if (timelinesMatch) {
-      sections.push({ type: 'timelines', content: timelinesMatch[0] });
-    }
-
-    // Extract THE TWO FUTURES
-    const futuresMatch = text.match(/⚖️ THE TWO FUTURES[\s\S]*?(?=\n---|\n✅|$)/);
+    // Extract THE TWO FUTURES (main section for What-If Simulator)
+    const futuresMatch = text.match(/🌗 THE TWO FUTURES[\s\S]*?(?=\n---|\n📊|\n🟢|\n⚙️|$)/);
     if (futuresMatch) {
       sections.push({ type: 'futures', content: futuresMatch[0] });
+    }
+
+    // Extract THE TWO FUTURES (closing section for Habit Master)
+    const closingFuturesMatch = text.match(/⚖️ THE TWO FUTURES[\s\S]*?(?=\n---|\n✅|$)/);
+    if (closingFuturesMatch) {
+      sections.push({ type: 'closing_futures', content: closingFuturesMatch[0] });
     }
 
     // Extract SPLIT-FUTURE COMPARISON table
@@ -370,10 +370,16 @@ export class WhatIfChatService {
       sections.push({ type: 'comparison', content: tableMatch[0] });
     }
 
-    // Extract WHY IT WORKS
+    // Extract WHY IT WORKS (What-If Simulator)
     const whyMatch = text.match(/🧬 WHY IT WORKS[\s\S]*?(?=\n---)/);
     if (whyMatch) {
       sections.push({ type: 'explanation', content: whyMatch[0] });
+    }
+    
+    // Extract WHY YOU'VE FAILED BEFORE (Habit Master)
+    const failedMatch = text.match(/⚙️ WHY YOU'VE FAILED BEFORE[\s\S]*?(?=\n---)/);
+    if (failedMatch) {
+      sections.push({ type: 'science', content: failedMatch[0] });
     }
     
     // Extract QUARTER-BY-QUARTER or PROJECTED OUTCOMES
@@ -382,15 +388,9 @@ export class WhatIfChatService {
       sections.push({ type: 'quarterly', content: quarterMatch[0] });
     }
 
-    const outcomesMatch = text.match(/📈 PROJECTED 12-WEEK OUTCOMES[\s\S]*?(?=\n---)/);
+    const outcomesMatch = text.match(/📈 (?:12-WEEK OUTCOMES|PROJECTED 12-WEEK OUTCOMES)[\s\S]*?(?=\n---)/);
     if (outcomesMatch) {
       sections.push({ type: 'outcomes', content: outcomesMatch[0] });
-    }
-
-    // Extract SCIENCE section (for Habit Master)
-    const scienceMatch = text.match(/⚙️ THE SCIENCE OF WHY YOU FALL OFF[\s\S]*?(?=\n---)/);
-    if (scienceMatch) {
-      sections.push({ type: 'science', content: scienceMatch[0] });
     }
 
     // Extract PHASES (for Habit Master)
@@ -402,8 +402,8 @@ export class WhatIfChatService {
     if (phase2Match) sections.push({ type: 'phase2', content: phase2Match[0] });
     if (phase3Match) sections.push({ type: 'phase3', content: phase3Match[0] });
 
-    // Extract ACTION PLAN / COMMIT PLAN
-    const actionMatch = text.match(/✅ (?:NEXT-BEST ACTION PLAN|3-STEP COMMIT PLAN)[\s\S]*?(?=\n---|\n💬)/);
+    // Extract ACTION PLAN / COMMIT PLAN (updated patterns)
+    const actionMatch = text.match(/✅ (?:NEXT 7 DAYS|NEXT-BEST ACTION PLAN|3-STEP COMMIT PLAN)[\s\S]*?(?=\n---|\n💬|\n💎)/);
     if (actionMatch) {
       sections.push({ type: 'action', content: actionMatch[0] });
     }
@@ -825,7 +825,7 @@ ${userMessage}
       model: "gpt-5-mini",
       messages,
       temperature: 0.7,
-      max_completion_tokens: 8000, // 🔥 NO LIMITS! Let it finish the full output card!
+      max_completion_tokens: 2500, // 🔥 Balanced: Fast but complete!
       stream: true, // Enable streaming!
     });
 
