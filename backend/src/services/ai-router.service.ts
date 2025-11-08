@@ -30,11 +30,11 @@ interface AIRouterResponse {
 }
 
 // MODEL TIERS WITH REASONING + VERBOSITY
-// 🔥 Balanced: Enough for full cards, not too slow!
+// 🔥 BACK TO 8000 - Reasoning tokens need space!
 const MODEL_TIERS = {
-  futureYou: { model: "gpt-5-mini", effort: "high", verbosity: "high", maxTokens: 2000 },
-  habit: { model: "gpt-5-mini", effort: "medium", verbosity: "medium", maxTokens: 2500 },
-  whatif: { model: "gpt-5-mini", effort: "medium", verbosity: "high", maxTokens: 2500 },
+  futureYou: { model: "gpt-5-mini", effort: "high", verbosity: "high", maxTokens: 8000 },
+  habit: { model: "gpt-5-mini", effort: "medium", verbosity: "medium", maxTokens: 8000 },
+  whatif: { model: "gpt-5-mini", effort: "medium", verbosity: "high", maxTokens: 8000 },
   brief: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
   nudge: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 200 },
   debrief: { model: "gpt-5-mini", effort: "low", verbosity: "medium", maxTokens: 450 },
@@ -127,14 +127,6 @@ export class AIRouterService {
     }
 
     const rawOutput = result.choices[0]?.message?.content?.trim() || "";
-    
-    // 🔥 DEBUG: Log if OpenAI returns empty
-    if (!rawOutput) {
-      console.error("⚠️  OpenAI returned EMPTY content!");
-      console.error("Model:", tier.model);
-      console.error("Result:", JSON.stringify(result).slice(0, 500));
-      console.error("Choices:", JSON.stringify(result.choices).slice(0, 500));
-    }
 
     // Parse response based on format
     let data: AIRouterResponse;

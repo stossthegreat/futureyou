@@ -590,11 +590,6 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
     });
 
     const responseText = aiResponse.chat || "Let's break this down systematically.";
-    
-    // 🔥 Debug logging
-    if (!aiResponse.chat) {
-      console.error("⚠️  AI Router returned empty chat! aiResponse:", JSON.stringify(aiResponse).slice(0, 200));
-    }
 
     // Parse for card sections
     const parsed = this.parseCardSections(responseText);
@@ -830,7 +825,7 @@ ${userMessage}
       model: "gpt-5-mini",
       messages,
       temperature: 0.7,
-      max_completion_tokens: 2500, // 🔥 Balanced: Fast but complete!
+      max_completion_tokens: 8000, // 🔥 BACK TO 8000 - Reasoning needs space!
       stream: true, // Enable streaming!
     });
 

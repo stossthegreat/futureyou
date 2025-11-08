@@ -330,7 +330,7 @@ ${userMessage}
       model: "gpt-5-mini",
       messages,
       temperature: 0.7,
-      max_completion_tokens: 2000, // 🔥 Balanced: Fast but complete!
+      max_completion_tokens: 8000, // 🔥 BACK TO 8000 - Reasoning needs space!
       stream: true, // Enable streaming!
     });
 
