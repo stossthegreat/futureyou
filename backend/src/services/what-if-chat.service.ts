@@ -411,7 +411,7 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
     // Call OpenAI
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      temperature: 0.6,
+      // temperature: removed - GPT-5-mini only supports default (1)
       max_completion_tokens: 12000, // 🔥 UNLIMITED for output card generation!
       messages: [
         { role: "system", content: systemPrompt },
