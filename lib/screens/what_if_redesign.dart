@@ -98,13 +98,13 @@ Timeline: 180 days to functional fluency''',
       title: '💰 Side Hustle',
       subtitle: 'Extra income',
       emoji: '💰',
-      scenario: '''Goal: Launch consulting business, first $5k/month
+      scenario: '''Goal: Launch consulting business, first \$5k/month
 Current: Full-time job (9-6), weekends free
 Skills: 8 years marketing experience, strong copywriting
 Time available: 10-15 hours/week (evenings + Sat morning)
 Financial need: Medium (want to quit day job in 12 months)
 Barriers: No client network, imposter syndrome, time management
-Investment: $500 to start (website, tools)
+Investment: \$500 to start (website, tools)
 Timeline: 90 days to first paying clients''',
     ),
     PresetScenario(
@@ -168,8 +168,8 @@ Timeline: 90 days to build habit + small audience''',
       final mode = _tabController.index == 0 ? 'simulator' : 'habit-master';
       
       // Send to backend
-      final response = await ApiClient.chatWhatIf(
-        message: _scenarioController.text,
+      final response = await ApiClient.sendWhatIfMessage(
+        _scenarioController.text,
         preset: mode,
       );
 
