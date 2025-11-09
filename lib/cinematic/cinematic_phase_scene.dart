@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'cinematic_intro.dart';
 import 'cinematic_chat.dart';
@@ -27,8 +28,6 @@ class CinematicPhaseScene extends StatefulWidget {
 
 class _CinematicPhaseSceneState extends State<CinematicPhaseScene> {
   PhaseState _state = PhaseState.intro;
-  // Conversation stored for transcript generation
-  List<Map<String, String>> _conversation = [];
   Map<String, dynamic>? _generatedChapter;
 
   @override
@@ -45,7 +44,6 @@ class _CinematicPhaseSceneState extends State<CinematicPhaseScene> {
 
   Future<void> _onChatComplete(List<Map<String, String>> conversation) async {
     setState(() {
-      _conversation = conversation;
       _state = PhaseState.chapter;
     });
 

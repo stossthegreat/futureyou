@@ -50,7 +50,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   final _systemTaglineController = TextEditingController();
   String? _systemEmoji;
   Color _systemColor = AppColors.emerald;
-  final List<Color> _systemGradientColors = [AppColors.emerald, AppColors.emerald.withOpacity(0.7)];
+  List<Color> _systemGradientColors = [AppColors.emerald, AppColors.emerald.withOpacity(0.7)];
 
   @override
   void initState() {

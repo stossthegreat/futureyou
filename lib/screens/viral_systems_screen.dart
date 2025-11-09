@@ -274,7 +274,7 @@ class _ViralSystemCard extends StatelessWidget {
                     const SizedBox(height: AppSpacing.sm),
                     
                     // Action buttons
-                    _buildActions(),
+                    _buildActions(context),
                   ],
                 ),
               ),
@@ -474,7 +474,7 @@ class _ViralSystemCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActions() {
+  Widget _buildActions(BuildContext context) {
     return Row(
       children: [
         Expanded(
@@ -525,7 +525,8 @@ class _ViralSystemCard extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.85),
                     fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
