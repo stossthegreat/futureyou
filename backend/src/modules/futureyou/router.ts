@@ -4,8 +4,8 @@ import { chaptersController } from './controllers/chapters.controller';
 import { bookController } from './controllers/book.controller';
 
 export async function futureYouRouter(fastify: FastifyInstance) {
-  // Guard: only register if enabled
-  if (process.env.FUTUREYOU_ENABLED !== 'true') {
+  // Guard: only register if explicitly disabled (default: ENABLED)
+  if (process.env.FUTUREYOU_ENABLED === 'false') {
     fastify.get('/api/futureyou/status', async () => ({ enabled: false }));
     return;
   }

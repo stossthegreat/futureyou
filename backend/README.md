@@ -100,7 +100,7 @@ JWT_SECRET="your_jwt_secret_here"
 BULLMQ_REDIS_URL="redis://localhost:6379"
 
 # Future-You Unified Engine
-FUTUREYOU_ENABLED=false
+FUTUREYOU_ENABLED=true  # Default: true (set to 'false' to disable)
 FUTUREYOU_AI_MODEL=gpt-5-mini
 FUTUREYOU_MAX_TOKENS=900
 FUTUREYOU_TEMPERATURE=0.7
