@@ -20,6 +20,7 @@ class _WhatIfRedesignScreenState extends State<WhatIfRedesignScreen> with Single
   bool _isLoading = false;
   Map<String, dynamic>? _outputCard;
   String? _errorMessage;
+  String? _selectedPresetId;
 
   // Preset scenarios
   final List<PresetScenario> _presets = [
@@ -147,6 +148,7 @@ Timeline: 90 days to build habit + small audience''',
   void _selectPreset(PresetScenario preset) {
     setState(() {
       _scenarioController.text = preset.scenario;
+      _selectedPresetId = preset.id;
       _outputCard = null;
       _errorMessage = null;
     });
@@ -362,44 +364,85 @@ Timeline: 90 days to build habit + small audience''',
   }
 
   Widget _buildPresetCard(PresetScenario preset, int index) {
+    final isSelected = _selectedPresetId == preset.id;
+    
     return GestureDetector(
       onTap: () => _selectPreset(preset),
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              AppColors.emerald.withOpacity(0.15),
-              AppColors.emerald.withOpacity(0.05),
-            ],
+            colors: isSelected
+                ? [
+                    AppColors.emerald.withOpacity(0.4),
+                    AppColors.emerald.withOpacity(0.2),
+                  ]
+                : [
+                    AppColors.emerald.withOpacity(0.15),
+                    AppColors.emerald.withOpacity(0.05),
+                  ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-          border: Border.all(color: AppColors.emerald.withOpacity(0.3)),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.emerald.withOpacity(0.8)
+                : AppColors.emerald.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            Text(
-              preset.emoji,
-              style: const TextStyle(fontSize: 32),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              preset.title,
-              style: AppTextStyles.bodySemiBold.copyWith(
-                color: AppColors.textPrimary,
+            // Check mark when selected
+            if (isSelected)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.emerald,
+                    borderRadius: BorderRadius.circular(AppBorderRadius.full),
+                  ),
+                  child: const Icon(
+                    LucideIcons.check,
+                    color: Colors.black,
+                    size: 14,
+                  ),
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              preset.subtitle,
-              style: AppTextStyles.captionSmall.copyWith(
-                color: AppColors.textTertiary,
-              ),
-              textAlign: TextAlign.center,
+            // Content
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  preset.emoji,
+                  style: const TextStyle(fontSize: 28),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  preset.title,
+                  style: AppTextStyles.bodySemiBold.copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  preset.subtitle,
+                  style: AppTextStyles.captionSmall.copyWith(
+                    color: AppColors.textTertiary,
+                    fontSize: 11,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ],
         ),
