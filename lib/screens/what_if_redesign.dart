@@ -178,7 +178,8 @@ Timeline: 90 days to build habit + small audience''',
 
       if (response.success && response.data != null) {
         setState(() {
-          _outputCard = response.data!['outputCard'];
+          // Store the whole response { message, outputCard, habits, sources }
+          _outputCard = response.data!;
           _isLoading = false;
         });
       } else {
@@ -583,7 +584,12 @@ Timeline: 90 days to build habit + small audience''',
   }
 
   Widget _buildOutputCard() {
-    final content = _outputCard?['content'] ?? _outputCard?['response'] ?? '';
+    // Backend returns: { message, outputCard: { title, sections, fullText }, habits, sources }
+    // We want the fullText from outputCard
+    final content = _outputCard?['outputCard']?['fullText'] ?? 
+                    _outputCard?['fullText'] ?? 
+                    _outputCard?['message'] ?? 
+                    '';
     
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
