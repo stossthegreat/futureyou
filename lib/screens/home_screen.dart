@@ -194,8 +194,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required int index,
     required VoidCallback onToggle,
   }) {
-    final timeFormatter = DateFormat('HH:mm');
-    final time = timeFormatter.format(DateTime.parse('2025-01-01 ${habit.time}:00'));
+    // Handle empty time (for system habits that don't have a specific time)
+    String? time;
+    if (habit.time != null && habit.time.isNotEmpty) {
+      try {
+        final timeFormatter = DateFormat('HH:mm');
+        time = timeFormatter.format(DateTime.parse('2025-01-01 ${habit.time}:00'));
+      } catch (e) {
+        time = null; // Invalid time format, treat as no time
+      }
+    }
     
     // Use the habit's chosen color
     final habitColor = habit.color;
@@ -258,19 +266,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         // Time + Status chip
                         Row(
                           children: [
-                            Text(
-                              time,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: habitColor,
-                                fontFamily: 'monospace',
-                                letterSpacing: 1,
+                            if (time != null) ...[
+                              Text(
+                                time,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: habitColor,
+                                  fontFamily: 'monospace',
+                                  letterSpacing: 1,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Text('•', style: TextStyle(color: Colors.white38)),
-                            const SizedBox(width: AppSpacing.sm),
+                              const SizedBox(width: AppSpacing.sm),
+                              Text('•', style: TextStyle(color: Colors.white38)),
+                              const SizedBox(width: AppSpacing.sm),
+                            ],
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,

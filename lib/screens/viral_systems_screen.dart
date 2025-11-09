@@ -232,8 +232,8 @@ class _ViralSystemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completion = 75; // Mock completion
-    final completedCount = (system.habits.length * completion / 100).ceil();
+    final completion = 100; // All habits completed (for demo)
+    final completedCount = system.habits.length; // ALL habits checked
     final streak = 12; // Mock streak
 
     return Container(
@@ -503,18 +503,28 @@ class _ViralSystemCard extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Container(
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(AppBorderRadius.md),
-            ),
-            child: Center(
-              child: Text(
-                'Share',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.85),
-                  fontSize: 12,
+          child: GestureDetector(
+            onTap: () {
+              // Share the system
+              final shareText = '🔥 ${system.name}\n${system.tagline}\n\n${system.habits.join("\n")}\n\n📱 Track it on Future-You OS';
+              // Import share_plus package
+              // Share.share(shareText);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Share: ${system.name}'), backgroundColor: system.accentColor),
+              );
+            },
+            child: Container(
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(AppBorderRadius.md),
+              ),
+              child: Center(
+                child: Text(
+                  'Share',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.85),
+                    fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -547,6 +557,24 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
     // All habits selected by default
     _selectedHabits = List.filled(widget.system.habits.length, true);
   }
+  
+  // Helper to determine text color based on background brightness
+  Color _getTextColor() {
+    // Calculate average brightness of gradient
+    final colors = widget.system.gradientColors;
+    double totalBrightness = 0;
+    for (final color in colors) {
+      final r = color.red / 255.0;
+      final g = color.green / 255.0;
+      final b = color.blue / 255.0;
+      // Perceived brightness formula
+      final brightness = (0.299 * r + 0.587 * g + 0.114 * b);
+      totalBrightness += brightness;
+    }
+    final avgBrightness = totalBrightness / colors.length;
+    // If light background, use dark text. If dark background, use white text
+    return avgBrightness > 0.7 ? Colors.black87 : Colors.white;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -565,8 +593,8 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
           children: [
             Text(
               'Commit to ${widget.system.name}',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: _getTextColor(),
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -640,7 +668,7 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                             decoration: BoxDecoration(
                               color: _selectedHabits[index] ? Colors.white : Colors.transparent,
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.white, width: 2),
+                              border: Border.all(color: _getTextColor(), width: 2),
                             ),
                             child: _selectedHabits[index]
                                 ? Icon(
@@ -654,8 +682,8 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                           Expanded(
                             child: Text(
                               widget.system.habits[index],
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: _getTextColor(),
                                 fontSize: 13,
                               ),
                             ),
@@ -681,15 +709,15 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                 children: [
                   Icon(
                     _alarmEnabled ? LucideIcons.bell : LucideIcons.bellOff,
-                    color: Colors.white,
+                    color: _getTextColor(),
                     size: 20,
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Daily Reminder',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: _getTextColor(),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -697,7 +725,7 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                   Switch(
                     value: _alarmEnabled,
                     onChanged: (value) => setState(() => _alarmEnabled = value),
-                    activeColor: Colors.white,
+                    activeColor: _getTextColor(),
                   ),
                 ],
               ),
@@ -711,9 +739,9 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text(
+                    child: Text(
                       'Cancel',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: _getTextColor()),
                     ),
                   ),
                 ),
@@ -815,7 +843,7 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
         ),
         child: Row(
           children: [
-            const Icon(LucideIcons.calendar, color: Colors.white, size: 20),
+            Icon(LucideIcons.calendar, color: _getTextColor(), size: 20),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
@@ -824,21 +852,21 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                   Text(
                     label,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: _getTextColor().withOpacity(0.8),
                       fontSize: 12,
                     ),
                   ),
                   Text(
                     '${date.day}/${date.month}/${date.year}',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: _getTextColor(),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(LucideIcons.chevronDown, color: Colors.white, size: 16),
+            Icon(LucideIcons.chevronDown, color: _getTextColor(), size: 16),
           ],
         ),
       ),
