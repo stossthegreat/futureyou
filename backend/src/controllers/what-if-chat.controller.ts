@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { whatIfChatService } from "../services/what-if-chat.service";
+import { whatIfChatService } from "../services/what-if-chat-v3.service";
 
 function getUserIdOr401(req: any) {
   // 🔥 SIMPLE AUTH: Accept user ID from multiple sources
