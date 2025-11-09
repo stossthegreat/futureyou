@@ -246,6 +246,8 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
                     children: [
                       _buildHeroSection(),
                       const SizedBox(height: AppSpacing.xl),
+                      _buildBookOfPurposeButton(),
+                      const SizedBox(height: AppSpacing.xl),
                       _buildVisualizationVideos(),
                       const SizedBox(height: AppSpacing.xl),
                       _buildDiscoveryPrompts(),
@@ -346,6 +348,120 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
         ],
       ),
     ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0);
+  }
+
+  Widget _buildBookOfPurposeButton() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, '/cinematic');
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFFD4AF37).withOpacity(0.15), // Gold
+              const Color(0xFFA855F7).withOpacity(0.1),  // Purple
+              Colors.transparent,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: const Color(0xFFD4AF37).withOpacity(0.3),
+          ),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD4AF37).withOpacity(0.2),
+                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                border: Border.all(
+                  color: const Color(0xFFD4AF37).withOpacity(0.4),
+                ),
+              ),
+              child: const Icon(
+                LucideIcons.bookOpen,
+                size: 28,
+                color: Color(0xFFD4AF37),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.lg),
+            // Text content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD4AF37).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(AppBorderRadius.full),
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37).withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          LucideIcons.sparkles,
+                          size: 12,
+                          color: Color(0xFFD4AF37),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '7 Chapter Journey',
+                          style: AppTextStyles.captionSmall.copyWith(
+                            color: const Color(0xFFD4AF37),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  // Title
+                  Text(
+                    'The Book of Purpose',
+                    style: AppTextStyles.h3.copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  // Description
+                  Text(
+                    'Begin your cinematic journey through purpose discovery',
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textTertiary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            // Arrow
+            const Icon(
+              LucideIcons.arrowRight,
+              color: Color(0xFFD4AF37),
+              size: 24,
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(duration: 600.ms, delay: 100.ms).slideY(begin: 0.1, end: 0);
   }
 
   Widget _buildVisualizationVideos() {

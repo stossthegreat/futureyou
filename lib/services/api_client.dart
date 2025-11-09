@@ -484,6 +484,115 @@ class ApiClient {
     }
   }
 
+  // ================================
+  // 📖 FUTURE-YOU UNIFIED ENGINE API (NEW BACKEND /api/futureyou/*)
+  // ================================
+  
+  /// Start or continue a phase conversation
+  static Future<ApiResponse<Map<String, dynamic>>> enginePhaseStart({
+    required String phase,
+    List<Map<String, String>>? scenes,
+    String? idemKey,
+  }) async {
+    try {
+      final body = {
+        'phase': phase,
+        if (scenes != null) 'scenes': scenes,
+        if (idemKey != null) 'idemKey': idemKey,
+      };
+      final response = await _post('/api/futureyou/engine/phase', body);
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      }
+      return ApiResponse.error('Phase start failed: ${response.statusCode}');
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  /// Generate a chapter for a phase
+  static Future<ApiResponse<Map<String, dynamic>>> generateChapter({
+    required String phase,
+    String? title,
+    String? body,
+    String? idemKey,
+  }) async {
+    try {
+      final reqBody = {
+        'phase': phase,
+        if (title != null) 'title': title,
+        if (body != null) 'body': body,
+        if (idemKey != null) 'idemKey': idemKey,
+      };
+      final response = await _post('/api/futureyou/chapters', reqBody);
+      
+      if (response.statusCode == 200 || response.statusCode == 202) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      }
+      return ApiResponse.error('Chapter generation failed: ${response.statusCode}');
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  /// List all chapters for the current user
+  static Future<ApiResponse<List<dynamic>>> listChapters() async {
+    try {
+      final response = await _get('/api/futureyou/chapters');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final chapters = data['chapters'] as List<dynamic>;
+        return ApiResponse.success(chapters);
+      }
+      return ApiResponse.error('List chapters failed: ${response.statusCode}');
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  /// Compile a book from chapters
+  static Future<ApiResponse<Map<String, dynamic>>> compileBook({
+    List<String>? includePhases,
+    String? title,
+    String? idemKey,
+  }) async {
+    try {
+      final body = {
+        if (includePhases != null) 'includePhases': includePhases,
+        if (title != null) 'title': title,
+        if (idemKey != null) 'idemKey': idemKey,
+      };
+      final response = await _post('/api/futureyou/book/compile', body);
+      
+      if (response.statusCode == 200 || response.statusCode == 202) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      }
+      return ApiResponse.error('Book compilation failed: ${response.statusCode}');
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  /// Get the latest compiled book
+  static Future<ApiResponse<Map<String, dynamic>>> getLatestBook() async {
+    try {
+      final response = await _get('/api/futureyou/book/latest');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      }
+      return ApiResponse.error('Get latest book failed: ${response.statusCode}');
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
   // Get vault items
   static Future<ApiResponse<List<dynamic>>> getVaultItems({int limit = 20}) async {
     try {

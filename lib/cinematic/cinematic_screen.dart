@@ -5,6 +5,7 @@ import 'cinematic_book.dart';
 import 'cinematic_api_mock.dart';
 import 'audio_voice_controller.dart';
 import 'phase_model.dart';
+import '../services/api_client.dart';
 
 class CinematicScreen extends StatefulWidget {
   const CinematicScreen({Key? key}) : super(key: key);
@@ -73,21 +74,94 @@ class _CinematicScreenState extends State<CinematicScreen> {
     }
   }
 
-  void _showBookCompilation() {
-    // Collect all chapters
+  Future<void> _showBookCompilation() async {
+    // 🔥 TRY BACKEND FIRST (compile book from saved chapters)
+    try {
+      debugPrint('📖 Attempting to compile book from backend...');
+      
+      // Request book compilation
+      final compileResult = await ApiClient.compileBook();
+      
+      if (compileResult.success) {
+        debugPrint('✅ Book compilation initiated');
+        
+        // Fetch latest compiled book
+        final bookResult = await ApiClient.getLatestBook();
+        
+        if (bookResult.success && bookResult.data != null) {
+          final bookData = bookResult.data!;
+          final String fullBookMd = bookData['bodyMd'] ?? '';
+          
+          if (fullBookMd.isNotEmpty) {
+            debugPrint('✅ Got compiled book from backend (${fullBookMd.length} chars)');
+            
+            // Parse markdown into chapters
+            final chapters = _parseBookMarkdown(fullBookMd);
+            
+            if (mounted) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => CinematicBook(
+                    chapters: chapters,
+                    audioController: _audioController,
+                  ),
+                ),
+              );
+              return;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Backend book compilation failed: $e');
+    }
+    
+    // 🎭 FALLBACK: Use mock data
+    debugPrint('📚 Using mock data for book compilation');
     final chapters = <String, String>{};
     for (final phase in FuturePhase.values) {
       chapters[phase.title] = CinematicApiMock.getChapterContent(phase);
     }
     
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CinematicBook(
-          chapters: chapters,
-          audioController: _audioController,
+    if (mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => CinematicBook(
+            chapters: chapters,
+            audioController: _audioController,
+          ),
         ),
-      ),
-    );
+      );
+    }
+  }
+
+  Map<String, String> _parseBookMarkdown(String markdown) {
+    // Simple parser: split by "# " chapter titles
+    final chapters = <String, String>{};
+    final lines = markdown.split('\n');
+    String? currentTitle;
+    final currentContent = StringBuffer();
+    
+    for (final line in lines) {
+      if (line.startsWith('# ')) {
+        // Save previous chapter
+        if (currentTitle != null) {
+          chapters[currentTitle] = currentContent.toString().trim();
+          currentContent.clear();
+        }
+        // Start new chapter
+        currentTitle = line.substring(2).trim();
+      } else {
+        currentContent.writeln(line);
+      }
+    }
+    
+    // Save last chapter
+    if (currentTitle != null) {
+      chapters[currentTitle] = currentContent.toString().trim();
+    }
+    
+    return chapters;
   }
 
   void _showSettings() {
