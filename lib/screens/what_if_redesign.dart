@@ -611,118 +611,270 @@ Timeline: 90 days to build habit + small audience''',
 
   Widget _buildOutputCard() {
     // Backend returns: { message, outputCard: { title, sections, fullText }, habits, sources }
-    // We want the fullText from outputCard
     final content = _outputCard?['outputCard']?['fullText'] ?? 
                     _outputCard?['fullText'] ?? 
                     _outputCard?['message'] ?? 
                     '';
     
+    final habits = _outputCard?['habits'] as List<dynamic>? ?? [];
+    
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: [
-            AppColors.emerald.withOpacity(0.1),
-            AppColors.emerald.withOpacity(0.05),
+            Colors.black.withOpacity(0.6),
+            Colors.black.withOpacity(0.4),
+            const Color(0xFF1a1a2e).withOpacity(0.5),
           ],
         ),
         borderRadius: BorderRadius.circular(AppBorderRadius.xl),
-        border: Border.all(color: AppColors.emerald.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: AppColors.emerald.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                ),
-                child: const Icon(LucideIcons.sparkles, color: AppColors.emerald, size: 20),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  _tabController.index == 0 ? 'Your Future Simulation' : 'Your Habit System',
-                  style: AppTextStyles.h2.copyWith(
-                    color: AppColors.emerald,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
           ),
-          
-          const SizedBox(height: AppSpacing.lg),
-          
-          // Action buttons at top
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    // Copy to clipboard
-                    Clipboard.setData(ClipboardData(text: content));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('📋 Copied to clipboard!'), duration: Duration(seconds: 2)),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: AppColors.glassBackground,
-                      borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                      border: Border.all(color: AppColors.glassBorder),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(LucideIcons.copy, size: 16, color: AppColors.textSecondary),
-                        const SizedBox(width: 6),
-                        Text('Copy', style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    // Save to vault (Reflections tab)
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('🔐 Saved to Reflections Vault!'), duration: Duration(seconds: 2)),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: AppColors.glassBackground,
-                      borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                      border: Border.all(color: AppColors.glassBorder),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(LucideIcons.bookMarked, size: 16, color: AppColors.textSecondary),
-                        const SizedBox(width: 6),
-                        Text('Save to Vault', style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: AppSpacing.lg),
-          
-          // Content
-          _buildFormattedContent(content),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Stunning Header with gradient
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF6366f1),
+                    const Color(0xFF8b5cf6),
+                    const Color(0xFFec4899),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF8b5cf6).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _tabController.index == 0 ? 'Future Simulation' : 'Habit System',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Text(
+                          'AI-Generated Plan',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Main Content
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: _buildFormattedContent(content),
+            ),
+            
+            // Habits to Commit Section
+            if (habits.isNotEmpty) ...[
+              Container(
+                margin: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF10b981).withOpacity(0.15),
+                      const Color(0xFF059669).withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                  border: Border.all(color: const Color(0xFF10b981).withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10b981).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(LucideIcons.target, color: Color(0xFF10b981), size: 20),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        const Text(
+                          'Habits to Commit',
+                          style: TextStyle(
+                            color: Color(0xFF10b981),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    ...habits.map((habit) => Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            habit['emoji'] ?? '✅',
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  habit['title'] ?? '',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (habit['frequency'] != null)
+                                  Text(
+                                    habit['frequency'],
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.6),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Icon(LucideIcons.plus, color: const Color(0xFF10b981), size: 20),
+                        ],
+                      ),
+                    )).toList(),
+                  ],
+                ),
+              ),
+            ],
+            
+            // Action Buttons at Bottom
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.3),
+                border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: content));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('📋 Copied to clipboard!'), duration: Duration(seconds: 2)),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                          border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(LucideIcons.copy, size: 18, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text(
+                              'Copy',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('🔐 Saved to Reflections Vault!'), duration: Duration(seconds: 2)),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF6366f1), Color(0xFF8b5cf6)],
+                          ),
+                          borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(LucideIcons.bookMarked, size: 18, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text(
+                              'Save to Vault',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     ).animate()
         .fadeIn(duration: 600.ms)
@@ -767,10 +919,11 @@ Timeline: 90 days to build habit + small audience''',
               padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
               child: Text(
                 section.replaceAll('---', '').replaceAll('###', '').trim(),
-                style: AppTextStyles.h3.copyWith(
-                  color: AppColors.emerald,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 18,
+                  letterSpacing: 0.5,
                 ),
               ),
             );
@@ -786,9 +939,10 @@ Timeline: 90 days to build habit + small audience''',
             padding: const EdgeInsets.only(bottom: AppSpacing.md),
             child: Text(
               section,
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.textPrimary,
-                height: 1.6,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                height: 1.7,
+                fontSize: 15,
               ),
             ),
           );
