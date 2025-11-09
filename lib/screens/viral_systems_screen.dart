@@ -547,7 +547,7 @@ class _CommitDialog extends ConsumerStatefulWidget {
 
 class _CommitDialogState extends ConsumerState<_CommitDialog> {
   DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now().add(const Duration(days: 30));
+  DateTime _endDate = DateTime.now(); // Same as start date, user can change
   bool _alarmEnabled = false;
   late List<bool> _selectedHabits;
   
