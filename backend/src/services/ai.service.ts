@@ -63,8 +63,8 @@ ${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0,
 
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      temperature: opts.temperature ?? 0.4,
-      max_tokens: LLM_MAX_TOKENS,
+      // temperature: removed - GPT-5-mini only supports default (1)
+      max_completion_tokens: LLM_MAX_TOKENS,
       messages,
     });
 
@@ -80,18 +80,18 @@ ${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0,
 
   async generateMorningBrief(userId: string) {
     const prompt = "Write a short, powerful morning brief. 2–3 clear actions and one imperative closing line.";
-    return this.generateFutureYouReply(userId, prompt, { purpose: "brief", temperature: 0.4, maxChars: 400 });
+    return this.generateFutureYouReply(userId, prompt, { purpose: "brief", maxChars: 400 });
   }
 
   async generateEveningDebrief(userId: string) {
     await memoryService.summarizeDay(userId);
     const prompt = "Write a concise evening reflection. Mention progress, lessons, and one focus for tomorrow.";
-    return this.generateFutureYouReply(userId, prompt, { purpose: "debrief", temperature: 0.3, maxChars: 400 });
+    return this.generateFutureYouReply(userId, prompt, { purpose: "debrief", maxChars: 400 });
   }
 
   async generateNudge(userId: string, reason: string) {
     const prompt = `Generate a one-sentence motivational nudge because: ${reason}`;
-    return this.generateFutureYouReply(userId, prompt, { purpose: "nudge", temperature: 0.5, maxChars: 200 });
+    return this.generateFutureYouReply(userId, prompt, { purpose: "nudge", maxChars: 200 });
   }
 
   /**
@@ -123,8 +123,8 @@ If no clear habit/task, return: {"none": true}
 
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      temperature: 0.2,
-      max_tokens: 200,
+      // temperature: removed - GPT-5-mini only supports default (1)
+      max_completion_tokens: 200,
       messages: [
         { role: "system", content: "You extract actionable habits from conversations. Output only JSON." },
         { role: "user", content: extractionPrompt },

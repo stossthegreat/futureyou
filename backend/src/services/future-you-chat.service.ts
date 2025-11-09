@@ -188,8 +188,8 @@ Death Perspective, Urgency Lens, Hero's Journey, Aliveness Compass, Childhood Ar
 
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      temperature: 0.6,
-      max_tokens: 300,
+      // temperature: removed - GPT-5-mini only supports default (1)
+      max_completion_tokens: 300,
       messages,
     });
 

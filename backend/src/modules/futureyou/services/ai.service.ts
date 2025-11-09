@@ -51,8 +51,8 @@ export class FutureYouAIService {
     
     const response = await this.client.chat.completions.create({
       model: process.env.FUTUREYOU_AI_MODEL || 'gpt-5-mini',
-      temperature: Number(process.env.FUTUREYOU_TEMPERATURE || 0.7),
-      max_tokens: Number(process.env.FUTUREYOU_MAX_TOKENS || 900),
+      // temperature: removed - GPT-5-mini only supports default (1)
+      max_completion_tokens: Number(process.env.FUTUREYOU_MAX_TOKENS || 900),
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userMsg }
