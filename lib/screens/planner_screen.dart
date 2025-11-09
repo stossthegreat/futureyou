@@ -10,6 +10,8 @@ import '../widgets/date_strip.dart';
 import '../widgets/simple_header.dart';
 import '../providers/habit_provider.dart';
 import '../models/habit.dart';
+import '../models/habit_system.dart';
+import '../services/local_storage.dart';
 import 'what_if_screen.dart';
 import 'viral_systems_screen.dart';
 
@@ -41,18 +43,53 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   final List<bool> _repeatDays = List.generate(7, (index) => false);
   final List<String> _dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
+  // System creation state
+  final List<TextEditingController> _systemHabitControllers = [];
+  final List<String?> _systemHabitEmojis = [];
+  final _systemNameController = TextEditingController();
+  final _systemTaglineController = TextEditingController();
+  String? _systemEmoji;
+  Color _systemColor = AppColors.emerald;
+  final List<Color> _systemGradientColors = [AppColors.emerald, AppColors.emerald.withOpacity(0.7)];
+
   @override
   void initState() {
     super.initState();
     // Start on Manage tab by default
-    _tabController = TabController(length: 2, vsync: this, initialIndex: 1);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
     _onTypeChanged(_selectedType);
+    // Start with 3 habit fields
+    _addSystemHabitField();
+    _addSystemHabitField();
+    _addSystemHabitField();
+  }
+
+  void _addSystemHabitField() {
+    setState(() {
+      _systemHabitControllers.add(TextEditingController());
+      _systemHabitEmojis.add(null);
+    });
+  }
+
+  void _removeSystemHabitField(int index) {
+    if (_systemHabitControllers.length > 1) {
+      setState(() {
+        _systemHabitControllers[index].dispose();
+        _systemHabitControllers.removeAt(index);
+        _systemHabitEmojis.removeAt(index);
+      });
+    }
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _timeController.dispose();
+    _systemNameController.dispose();
+    _systemTaglineController.dispose();
+    for (var controller in _systemHabitControllers) {
+      controller.dispose();
+    }
     _tabController.dispose();
     super.dispose();
   }
@@ -274,7 +311,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                       ),
                       child: TabBar(
                         controller: _tabController,
-                        tabs: const [Tab(text:'Add New'),Tab(text:'Manage')],
+                        tabs: const [Tab(text:'Add New'),Tab(text:'Manage'),Tab(text:'System')],
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
@@ -285,7 +322,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               SliverFillRemaining(
                 child: TabBarView(
                   controller: _tabController,
-                  children: [_buildAddNewTab(), _buildManageTab()],
+                  children: [_buildAddNewTab(), _buildManageTab(), _buildSystemTab()],
                 ),
               ),
             ],
@@ -1180,6 +1217,346 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     ).animate()
         .fadeIn(duration: 600.ms, delay: 100.ms)
         .slideY(begin: -0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
+  }
+
+  // ---------------------------------------------------------
+  // 🎯 SYSTEM TAB (Create custom habit systems)
+  // ---------------------------------------------------------
+  Widget _buildSystemTab() {
+    return SingleChildScrollView(
+      child: GlassCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // System Name
+            Text(
+              'System Name',
+              style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextField(
+              controller: _systemNameController,
+              style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+              decoration: InputDecoration(
+                hintText: 'e.g., 5AM Club, Morning Routine',
+                hintStyle: AppTextStyles.body.copyWith(color: AppColors.textTertiary),
+                filled: true,
+                fillColor: AppColors.glassBackground,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                  borderSide: BorderSide(color: AppColors.glassBorder),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: AppSpacing.lg),
+            
+            // System Tagline
+            Text(
+              'Tagline',
+              style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextField(
+              controller: _systemTaglineController,
+              style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+              decoration: InputDecoration(
+                hintText: 'e.g., Own your morning, own your day',
+                hintStyle: AppTextStyles.body.copyWith(color: AppColors.textTertiary),
+                filled: true,
+                fillColor: AppColors.glassBackground,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                  borderSide: BorderSide(color: AppColors.glassBorder),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: AppSpacing.lg),
+            
+            // System Icon/Emoji
+            Text(
+              'System Icon',
+              style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            GestureDetector(
+              onTap: () => _showSystemEmojiPicker(),
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.glassBackground,
+                  borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      _systemEmoji ?? '🎯',
+                      style: const TextStyle(fontSize: 32),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      'Tap to change',
+                      style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: AppSpacing.lg),
+            
+            // System Color
+            Text(
+              'System Color',
+              style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.sm,
+              children: [
+                AppColors.emerald,
+                const Color(0xFF3B82F6), // Blue
+                AppColors.purple,
+                const Color(0xFFFF6B35),
+                const Color(0xFFDC143C),
+                const Color(0xFFFFD700),
+              ].map((color) => GestureDetector(
+                onTap: () => setState(() {
+                  _systemColor = color;
+                  _systemGradientColors = [color, color.withOpacity(0.7)];
+                }),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _systemColor == color ? Colors.white : Colors.transparent,
+                      width: 3,
+                    ),
+                  ),
+                  child: _systemColor == color
+                      ? const Icon(LucideIcons.check, color: Colors.white, size: 20)
+                      : null,
+                ),
+              )).toList(),
+            ),
+            
+            const SizedBox(height: AppSpacing.xl),
+            
+            // Habits in System
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Habits in System',
+                  style: AppTextStyles.h3.copyWith(color: AppColors.emerald),
+                ),
+                TextButton.icon(
+                  onPressed: _addSystemHabitField,
+                  icon: const Icon(LucideIcons.plus, size: 16),
+                  label: const Text('Add Habit'),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: AppSpacing.md),
+            
+            // Habit fields
+            ...List.generate(_systemHabitControllers.length, (index) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: Row(
+                  children: [
+                    // Emoji picker
+                    GestureDetector(
+                      onTap: () => _showHabitEmojiPicker(index),
+                      child: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: AppColors.glassBackground,
+                          borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                          border: Border.all(color: AppColors.glassBorder),
+                        ),
+                        child: Center(
+                          child: Text(
+                            _systemHabitEmojis[index] ?? '➕',
+                            style: const TextStyle(fontSize: 24),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    // Habit title
+                    Expanded(
+                      child: TextField(
+                        controller: _systemHabitControllers[index],
+                        style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Habit ${index + 1}',
+                          hintStyle: AppTextStyles.body.copyWith(color: AppColors.textTertiary),
+                          filled: true,
+                          fillColor: AppColors.glassBackground,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                            borderSide: BorderSide(color: AppColors.glassBorder),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Delete button
+                    if (_systemHabitControllers.length > 1)
+                      IconButton(
+                        onPressed: () => _removeSystemHabitField(index),
+                        icon: const Icon(LucideIcons.x, size: 20),
+                        color: AppColors.error,
+                      ),
+                  ],
+                ),
+              );
+            }),
+            
+            const SizedBox(height: AppSpacing.xl),
+            
+            // Create System Button
+            GlassButton(
+              onPressed: _createSystem,
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(LucideIcons.checkCircle, size: 20),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'Create System',
+                    style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSystemEmojiPicker() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => EmojiPicker(
+        onEmojiSelected: (category, emoji) {
+          setState(() => _systemEmoji = emoji.emoji);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _showHabitEmojiPicker(int index) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => EmojiPicker(
+        onEmojiSelected: (category, emoji) {
+          setState(() => _systemHabitEmojis[index] = emoji.emoji);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  Future<void> _createSystem() async {
+    // Validate
+    if (_systemNameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('⚠️ Please enter a system name')),
+      );
+      return;
+    }
+
+    final validHabits = <String>[];
+    for (int i = 0; i < _systemHabitControllers.length; i++) {
+      final habitText = _systemHabitControllers[i].text.trim();
+      if (habitText.isNotEmpty) {
+        final emoji = _systemHabitEmojis[i] ?? '✅';
+        validHabits.add('$emoji $habitText');
+      }
+    }
+
+    if (validHabits.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('⚠️ Please add at least one habit')),
+      );
+      return;
+    }
+
+    // Create all habits
+    try {
+      final habitIds = <String>[];
+      
+      for (final habitText in validHabits) {
+        final habitId = DateTime.now().millisecondsSinceEpoch.toString() + '_${validHabits.indexOf(habitText)}';
+        habitIds.add(habitId);
+        
+        await ref.read(habitEngineProvider.notifier).createHabit(
+          title: habitText,
+          type: 'habit',
+          time: '', // No specific time
+          startDate: DateTime.now(),
+          endDate: DateTime.now().add(const Duration(days: 90)),
+          repeatDays: [0, 1, 2, 3, 4, 5, 6], // Daily
+          color: _systemColor,
+          emoji: habitText.split(' ').first,
+          reminderOn: false,
+        );
+        
+        await Future.delayed(const Duration(milliseconds: 10));
+      }
+
+      // Save system metadata
+      final system = HabitSystem(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: _systemNameController.text.trim(),
+        tagline: _systemTaglineController.text.trim().isEmpty 
+            ? 'Custom system' 
+            : _systemTaglineController.text.trim(),
+        icon: Icons.star, // Default icon
+        accentColor: _systemColor,
+        gradientColors: _systemGradientColors,
+        habitIds: habitIds,
+        createdAt: DateTime.now(),
+      );
+
+      await LocalStorageService.saveSystem(system);
+
+      // Clear form
+      _systemNameController.clear();
+      _systemTaglineController.clear();
+      setState(() {
+        _systemEmoji = null;
+        for (var controller in _systemHabitControllers) {
+          controller.clear();
+        }
+        _systemHabitEmojis.fillRange(0, _systemHabitEmojis.length, null);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Created system "${system.name}" with ${validHabits.length} habits!'),
+            backgroundColor: _systemColor,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ Failed to create system: $e')),
+      );
+    }
   }
 }
 
