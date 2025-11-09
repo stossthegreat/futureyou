@@ -422,6 +422,12 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
       timestamp: new Date().toISOString()
     });
 
+    // 🔥 FORCE CARD GENERATION after 6 exchanges (prevent endless questioning)
+    const userTurns = history.filter((m: any) => m.role === "user").length;
+    const forceCardMessage = userTurns >= 6 ? 
+      `USER HAS ANSWERED ${userTurns} TIMES. You MUST output the complete ${preset === 'simulator' ? 'simulation card' : 'habit plan'} NOW. Say "Locked..." then output ALL sections immediately.` : 
+      null;
+
     // Call OpenAI
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
@@ -430,6 +436,7 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
       messages: [
         { role: "system", content: systemPrompt },
         { role: "system", content: contextBlock },
+        ...(forceCardMessage ? [{ role: "system" as const, content: forceCardMessage }] : []),
         { role: "user", content: userMessage }
       ]
     });
