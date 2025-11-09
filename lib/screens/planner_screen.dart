@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import '../design/tokens.dart';
@@ -9,6 +10,7 @@ import '../widgets/date_strip.dart';
 import '../widgets/simple_header.dart';
 import '../providers/habit_provider.dart';
 import '../models/habit.dart';
+import 'what_if_screen.dart';
 
 class PlannerScreen extends ConsumerStatefulWidget {
   const PlannerScreen({super.key});
@@ -249,6 +251,11 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                 child: Column(
                   children: [
                     DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    // Habit Library Card
+                    _buildHabitLibraryCard(),
+                    
                     const SizedBox(height: AppSpacing.sm),
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -923,6 +930,98 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         backgroundColor: AppColors.error.withOpacity(0.9),
       ));
     }
+  }
+
+  Widget _buildHabitLibraryCard() {
+    return GestureDetector(
+      onTap: () {
+        // Navigate to What-If screen - the library is the old what-if screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const WhatIfScreen(),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.emerald.withOpacity(0.3),
+              AppColors.emerald.withOpacity(0.1),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+          border: Border.all(color: AppColors.emerald.withOpacity(0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.emerald.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Icon with animation
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.emerald.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(AppBorderRadius.md),
+              ),
+              child: const Icon(
+                LucideIcons.library,
+                color: AppColors.emerald,
+                size: 28,
+              ),
+            ).animate(onPlay: (controller) => controller.repeat())
+                .shimmer(duration: 2000.ms, color: AppColors.emerald.withOpacity(0.3))
+                .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.05, 1.05), duration: 1000.ms)
+                .then()
+                .scale(begin: const Offset(1.05, 1.05), end: const Offset(1.0, 1.0), duration: 1000.ms),
+            
+            const SizedBox(width: AppSpacing.md),
+            
+            // Text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '📚 Habit Library',
+                    style: AppTextStyles.h3.copyWith(
+                      color: AppColors.emerald,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Science-backed habits ready to commit',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Arrow
+            Icon(
+              LucideIcons.chevronRight,
+              color: AppColors.emerald.withOpacity(0.7),
+              size: 24,
+            ),
+          ],
+        ),
+      ),
+    ).animate()
+        .fadeIn(duration: 600.ms)
+        .slideY(begin: -0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
   }
 }
 

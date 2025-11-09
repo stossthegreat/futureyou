@@ -7,7 +7,7 @@ import '../design/tokens.dart';
 import 'home_screen.dart';
 import 'planner_screen.dart';
 import 'future_you_screen.dart';
-import 'what_if_screen.dart';
+import 'what_if_redesign.dart';
 import 'reflections_screen.dart';
 import 'mirror_screen.dart';
 
@@ -43,7 +43,7 @@ class _MainScreenState extends State<MainScreen>
     TabItem(
       icon: LucideIcons.sparkles,
       label: 'What-If',
-      screen: const WhatIfScreen(),
+      screen: const WhatIfRedesignScreen(),
     ),
     TabItem(
       icon: LucideIcons.bookOpen,

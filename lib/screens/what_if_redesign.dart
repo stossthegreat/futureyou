@@ -1,0 +1,592 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../design/tokens.dart';
+import '../services/api_client.dart';
+import '../widgets/simple_header.dart';
+
+class WhatIfRedesignScreen extends StatefulWidget {
+  final String? initialTab; // 'simulator', 'architect', or 'library'
+  
+  const WhatIfRedesignScreen({super.key, this.initialTab});
+
+  @override
+  State<WhatIfRedesignScreen> createState() => _WhatIfRedesignScreenState();
+}
+
+class _WhatIfRedesignScreenState extends State<WhatIfRedesignScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final TextEditingController _scenarioController = TextEditingController();
+  bool _isLoading = false;
+  Map<String, dynamic>? _outputCard;
+  String? _errorMessage;
+
+  // Preset scenarios
+  final List<PresetScenario> _presets = [
+    PresetScenario(
+      id: 'muscle',
+      title: '💪 Build Muscle',
+      subtitle: 'Strength & size',
+      emoji: '💪',
+      scenario: '''Goal: Gain 5-8kg lean muscle, increase strength 30%
+Current: Gym 2x/week (inconsistent), bodyweight 75kg
+Training: Thinking 4x/week weights (Mon/Tue/Thu/Fri)
+Sleep: Average 6.5 hours (bed 12am, wake 6:30am)
+Diet: Skip breakfast, lunch takeaway 3x/week, dinner home-cooked, protein ~80g/day
+Energy: 5/10 mornings, 7/10 evenings
+Barriers: Motivation after work, meal prep time
+Timeline: 90 days to see real change''',
+    ),
+    PresetScenario(
+      id: 'focus',
+      title: '🧠 Peak Focus',
+      subtitle: 'Mental performance',
+      emoji: '🧠',
+      scenario: '''Goal: Deep focus 4+ hours/day, eliminate afternoon crashes
+Current: Focus in 20-30min bursts, crash at 2pm daily
+Work: Software engineer, 8am-5pm, lots of meetings
+Sleep: 7 hours but poor quality (wake 2-3x per night)
+Diet: Coffee 3-4x/day, snack on chips/biscuits, irregular meals
+Exercise: Walking 3k steps/day, no structured training
+Stress: 7/10 (deadlines, context switching)
+Timeline: 30 days to feel difference, 90 days to lock in''',
+    ),
+    PresetScenario(
+      id: 'sleep',
+      title: '😴 Fix Sleep',
+      subtitle: 'Energy & recovery',
+      emoji: '😴',
+      scenario: '''Goal: Consistent 7.5h sleep, wake refreshed, stable energy all day
+Current: Bed 11:30pm-12:30am (varies), wake 6:30am, feel tired
+Sleep quality: Light sleeper, wake 2-3x, phone in bed
+Caffeine: 2-3 coffees (last one at 3pm)
+Exercise: Gym 2x/week, no cardio
+Screen time: Phone/laptop until bed, blue light exposure high
+Room: Light from street, temp varies, shared bed
+Timeline: 90 days to form new routine''',
+    ),
+    PresetScenario(
+      id: 'marathon',
+      title: '🏃 Marathon',
+      subtitle: 'First 42km',
+      emoji: '🏃',
+      scenario: '''Goal: Complete first marathon in under 4 hours
+Current: Run 2x/week (5km each), no race experience
+Fitness: Can run 10km without stopping, avg pace 6min/km
+Training time: 5-6 hours/week available
+Injuries: Occasional knee pain after long runs
+Sleep: 7 hours, fairly consistent
+Diet: Balanced, trying to eat clean
+Timeline: 16 weeks until race day''',
+    ),
+    PresetScenario(
+      id: 'skill',
+      title: '📚 Learn Fast',
+      subtitle: 'Master new skill',
+      emoji: '📚',
+      scenario: '''Goal: Master Spanish conversation (B2 level) for work
+Current: Can read basic texts, speaking is weak
+Time available: 1 hour/day (mornings before work)
+Learning style: Visual + practice, not good with pure theory
+Deadline: 6 months (work transfer to Madrid office)
+Barriers: Consistency, speaking anxiety, no practice partners
+Previous attempts: Duolingo for 3 months (quit)
+Timeline: 180 days to functional fluency''',
+    ),
+    PresetScenario(
+      id: 'hustle',
+      title: '💰 Side Hustle',
+      subtitle: 'Extra income',
+      emoji: '💰',
+      scenario: '''Goal: Launch consulting business, first $5k/month
+Current: Full-time job (9-6), weekends free
+Skills: 8 years marketing experience, strong copywriting
+Time available: 10-15 hours/week (evenings + Sat morning)
+Financial need: Medium (want to quit day job in 12 months)
+Barriers: No client network, imposter syndrome, time management
+Investment: $500 to start (website, tools)
+Timeline: 90 days to first paying clients''',
+    ),
+    PresetScenario(
+      id: 'create',
+      title: '🎨 Daily Create',
+      subtitle: 'Creative practice',
+      emoji: '🎨',
+      scenario: '''Goal: Write 500 words/day, publish 2 articles/week
+Current: Write sporadically when "inspired" (2-3x/month)
+Medium: Long-form essays on personal growth + tech
+Time: 30-60 min/day available (early morning or night)
+Consistency history: Good at gym (4x/week), bad at creative work
+Barriers: Perfectionism, waiting for perfect idea, editing too early
+Platform: Medium + personal blog
+Timeline: 90 days to build habit + small audience''',
+    ),
+    PresetScenario(
+      id: 'custom',
+      title: '✍️ Custom',
+      subtitle: 'Your scenario',
+      emoji: '✍️',
+      scenario: '',
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    final initialIndex = widget.initialTab == 'architect' ? 1 : 0;
+    _tabController = TabController(length: 2, vsync: this, initialIndex: initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _scenarioController.dispose();
+    super.dispose();
+  }
+
+  void _selectPreset(PresetScenario preset) {
+    setState(() {
+      _scenarioController.text = preset.scenario;
+      _outputCard = null;
+      _errorMessage = null;
+    });
+  }
+
+  Future<void> _runSimulation() async {
+    if (_scenarioController.text.trim().isEmpty) {
+      setState(() => _errorMessage = 'Please describe your scenario');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _outputCard = null;
+    });
+
+    try {
+      final mode = _tabController.index == 0 ? 'simulator' : 'habit-master';
+      
+      // Send to backend
+      final response = await ApiClient.chatWhatIf(
+        message: _scenarioController.text,
+        preset: mode,
+      );
+
+      if (response.success && response.data != null) {
+        setState(() {
+          _outputCard = response.data!['outputCard'];
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = response.error ?? 'Simulation failed';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: CustomScrollView(
+        slivers: [
+          // Header
+          const SliverAppBar(
+            expandedHeight: 80,
+            floating: true,
+            snap: true,
+            pinned: false,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: SimpleHeader(),
+          ),
+
+          // Content
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Tab selector
+                  _buildTabSelector(),
+                  
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Preset cards
+                  _buildPresetGrid(),
+
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Input field
+                  _buildInputField(),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Run button
+                  _buildRunButton(),
+
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    _buildErrorMessage(),
+                  ],
+
+                  if (_isLoading) ...[
+                    const SizedBox(height: AppSpacing.xl),
+                    _buildLoadingState(),
+                  ],
+
+                  if (_outputCard != null) ...[
+                    const SizedBox(height: AppSpacing.xl),
+                    _buildOutputCard(),
+                  ],
+
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.glassBackground,
+        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+        border: Border.all(color: AppColors.glassBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildTabButton(
+              label: '🔮 Future Simulator',
+              subtitle: 'Compare two timelines',
+              index: 0,
+            ),
+          ),
+          Expanded(
+            child: _buildTabButton(
+              label: '🏗️ Habit Architect',
+              subtitle: 'Build the system',
+              index: 1,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0);
+  }
+
+  Widget _buildTabButton({required String label, required String subtitle, required int index}) {
+    final isSelected = _tabController.index == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _tabController.animateTo(index);
+          _outputCard = null;
+          _errorMessage = null;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md, horizontal: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.emerald.withOpacity(0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppBorderRadius.md),
+          border: Border.all(
+            color: isSelected ? AppColors.emerald : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: AppTextStyles.bodySemiBold.copyWith(
+                color: isSelected ? AppColors.emerald : AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: AppTextStyles.captionSmall.copyWith(
+                color: isSelected ? AppColors.emerald.withOpacity(0.7) : AppColors.textTertiary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    ).animate(target: isSelected ? 1 : 0).scale(end: const Offset(1.02, 1.02));
+  }
+
+  Widget _buildPresetGrid() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '⚡ Quick Scenarios',
+          style: AppTextStyles.h3.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 1.4,
+            crossAxisSpacing: AppSpacing.md,
+            mainAxisSpacing: AppSpacing.md,
+          ),
+          itemCount: _presets.length,
+          itemBuilder: (context, index) {
+            return _buildPresetCard(_presets[index], index);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPresetCard(PresetScenario preset, int index) {
+    return GestureDetector(
+      onTap: () => _selectPreset(preset),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.emerald.withOpacity(0.15),
+              AppColors.emerald.withOpacity(0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+          border: Border.all(color: AppColors.emerald.withOpacity(0.3)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              preset.emoji,
+              style: const TextStyle(fontSize: 32),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              preset.title,
+              style: AppTextStyles.bodySemiBold.copyWith(
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              preset.subtitle,
+              style: AppTextStyles.captionSmall.copyWith(
+                color: AppColors.textTertiary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    ).animate(delay: Duration(milliseconds: index * 50))
+        .fadeIn(duration: 400.ms)
+        .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.0, 1.0));
+  }
+
+  Widget _buildInputField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '📝 Your Scenario',
+          style: AppTextStyles.bodySemiBold.copyWith(
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Be specific! Include: goal, current state, sleep, diet, timeline, barriers.',
+          style: AppTextStyles.caption.copyWith(
+            color: AppColors.textTertiary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.glassBackground,
+            borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          child: TextField(
+            controller: _scenarioController,
+            style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+            maxLines: 8,
+            decoration: InputDecoration(
+              hintText: 'Describe your scenario in detail...',
+              hintStyle: AppTextStyles.body.copyWith(color: AppColors.textTertiary),
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRunButton() {
+    return GestureDetector(
+      onTap: _isLoading ? null : _runSimulation,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.emerald,
+              AppColors.emerald.withOpacity(0.8),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.emerald.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_isLoading)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                ),
+              )
+            else
+              const Icon(LucideIcons.zap, color: Colors.black),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              _isLoading ? 'Running Simulation...' : '🚀 Run Simulation',
+              style: AppTextStyles.h3.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate(target: _isLoading ? 0 : 1)
+        .shimmer(duration: 1500.ms, color: Colors.white.withOpacity(0.3));
+  }
+
+  Widget _buildErrorMessage() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(LucideIcons.alertCircle, color: AppColors.error, size: 20),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              _errorMessage!,
+              style: AppTextStyles.body.copyWith(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Column(
+      children: [
+        const CircularProgressIndicator(color: AppColors.emerald),
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          _tabController.index == 0
+              ? 'Running both timelines...'
+              : 'Building your system...',
+          style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+        ),
+      ],
+    ).animate(onPlay: (controller) => controller.repeat())
+        .shimmer(duration: 2000.ms);
+  }
+
+  Widget _buildOutputCard() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.emerald.withOpacity(0.1),
+            AppColors.emerald.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+        border: Border.all(color: AppColors.emerald.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '✨ Your Simulation',
+            style: AppTextStyles.h2.copyWith(
+              color: AppColors.emerald,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            _outputCard.toString(),
+            style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+          ),
+        ],
+      ),
+    ).animate()
+        .fadeIn(duration: 600.ms)
+        .slideY(begin: 0.1, end: 0);
+  }
+}
+
+class PresetScenario {
+  final String id;
+  final String title;
+  final String subtitle;
+  final String emoji;
+  final String scenario;
+
+  PresetScenario({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.emoji,
+    required this.scenario,
+  });
+}
+
