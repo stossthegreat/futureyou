@@ -51,6 +51,11 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   String? _systemEmoji;
   Color _systemColor = AppColors.emerald;
   List<Color> _systemGradientColors = [AppColors.emerald, AppColors.emerald.withOpacity(0.7)];
+  DateTime _systemStartDate = DateTime.now();
+  DateTime _systemEndDate = DateTime.now();
+  TimeOfDay _systemTime = const TimeOfDay(hour: 9, minute: 0);
+  bool _systemTimeEnabled = false;
+  bool _systemAlarmEnabled = false;
 
   @override
   void initState() {
@@ -1422,18 +1427,134 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             
             const SizedBox(height: AppSpacing.xl),
             
+            // System Settings Divider
+            Divider(color: AppColors.glassBorder, height: 32),
+            
+            Text(
+              'System Settings',
+              style: AppTextStyles.h3.copyWith(color: AppColors.emerald),
+            ),
+            
+            const SizedBox(height: AppSpacing.md),
+            
+            // Start Date
+            ListTile(
+              leading: const Icon(LucideIcons.calendar, color: AppColors.emerald),
+              title: Text('Start Date', style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.textPrimary)),
+              subtitle: Text(
+                DateFormat('MMM d, yyyy').format(_systemStartDate),
+                style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+              ),
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: _systemStartDate,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (picked != null) {
+                  setState(() => _systemStartDate = picked);
+                }
+              },
+            ),
+            
+            // End Date
+            ListTile(
+              leading: const Icon(LucideIcons.calendarCheck, color: AppColors.emerald),
+              title: Text('End Date', style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.textPrimary)),
+              subtitle: Text(
+                DateFormat('MMM d, yyyy').format(_systemEndDate),
+                style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+              ),
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: _systemEndDate,
+                  firstDate: _systemStartDate,
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (picked != null) {
+                  setState(() => _systemEndDate = picked);
+                }
+              },
+            ),
+            
+            // Time Toggle
+            SwitchListTile(
+              secondary: const Icon(LucideIcons.clock, color: AppColors.emerald),
+              title: Text('Set Time', style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.textPrimary)),
+              subtitle: _systemTimeEnabled 
+                  ? Text(
+                      _systemTime.format(context),
+                      style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+                    )
+                  : Text(
+                      'No specific time',
+                      style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+                    ),
+              value: _systemTimeEnabled,
+              onChanged: (value) async {
+                setState(() => _systemTimeEnabled = value);
+                if (value) {
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime: _systemTime,
+                  );
+                  if (picked != null) {
+                    setState(() => _systemTime = picked);
+                  }
+                }
+              },
+            ),
+            
+            // Change Time (if enabled)
+            if (_systemTimeEnabled)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: TextButton.icon(
+                  onPressed: () async {
+                    final picked = await showTimePicker(
+                      context: context,
+                      initialTime: _systemTime,
+                    );
+                    if (picked != null) {
+                      setState(() => _systemTime = picked);
+                    }
+                  },
+                  icon: const Icon(LucideIcons.clock, size: 16),
+                  label: const Text('Change Time'),
+                ),
+              ),
+            
+            // Alarm Toggle
+            SwitchListTile(
+              secondary: const Icon(LucideIcons.bell, color: AppColors.emerald),
+              title: Text('Daily Reminder', style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.textPrimary)),
+              subtitle: Text(
+                _systemAlarmEnabled ? 'Alarm enabled' : 'No alarm',
+                style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+              ),
+              value: _systemAlarmEnabled,
+              onChanged: (value) => setState(() => _systemAlarmEnabled = value),
+            ),
+            
+            const SizedBox(height: AppSpacing.xl),
+            
             // Create System Button
             GlassButton(
               onPressed: _createSystem,
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              gradient: LinearGradient(
+                colors: [AppColors.emerald, AppColors.emerald.withOpacity(0.7)],
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(LucideIcons.checkCircle, size: 20),
+                  const Icon(LucideIcons.checkCircle, size: 20, color: Colors.white),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
                     'Create System',
-                    style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
+                    style: AppTextStyles.h3.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -1497,6 +1618,12 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     try {
       final habitIds = <String>[];
       
+      // Prepare time string
+      String timeString = '';
+      if (_systemTimeEnabled) {
+        timeString = '${_systemTime.hour.toString().padLeft(2, '0')}:${_systemTime.minute.toString().padLeft(2, '0')}';
+      }
+      
       for (final habitText in validHabits) {
         final habitId = DateTime.now().millisecondsSinceEpoch.toString() + '_${validHabits.indexOf(habitText)}';
         habitIds.add(habitId);
@@ -1504,13 +1631,13 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         await ref.read(habitEngineProvider.notifier).createHabit(
           title: habitText,
           type: 'habit',
-          time: '', // No specific time
-          startDate: DateTime.now(),
-          endDate: DateTime.now().add(const Duration(days: 90)),
-          repeatDays: [0, 1, 2, 3, 4, 5, 6], // Daily
+          time: timeString, // Use system time setting
+          startDate: _systemStartDate,
+          endDate: _systemEndDate,
+          repeatDays: [0, 1, 2, 3, 4, 5, 6], // Daily (all days)
           color: _systemColor,
           emoji: habitText.split(' ').first,
-          reminderOn: false,
+          reminderOn: _systemAlarmEnabled,
         );
         
         await Future.delayed(const Duration(milliseconds: 10));
@@ -1537,6 +1664,13 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       _systemTaglineController.clear();
       setState(() {
         _systemEmoji = null;
+        _systemColor = AppColors.emerald;
+        _systemGradientColors = [AppColors.emerald, AppColors.emerald.withOpacity(0.7)];
+        _systemStartDate = DateTime.now();
+        _systemEndDate = DateTime.now();
+        _systemTime = const TimeOfDay(hour: 9, minute: 0);
+        _systemTimeEnabled = false;
+        _systemAlarmEnabled = false;
         for (var controller in _systemHabitControllers) {
           controller.clear();
         }
