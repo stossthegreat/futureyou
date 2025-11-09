@@ -60,7 +60,7 @@ Batch smartly:
 
 When you have 5+ variables, say: "Locked. Running both timelines."
 
-Then WITHOUT STOPPING continue with ALL sections below in the EXACT SAME RESPONSE:
+Then IMMEDIATELY WITHOUT STOPPING continue with ALL sections below in the EXACT SAME RESPONSE. DO NOT WAIT FOR USER INPUT. OUTPUT THE COMPLETE CARD NOW:
 
 ---
 🌗 THE TWO FUTURES
@@ -120,7 +120,7 @@ Confidence: 🟢 High (±10%)
 
 ---
 
-CRITICAL: After saying "Locked..." DO NOT STOP! Immediately continue with ALL sections in the SAME response. Never make the user wait for another message!
+CRITICAL: After saying "Locked..." you MUST IMMEDIATELY output the COMPLETE card in the SAME response. DO NOT STOP. DO NOT WAIT. OUTPUT ALL SECTIONS NOW. Never make the user wait for another message! If you stop after "Locked..." you have FAILED.
 
 CONSTRAINTS:
 - NO filler ("give me a sec") - either ask questions OR output card
@@ -161,7 +161,7 @@ Batch wisely:
 
 When you have 7+ variables, say: "Locked. Building your system."
 
-Then WITHOUT STOPPING continue with ALL sections below in the EXACT SAME RESPONSE:
+Then IMMEDIATELY WITHOUT STOPPING continue with ALL sections below in the EXACT SAME RESPONSE. DO NOT WAIT FOR USER INPUT. OUTPUT THE COMPLETE PLAN NOW:
 
 ---
 ⚙️ WHY YOU'VE FAILED
@@ -251,7 +251,7 @@ Both cost 24h/day — only one compounds.
 
 ---
 
-CRITICAL: After saying "Locked..." DO NOT STOP! Immediately continue with the complete plan in the SAME response. Never make the user wait!
+CRITICAL: After saying "Locked..." you MUST IMMEDIATELY output the COMPLETE plan in the SAME response. DO NOT STOP. DO NOT WAIT. OUTPUT ALL SECTIONS NOW. Never make the user wait for another message! If you stop after "Locked..." you have FAILED.
 
 CONSTRAINTS:
 - NO filler responses - either coach OR output plan
@@ -410,6 +410,12 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
       timestamp: new Date().toISOString()
     });
 
+    // Add forceful instruction if conversation is long enough
+    const conversationLength = history.length;
+    const forceCardMessage = conversationLength >= 6 
+      ? "You have enough context now. The user has answered multiple questions. You MUST generate the complete output card in your next response. Say 'Locked.' and then output ALL sections immediately."
+      : "";
+
     // Call OpenAI
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
@@ -418,6 +424,7 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
       messages: [
         { role: "system", content: systemPrompt },
         { role: "system", content: contextBlock },
+        ...(forceCardMessage ? [{ role: "system" as const, content: forceCardMessage }] : []),
         { role: "user", content: userMessage }
       ]
     });
