@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
@@ -582,6 +583,8 @@ Timeline: 90 days to build habit + small audience''',
   }
 
   Widget _buildOutputCard() {
+    final content = _outputCard?['content'] ?? _outputCard?['response'] ?? '';
+    
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -591,29 +594,223 @@ Timeline: 90 days to build habit + small audience''',
             AppColors.emerald.withOpacity(0.05),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+        borderRadius: BorderRadius.circular(AppBorderRadius.xl),
         border: Border.all(color: AppColors.emerald.withOpacity(0.3)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            '✨ Your Simulation',
-            style: AppTextStyles.h2.copyWith(
-              color: AppColors.emerald,
-              fontWeight: FontWeight.bold,
-            ),
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.emerald.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                ),
+                child: const Icon(LucideIcons.sparkles, color: AppColors.emerald, size: 20),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  _tabController.index == 0 ? 'Your Future Simulation' : 'Your Habit System',
+                  style: AppTextStyles.h2.copyWith(
+                    color: AppColors.emerald,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
+          
           const SizedBox(height: AppSpacing.lg),
-          Text(
-            _outputCard.toString(),
-            style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+          
+          // Action buttons at top
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    // Copy to clipboard
+                    Clipboard.setData(ClipboardData(text: content));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('📋 Copied to clipboard!'), duration: Duration(seconds: 2)),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: AppColors.glassBackground,
+                      borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                      border: Border.all(color: AppColors.glassBorder),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(LucideIcons.copy, size: 16, color: AppColors.textSecondary),
+                        const SizedBox(width: 6),
+                        Text('Copy', style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    // Save to vault (Reflections tab)
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('🔐 Saved to Reflections Vault!'), duration: Duration(seconds: 2)),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: AppColors.glassBackground,
+                      borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                      border: Border.all(color: AppColors.glassBorder),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(LucideIcons.bookMarked, size: 16, color: AppColors.textSecondary),
+                        const SizedBox(width: 6),
+                        Text('Save to Vault', style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
+          
+          const SizedBox(height: AppSpacing.lg),
+          
+          // Content
+          _buildFormattedContent(content),
         ],
       ),
     ).animate()
         .fadeIn(duration: 600.ms)
         .slideY(begin: 0.1, end: 0);
+  }
+  
+  Widget _buildFormattedContent(String content) {
+    // Clean up the content
+    String cleaned = content
+        .replaceAll(RegExp(r'\{[^}]*type[^}]*:[^}]*\}'), '') // Remove {type: ...} blocks
+        .replaceAll(RegExp(r'\},\s*\{'), '\n\n') // Space between sections
+        .replaceAll(RegExp(r'[\{\}]'), '') // Remove braces
+        .replaceAll(RegExp(r'content:\s*'), '') // Remove "content:"
+        .replaceAll(RegExp(r'fullText:\s*Locked\.'), '') // Remove "fullText: Locked."
+        .trim();
+    
+    // Split into sections
+    final sections = cleaned.split(RegExp(r'\n\n+'));
+    
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: sections.map((section) {
+          section = section.trim();
+          if (section.isEmpty) return const SizedBox.shrink();
+          
+          // Check if it's a heading (all caps, emoji, or starts with ---/###)
+          final isHeading = section.startsWith(RegExp(r'[🔥💪😴🏃📚💰🌅📊🎯⚡]')) ||
+              section == section.toUpperCase() ||
+              section.startsWith('---') ||
+              section.startsWith('###') ||
+              section.startsWith('THE TWO FUTURES') ||
+              section.startsWith('STAY SAME') ||
+              section.startsWith('COMMIT') ||
+              section.startsWith('COMPARISON') ||
+              section.startsWith('SOURCES') ||
+              section.startsWith('HABITS') ||
+              section.startsWith('WHY IT WORKS');
+          
+          if (isHeading) {
+            return Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
+              child: Text(
+                section.replaceAll('---', '').replaceAll('###', '').trim(),
+                style: AppTextStyles.h3.copyWith(
+                  color: AppColors.emerald,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            );
+          }
+          
+          // Check if it's a table (has | characters)
+          if (section.contains('|') && section.split('\n').where((line) => line.contains('|')).length >= 2) {
+            return _buildTable(section);
+          }
+          
+          // Regular paragraph
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: Text(
+              section,
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textPrimary,
+                height: 1.6,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+  
+  Widget _buildTable(String tableText) {
+    final lines = tableText.split('\n').where((l) => l.contains('|')).toList();
+    if (lines.length < 2) return const SizedBox.shrink();
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.glassBackground,
+        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+        border: Border.all(color: AppColors.glassBorder),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: lines.map((line) {
+            final cells = line.split('|').map((c) => c.trim()).where((c) => c.isNotEmpty).toList();
+            final isHeader = lines.indexOf(line) == 0;
+            final isSeparator = line.contains('---');
+            
+            if (isSeparator) return const SizedBox.shrink();
+            
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: cells.map((cell) {
+                  return Container(
+                    width: 120,
+                    padding: const EdgeInsets.all(8),
+                    child: Text(
+                      cell,
+                      style: AppTextStyles.caption.copyWith(
+                        color: isHeader ? AppColors.emerald : AppColors.textPrimary,
+                        fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 12,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
   }
 }
 

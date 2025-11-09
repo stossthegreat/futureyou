@@ -21,7 +21,7 @@ function getOpenAIClient() {
   if (!process.env.OPENAI_API_KEY) return null;
   return new OpenAI({ 
     apiKey: process.env.OPENAI_API_KEY.trim(),
-    timeout: 900000, // NUCLEAR - 15 MINUTES timeout!
+    timeout: 300000, // 🔥 5 MINUTES for output card generation!
   });
 }
 
@@ -60,7 +60,7 @@ Batch smartly:
 
 When you have 5+ variables, say: "Locked. Running both timelines."
 
-Then IMMEDIATELY WITHOUT STOPPING continue with ALL sections below in the EXACT SAME RESPONSE. DO NOT WAIT FOR USER INPUT. OUTPUT THE COMPLETE CARD NOW:
+Then IMMEDIATELY output ALL sections below in SAME message:
 
 ---
 🌗 THE TWO FUTURES
@@ -120,13 +120,20 @@ Confidence: 🟢 High (±10%)
 
 ---
 
-CRITICAL: After saying "Locked..." you MUST IMMEDIATELY output the COMPLETE card in the SAME response. DO NOT STOP. DO NOT WAIT. OUTPUT ALL SECTIONS NOW. Never make the user wait for another message! If you stop after "Locked..." you have FAILED.
+CRITICAL FINISHING RULES:
+1. After "Locked..." output ALL sections in ONE response
+2. Each section appears ONCE - do NOT repeat sections
+3. DO NOT offer to do anything else after ("If you want, I can...")
+4. DO NOT ask follow-up questions after the card
+5. End with SOURCES section, then STOP completely
+6. The card IS the final deliverable - nothing more needed
 
 CONSTRAINTS:
 - NO filler ("give me a sec") - either ask questions OR output card
 - NO vague advice - specific numbers and studies
 - NO invented studies - cite real research only
 - NO single questions when you can batch 2-4 related ones
+- NO repetition of sections
 
 TONE: Warm scientist. Clear cause-effect chains. Cinematic endings.`;
 
@@ -161,7 +168,7 @@ Batch wisely:
 
 When you have 7+ variables, say: "Locked. Building your system."
 
-Then IMMEDIATELY WITHOUT STOPPING continue with ALL sections below in the EXACT SAME RESPONSE. DO NOT WAIT FOR USER INPUT. OUTPUT THE COMPLETE PLAN NOW:
+Then IMMEDIATELY output ALL sections below in SAME message:
 
 ---
 ⚙️ WHY YOU'VE FAILED
@@ -251,13 +258,20 @@ Both cost 24h/day — only one compounds.
 
 ---
 
-CRITICAL: After saying "Locked..." you MUST IMMEDIATELY output the COMPLETE plan in the SAME response. DO NOT STOP. DO NOT WAIT. OUTPUT ALL SECTIONS NOW. Never make the user wait for another message! If you stop after "Locked..." you have FAILED.
+CRITICAL FINISHING RULES:
+1. After "Locked..." output ALL sections in ONE response
+2. Each section appears ONCE - do NOT repeat sections
+3. DO NOT offer to do anything else after ("If you want, I can...")
+4. DO NOT ask follow-up questions after the plan
+5. End with SOURCES section, then STOP completely
+6. The plan IS the final deliverable - nothing more needed
 
 CONSTRAINTS:
 - NO filler responses - either coach OR output plan
 - NO generic advice - personalize to their barrier
 - NO fake studies - cite real behavioral science
 - NO single questions when 2-4 can be batched
+- NO repetition of sections
 
 TONE: Wise coach. Explain why each phase works. Tie biology together.`;
 
@@ -334,10 +348,8 @@ export class WhatIfChatService {
   ): Promise<{
     message: string;
     outputCard?: any;
-    chat?: string;
     habits?: any[];
     sources?: string[];
-    splitFutureCard?: string;
   }> {
     const openai = getOpenAIClient();
     if (!openai) {
@@ -410,21 +422,14 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
       timestamp: new Date().toISOString()
     });
 
-    // Add forceful instruction if conversation is long enough
-    const conversationLength = history.length;
-    const forceCardMessage = conversationLength >= 6 
-      ? "You have enough context now. The user has answered multiple questions. You MUST generate the complete output card in your next response. Say 'Locked.' and then output ALL sections immediately."
-      : "";
-
     // Call OpenAI
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       // temperature: removed - GPT-5-mini only supports default (1)
-      // max_completion_tokens: REMOVED - Let AI generate FULL response!
+      max_completion_tokens: 12000, // 🔥 UNLIMITED for output card generation!
       messages: [
         { role: "system", content: systemPrompt },
         { role: "system", content: contextBlock },
-        ...(forceCardMessage ? [{ role: "system" as const, content: forceCardMessage }] : []),
         { role: "user", content: userMessage }
       ]
     });
@@ -433,21 +438,7 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
       "Let's think this through. What matters most here?";
 
     // Parse for output card
-    // 🔥 DEBUG: Log AI response
-    console.log("🤖 AI Response Length:", aiText.length);
-    console.log("🤖 AI Response Preview:", aiText.substring(0, 500));
-    console.log("🤖 FINISH REASON:", response.choices[0]?.finish_reason);
-    console.log("🤖 FULL AI RESPONSE:");
-    console.log(aiText);
-    console.log("🤖 END OF AI RESPONSE");
-
-    console.log("�� Contains TWO FUTURES?", aiText.includes("🌗 THE TWO FUTURES"));
-    console.log("🤖 Contains COMPARISON?", aiText.includes("📊 COMPARISON"));
     const parsed = this.parseOutputCard(aiText);
-    // 🔥 DEBUG: Log parsing results
-    console.log("🎯 Parsed outputCard?", !!parsed.outputCard);
-    console.log("🎯 Habits count:", parsed.habits?.length || 0);
-    console.log("🎯 Sources count:", parsed.sources?.length || 0);
 
     // Save to history
     history.push({
@@ -472,20 +463,7 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
       }
     });
 
-    console.log("🚀 FINAL RESPONSE TO FRONTEND:");
-    console.log("outputCard:", !!parsed.outputCard);
-    console.log("habits:", parsed.habits?.length || 0);
-    console.log("message length:", (parsed.message || aiText).length);
-
-    // Return structure matching old service for frontend compatibility
-    return {
-      message: parsed.message || aiText,
-      chat: parsed.message || aiText, // Legacy field
-      outputCard: parsed.outputCard,
-      habits: parsed.habits,
-      sources: parsed.sources || [],
-      splitFutureCard: parsed.outputCard ? "Generated card" : undefined, // Legacy field
-    };
+    return parsed;
   }
 
   /**
@@ -499,14 +477,10 @@ ${history.slice(-12).map((m: any) => `${m.role}: ${m.content.substring(0, 200)}`
   } {
     // Check if this is a full output card
     const hasCard = 
-      text.includes("THE TWO FUTURES") ||
-      text.includes("PHASE 1") ||
-      text.includes("COMPARISON") ||
-      text.includes("12-WEEK OUTCOMES") ||
-      text.includes("WHY IT WORKS") ||
-      text.includes("WHY YOU'VE FAILED") ||
-      text.includes("NEXT 7 DAYS") ||
-      (text.includes("Locked") && text.length > 1000);
+      text.includes("🌗 THE TWO FUTURES") ||
+      text.includes("🟢 PHASE 1") ||
+      text.includes("📊 COMPARISON") ||
+      text.includes("📈 12-WEEK OUTCOMES");
 
     if (!hasCard) {
       return { message: text }; // Still in conversation phase
