@@ -26,3 +26,9 @@ export interface ChapterDTO {
   body?: string;
 }
 
+export interface BookCompileDTO {
+  includePhases?: PhaseId[];
+  title?: string;
+  idemKey?: string;
+}
+

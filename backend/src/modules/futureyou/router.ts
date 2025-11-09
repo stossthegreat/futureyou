@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { engineController } from './controllers/engine.controller';
 import { chaptersController } from './controllers/chapters.controller';
+import { bookController } from './controllers/book.controller';
 
 export async function futureYouRouter(fastify: FastifyInstance) {
   // Guard: only register if enabled
@@ -13,5 +14,6 @@ export async function futureYouRouter(fastify: FastifyInstance) {
   
   await fastify.register(engineController, { prefix: '/api/futureyou' });
   await fastify.register(chaptersController, { prefix: '/api/futureyou' });
+  await fastify.register(bookController, { prefix: '/api/futureyou' });
 }
 

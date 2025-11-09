@@ -1,8 +1,8 @@
 import crypto from 'crypto';
-import { prisma } from '../../../utils/db';
 import { FutureYouAIService } from './ai.service';
 import { PhasesService } from './phases.service';
 import { PhaseId } from '../dto/engine.dto';
+import { chaptersRepo } from '../repo/chapters.repo';
 
 export class ChaptersService {
   private ai = new FutureYouAIService();
@@ -20,31 +20,35 @@ export class ChaptersService {
     const draftHash = crypto.createHash('sha1').update(draft).digest('hex');
 
     // Check for duplicate
-    const existing = await prisma.futureYouChapter.findFirst({
-      where: { userId, phase, draftHash }
-    });
-    
-    if (existing) return existing;
+    const exists = await chaptersRepo.existsByHash(userId, phase, draftHash);
+    if (exists) {
+      const existing = await chaptersRepo.getByPhase(userId, phase);
+      return existing;
+    }
 
-    return await prisma.futureYouChapter.create({
-      data: {
-        userId,
-        phase,
-        title: this.phases.getPhaseTitle(phase),
-        bodyMd: draft,
-        words,
-        draftHash,
-        status: 'final'
-      }
-    });
+    // Queue write (batched)
+    const chapterData = {
+      userId,
+      phase,
+      title: this.phases.getPhaseTitle(phase),
+      bodyMd: draft,
+      words,
+      draftHash
+    };
+
+    chaptersRepo.queueWrite(chapterData);
+
+    // Return immediately (optimistic)
+    return {
+      id: 'pending-' + Date.now(),
+      ...chapterData,
+      status: 'final',
+      createdAt: new Date()
+    };
   }
 
   async listChapters(userId: string): Promise<any[]> {
-    return await prisma.futureYouChapter.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'asc' },
-      select: { id: true, phase: true, title: true, words: true, createdAt: true }
-    });
+    return await chaptersRepo.list(userId);
   }
 
   private countWords(text: string): number {

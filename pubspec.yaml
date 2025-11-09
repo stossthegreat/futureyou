@@ -40,6 +40,13 @@ dependencies:
   # HTTP & API
   http: ^1.2.1
   audioplayers: ^5.2.1
+  
+  # Cinematic UI Audio & Animation
+  just_audio: ^0.9.38
+  audio_session: ^0.1.18
+  flutter_tts: ^3.8.3
+  lottie: ^3.1.2
+  share_plus: ^10.0.2
 
   # UI & Icons
   cupertino_icons: ^1.0.6
@@ -66,6 +73,8 @@ flutter:
   assets:
     - assets/images/onboarding/
     - assets/images/
+    - assets/cinema/music/
+    - assets/cinema/anims/
     # If you add a custom notification sound file later, place it in:
     # android/app/src/main/res/raw/notification_sound.(mp3|wav)
     # (No pubspec entry needed for raw/)
