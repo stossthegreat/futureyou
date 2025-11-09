@@ -223,9 +223,9 @@ class _CinematicBookState extends State<CinematicBook> {
               Center(
                 child: Text(
                   'Generated: ${DateTime.now().toString().split('.')[0]}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white50,
+                    color: Colors.white.withOpacity(0.5),
                   ),
                 ),
               ),

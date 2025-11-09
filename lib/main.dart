@@ -27,6 +27,7 @@ import 'screens/settings_screen.dart';
 import 'screens/terms_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/support_screen.dart';
+import 'cinematic/cinematic_entry.dart';
 import 'design/theme.dart';
 
 Future<void> _initTimezone() async {
@@ -120,6 +121,7 @@ class FutureYouApp extends StatelessWidget {
         '/terms': (context) => const TermsScreen(),
         '/privacy': (context) => const PrivacyScreen(),
         '/support': (context) => const SupportScreen(),
+        '/cinematic': (context) => const CinematicEntry(),
       },
     );
   }
