@@ -539,6 +539,14 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 30));
   bool _alarmEnabled = false;
+  late List<bool> _selectedHabits;
+  
+  @override
+  void initState() {
+    super.initState();
+    // All habits selected by default
+    _selectedHabits = List.filled(widget.system.habits.length, true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -603,6 +611,65 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
             
             const SizedBox(height: AppSpacing.md),
             
+            // Habit Selection
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: widget.system.habits.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedHabits[index] = !_selectedHabits[index]);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(_selectedHabits[index] ? 0.25 : 0.1),
+                        borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(_selectedHabits[index] ? 0.4 : 0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 18,
+                            height: 18,
+                            decoration: BoxDecoration(
+                              color: _selectedHabits[index] ? Colors.white : Colors.transparent,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: _selectedHabits[index]
+                                ? Icon(
+                                    LucideIcons.check,
+                                    size: 12,
+                                    color: widget.system.accentColor,
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              widget.system.habits[index],
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            
+            const SizedBox(height: AppSpacing.md),
+            
             // Alarm Toggle
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
@@ -656,26 +723,48 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                     onPressed: () async {
                       Navigator.pop(context);
                       
-                      // Commit all habits in the system
+                      // Count selected habits
+                      final selectedCount = _selectedHabits.where((selected) => selected).length;
+                      if (selectedCount == 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('⚠️ Please select at least one habit')),
+                        );
+                        return;
+                      }
+                      
+                      // Commit only selected habits
                       try {
-                        for (final habit in widget.system.habits) {
-                          await ref.read(habitEngineProvider.notifier).createHabit(
-                            title: habit,
-                            type: 'habit',
-                            time: '', // No specific time for system habits
-                            startDate: _startDate,
-                            endDate: _endDate,
-                            repeatDays: [0, 1, 2, 3, 4, 5, 6], // All days
-                            color: widget.system.accentColor,
-                            emoji: habit.split(' ').first, // Extract emoji from habit string
-                            reminderOn: _alarmEnabled,
-                          );
+                        final habitIds = <String>[];
+                        
+                        for (int i = 0; i < widget.system.habits.length; i++) {
+                          if (_selectedHabits[i]) {
+                            final habitId = DateTime.now().millisecondsSinceEpoch.toString() + '_$i';
+                            habitIds.add(habitId);
+                            
+                            await ref.read(habitEngineProvider.notifier).createHabit(
+                              title: widget.system.habits[i],
+                              type: 'habit',
+                              time: '', // No specific time for system habits
+                              startDate: _startDate,
+                              endDate: _endDate,
+                              repeatDays: [0, 1, 2, 3, 4, 5, 6], // All days
+                              color: widget.system.accentColor,
+                              emoji: widget.system.habits[i].split(' ').first, // Extract emoji
+                              reminderOn: _alarmEnabled,
+                            );
+                            
+                            // Small delay to ensure unique IDs
+                            await Future.delayed(const Duration(milliseconds: 10));
+                          }
                         }
+                        
+                        // TODO: Store system metadata linking to habit IDs
+                        // This will be used to show system cards on Home/Planner
                         
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('✅ Committed ${widget.system.habits.length} habits from ${widget.system.name}!'),
+                              content: Text('✅ Committed $selectedCount habits from ${widget.system.name}!'),
                               backgroundColor: widget.system.accentColor,
                               duration: const Duration(seconds: 3),
                             ),

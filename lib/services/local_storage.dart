@@ -1,16 +1,20 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/habit.dart';
+import '../models/habit_system.dart';
 
 class LocalStorageService {
   static const String _habitsBoxName = 'habits';
   static const String _settingsBoxName = 'settings';
+  static const String _systemsBoxName = 'habit_systems';
 
   static Box<Habit>? _habitsBox;
   static Box? _settingsBox;
+  static Box? _systemsBox;
 
   static Future<void> initialize() async {
     _habitsBox = await Hive.openBox<Habit>(_habitsBoxName);
     _settingsBox = await Hive.openBox(_settingsBoxName);
+    _systemsBox = await Hive.openBox(_systemsBoxName);
   }
 
   // CRUD
@@ -61,6 +65,37 @@ class LocalStorageService {
     await clearAllHabits();
     await clearAllSettings();
   }
+  
+  // Habit Systems CRUD
+  static Future<void> saveSystem(HabitSystem system) async {
+    final json = system.toJson();
+    await _systemsBox?.put(system.id, json);
+  }
+  
+  static Future<void> deleteSystem(String id) async =>
+      _systemsBox?.delete(id);
+  
+  static HabitSystem? getSystem(String id) {
+    final json = _systemsBox?.get(id);
+    if (json == null) return null;
+    return HabitSystem.fromJson(Map<String, dynamic>.from(json as Map));
+  }
+  
+  static List<HabitSystem> getAllSystems() {
+    final systems = <HabitSystem>[];
+    for (final value in _systemsBox?.values ?? []) {
+      try {
+        systems.add(HabitSystem.fromJson(Map<String, dynamic>.from(value as Map)));
+      } catch (e) {
+        // Skip invalid entries
+        continue;
+      }
+    }
+    return systems;
+  }
+  
+  static Future<void> clearAllSystems() async =>
+      _systemsBox?.clear();
 
   // -------------------  STREAK & ANALYTICS (date-aware)  -------------------
 
