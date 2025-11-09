@@ -1,8 +1,9 @@
 import { prisma } from "../utils/db";
 import { redis } from "../utils/redis";
 import { memoryService } from "./memory.service";
-import { aiRouter } from "./ai-router.service";
 import OpenAI from "openai";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
  * 🔮 FUTURE-YOU OS - WHAT-IF SYSTEM (GPT-5 REASONING)
@@ -595,17 +596,17 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
     // Combine system prompt with context
     const fullSystemPrompt = `${systemPrompt}\n\n${contextString}`;
 
-    // Call AI Router (whatif = medium reasoning + high verbosity for simulator, habit = medium/medium for coach)
-    const aiRouterPreset = preset === 'simulator' ? 'whatif' : 'habit';
-    const aiResponse = await aiRouter.callAI({
-      preset: aiRouterPreset,
-      systemPrompt: fullSystemPrompt,
-      userInput: userMessage,
-      userId,
-      parseJson: false, // What-If uses markdown, not JSON
+    // Call OpenAI directly
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      max_completion_tokens: 12000,
+      messages: [
+        { role: "system", content: fullSystemPrompt },
+        { role: "user", content: userMessage }
+      ]
     });
 
-    const responseText = aiResponse.chat || "Let's break this down systematically.";
+    const responseText = completion.choices[0]?.message?.content?.trim() || "Let's break this down systematically.";
 
     // Parse for card sections
     const parsed = this.parseCardSections(responseText);
@@ -719,17 +720,17 @@ Return ONLY valid JSON:
     const prompt = preset === 'simulator' ? simulatorPrompt : habitMasterPrompt;
 
     try {
-      // Call AI Router for plan generation (parse JSON)
-      const aiRouterPreset = preset === 'simulator' ? 'whatif' : 'habit';
-      const aiResponse = await aiRouter.callAI({
-        preset: aiRouterPreset,
-        systemPrompt: "Generate cinematic, evidence-based plans. Cite real peer-reviewed studies. Output valid JSON only.",
-        userInput: prompt,
-        userId,
-        parseJson: true,
+      // Call OpenAI directly for plan generation
+      const completion = await openai.chat.completions.create({
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        max_completion_tokens: 12000,
+        messages: [
+          { role: "system", content: "Generate cinematic, evidence-based plans. Cite real peer-reviewed studies. Output valid JSON only." },
+          { role: "user", content: prompt }
+        ]
       });
 
-      const raw = aiResponse.rawOutput || "{}";
+      const raw = completion.choices[0]?.message?.content?.trim() || "{}";
       const cleaned = raw.replace(/```json|```/g, "").trim();
       const plan = JSON.parse(cleaned);
 
