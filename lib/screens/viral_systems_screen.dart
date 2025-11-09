@@ -194,24 +194,21 @@ class _ViralSystemsScreenState extends State<ViralSystemsScreen> {
 
                 const SizedBox(height: AppSpacing.xl),
 
-                // Grid of systems
-                GridView.builder(
+                // Grid of systems - 1 column to show all habits
+                ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.75,
-                    crossAxisSpacing: AppSpacing.md,
-                    mainAxisSpacing: AppSpacing.md,
-                  ),
                   itemCount: _systems.length,
                   itemBuilder: (context, index) {
-                    return _ViralSystemCard(
-                      system: _systems[index],
-                      onCommit: () => _showCommitDialog(_systems[index]),
-                    ).animate(delay: Duration(milliseconds: index * 50))
-                        .fadeIn(duration: 400.ms)
-                        .scale(begin: const Offset(0.8, 0.8));
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                      child: _ViralSystemCard(
+                        system: _systems[index],
+                        onCommit: () => _showCommitDialog(_systems[index]),
+                      ).animate(delay: Duration(milliseconds: index * 50))
+                          .fadeIn(duration: 400.ms)
+                          .slideY(begin: 0.1, end: 0),
+                    );
                   },
                 ),
 
@@ -426,18 +423,14 @@ class _ViralSystemCard extends StatelessWidget {
   }
 
   Widget _buildHabitsGrid(int completedCount) {
-    return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 3,
-        crossAxisSpacing: 6,
-        mainAxisSpacing: 6,
-      ),
-      itemCount: system.habits.length,
-      itemBuilder: (context, index) {
+    return Column(
+      children: system.habits.asMap().entries.map((entry) {
+        final index = entry.key;
+        final habit = entry.value;
         final completed = index < completedCount;
+        
         return Container(
+          margin: const EdgeInsets.only(bottom: 6),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.05),
@@ -446,6 +439,7 @@ class _ViralSystemCard extends StatelessWidget {
           ),
           child: Row(
             children: [
+              // Checkbox
               Container(
                 width: 14,
                 height: 14,
@@ -457,13 +451,15 @@ class _ViralSystemCard extends StatelessWidget {
                     ? const Icon(LucideIcons.check, color: Colors.white, size: 10)
                     : null,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
+              // Habit text with emoji
               Expanded(
                 child: Text(
-                  system.habits[index],
+                  habit,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.9),
-                    fontSize: 10,
+                    fontSize: 12,
+                    height: 1.2,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -472,7 +468,7 @@ class _ViralSystemCard extends StatelessWidget {
             ],
           ),
         );
-      },
+      }).toList(),
     );
   }
 
