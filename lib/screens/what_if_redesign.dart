@@ -177,12 +177,18 @@ Timeline: 90 days to build habit + small audience''',
       );
 
       if (response.success && response.data != null) {
+        // Debug: Print what we got
+        print('✅ What-If Response: ${response.data}');
+        print('✅ Has outputCard: ${response.data!['outputCard'] != null}');
+        print('✅ Has message: ${response.data!['message'] != null}');
+        
         setState(() {
           // Store the whole response { message, outputCard, habits, sources }
           _outputCard = response.data!;
           _isLoading = false;
         });
       } else {
+        print('❌ What-If Error: ${response.error}');
         setState(() {
           _errorMessage = response.error ?? 'Simulation failed';
           _isLoading = false;
@@ -248,9 +254,29 @@ Timeline: 90 days to build habit + small audience''',
                     _buildLoadingState(),
                   ],
 
-                  if (_outputCard != null) ...[
+                  if (_outputCard != null && _outputCard!['outputCard'] != null) ...[
                     const SizedBox(height: AppSpacing.xl),
                     _buildOutputCard(),
+                  ],
+                  
+                  // Show AI message even if no full card yet (during conversation)
+                  if (_outputCard != null && _outputCard!['outputCard'] == null && _outputCard!['message'] != null) ...[
+                    const SizedBox(height: AppSpacing.xl),
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: AppColors.glassBackground,
+                        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                        border: Border.all(color: AppColors.glassBorder),
+                      ),
+                      child: Text(
+                        _outputCard!['message'] as String,
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.textPrimary,
+                          height: 1.6,
+                        ),
+                      ),
+                    ),
                   ],
 
                   const SizedBox(height: 100),
