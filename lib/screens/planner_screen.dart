@@ -11,6 +11,7 @@ import '../widgets/simple_header.dart';
 import '../providers/habit_provider.dart';
 import '../models/habit.dart';
 import 'what_if_screen.dart';
+import 'viral_systems_screen.dart';
 
 class PlannerScreen extends ConsumerStatefulWidget {
   const PlannerScreen({super.key});
@@ -255,6 +256,11 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                     
                     // Habit Library Card
                     _buildHabitLibraryCard(),
+                    
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    // Viral Habit Systems Card
+                    _buildViralSystemsCard(),
                     
                     const SizedBox(height: AppSpacing.sm),
                     Container(
@@ -1021,6 +1027,99 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       ),
     ).animate()
         .fadeIn(duration: 600.ms)
+        .slideY(begin: -0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
+  }
+
+  Widget _buildViralSystemsCard() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ViralSystemsScreen(),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFE879F9),
+              Color(0xFF9333EA),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+          border: Border.all(color: const Color(0xFFE879F9).withOpacity(0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE879F9).withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Icon with animation
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(AppBorderRadius.md),
+              ),
+              child: const Icon(
+                LucideIcons.flame,
+                color: Colors.white,
+                size: 28,
+              ),
+            ).animate(onPlay: (controller) => controller.repeat())
+                .shimmer(duration: 2000.ms, color: Colors.white.withOpacity(0.3))
+                .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.05, 1.05), duration: 1000.ms)
+                .then()
+                .scale(begin: const Offset(1.05, 1.05), end: const Offset(1.0, 1.0), duration: 1000.ms),
+            
+            const SizedBox(width: AppSpacing.md),
+            
+            // Text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '🔥 Viral Habit Systems',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '15 proven systems ready to commit',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Arrow
+            Icon(
+              LucideIcons.chevronRight,
+              color: Colors.white.withOpacity(0.7),
+              size: 24,
+            ),
+          ],
+        ),
+      ),
+    ).animate()
+        .fadeIn(duration: 600.ms, delay: 100.ms)
         .slideY(begin: -0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic);
   }
 }
