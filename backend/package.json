@@ -5,11 +5,12 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch 'src/**/*.ts' --exec ts-node src/server.ts",
-    "build": "prisma generate && prisma migrate deploy && tsc",
-    "start": "node dist/server.js",
+    "build": "prisma generate && tsc",
+    "migrate": "prisma migrate deploy",
+    "start": "npm run migrate && node dist/server.js",
     "worker:scheduler": "node dist/workers/scheduler.worker.js",
     "worker:notifications": "node dist/workers/notifications.worker.js",
-    "start:all": "concurrently \"node dist/server.js\" \"node dist/workers/scheduler.worker.js\"",
+    "start:all": "npm run migrate && concurrently \"node dist/server.js\" \"node dist/workers/scheduler.worker.js\"",
     "postinstall": "npm run build"
   },
   "dependencies": {
