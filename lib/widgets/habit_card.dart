@@ -134,19 +134,22 @@ class _HabitCardState extends State<HabitCard>
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(
-                      LucideIcons.clock,
-                      size: 12,
-                      color: AppColors.textTertiary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      widget.habit.time,
-                      style: AppTextStyles.captionSmall.copyWith(
+                    // Only show time if it's not empty
+                    if (widget.habit.time.isNotEmpty) ...[
+                      const Icon(
+                        LucideIcons.clock,
+                        size: 12,
                         color: AppColors.textTertiary,
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.habit.time,
+                        style: AppTextStyles.captionSmall.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                    ],
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,

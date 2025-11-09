@@ -37,6 +37,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   Color _selectedColor = AppColors.emerald;
   String? _selectedEmoji;
   bool _reminderOn = false; // Alarm toggle - defaults OFF
+  bool _timeEnabled = false; // NEW: Time is OPTIONAL now
   final List<bool> _repeatDays = List.generate(7, (index) => false);
   final List<String> _dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -186,7 +187,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       await ref.read(habitEngineProvider).createHabit(
         title: _titleController.text.trim(),
         type: _selectedType,
-        time: _timeController.text,
+        time: _timeEnabled ? _timeController.text : '', // Empty string if time disabled
         startDate: DateTime.now(),
         endDate: _endDate,
         repeatDays: _getRepeatDays(),
@@ -202,6 +203,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         _selectedColor = AppColors.emerald;
         _selectedEmoji = null;
         _reminderOn = false; // Reset alarm toggle
+        _timeEnabled = false; // Reset time toggle
       });
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -321,10 +323,14 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               const SizedBox(height: AppSpacing.lg),
               _emojiField(),
               const SizedBox(height: AppSpacing.lg),
-              _alarmToggle(),
+              _timeToggle(),
+              if (_timeEnabled) ...[
+                const SizedBox(height: AppSpacing.lg),
+                _timeField(),
+              ],
               const SizedBox(height: AppSpacing.lg),
-              _timeField(),
-              const SizedBox(height: AppSpacing.lg),
+              if (_timeEnabled) _alarmToggle(),
+              if (_timeEnabled) const SizedBox(height: AppSpacing.lg),
               _dateField('Start Date', _startDate, _selectStartDate),
               const SizedBox(height: AppSpacing.lg),
               _dateField('End Date', _endDate, _selectEndDate),
@@ -426,6 +432,59 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               ),
             ],
           ),
+        ),
+      );
+
+  Widget _timeToggle() => Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.glassBackground,
+          border: Border.all(color: AppColors.glassBorder),
+          borderRadius: BorderRadius.circular(AppBorderRadius.md),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _timeEnabled ? LucideIcons.clock : LucideIcons.clock,
+              color: _timeEnabled ? AppColors.emerald : AppColors.textTertiary,
+              size: 20,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Set Specific Time',
+                    style: AppTextStyles.bodySemiBold.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _timeEnabled ? 'Time will show on card' : 'No specific time (all-day)',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textTertiary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              value: _timeEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _timeEnabled = value;
+                  if (!value) {
+                    _reminderOn = false; // Disable alarm if time is disabled
+                  }
+                });
+              },
+              activeColor: AppColors.emerald,
+              activeTrackColor: AppColors.emerald.withOpacity(0.3),
+            ),
+          ],
         ),
       );
 
