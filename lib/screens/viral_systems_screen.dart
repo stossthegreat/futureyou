@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../widgets/simple_header.dart';
+import '../providers/habit_provider.dart';
 
-class ViralSystemsScreen extends StatefulWidget {
+class ViralSystemsScreen extends ConsumerStatefulWidget {
   const ViralSystemsScreen({super.key});
 
   @override
-  State<ViralSystemsScreen> createState() => _ViralSystemsScreenState();
+  ConsumerState<ViralSystemsScreen> createState() => _ViralSystemsScreenState();
 }
 
-class _ViralSystemsScreenState extends State<ViralSystemsScreen> {
+class _ViralSystemsScreenState extends ConsumerState<ViralSystemsScreen> {
   final List<ViralSystem> _systems = [
     ViralSystem(
       name: '5AM Club',
@@ -524,16 +526,16 @@ class _ViralSystemCard extends StatelessWidget {
   }
 }
 
-class _CommitDialog extends StatefulWidget {
+class _CommitDialog extends ConsumerStatefulWidget {
   final ViralSystem system;
 
   const _CommitDialog({required this.system});
 
   @override
-  State<_CommitDialog> createState() => _CommitDialogState();
+  ConsumerState<_CommitDialog> createState() => _CommitDialogState();
 }
 
-class _CommitDialogState extends State<_CommitDialog> {
+class _CommitDialogState extends ConsumerState<_CommitDialog> {
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 30));
   bool _alarmEnabled = false;
@@ -651,15 +653,44 @@ class _CommitDialogState extends State<_CommitDialog> {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: Actually commit the system
+                    onPressed: () async {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('✅ Committed to ${widget.system.name}!'),
-                          backgroundColor: widget.system.accentColor,
-                        ),
-                      );
+                      
+                      // Commit all habits in the system
+                      try {
+                        for (final habit in widget.system.habits) {
+                          await ref.read(habitEngineProvider.notifier).createHabit(
+                            title: habit,
+                            type: 'habit',
+                            time: '', // No specific time for system habits
+                            startDate: _startDate,
+                            endDate: _endDate,
+                            repeatDays: [0, 1, 2, 3, 4, 5, 6], // All days
+                            color: widget.system.accentColor,
+                            emoji: habit.split(' ').first, // Extract emoji from habit string
+                            reminderOn: _alarmEnabled,
+                          );
+                        }
+                        
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('✅ Committed ${widget.system.habits.length} habits from ${widget.system.name}!'),
+                              backgroundColor: widget.system.accentColor,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('❌ Failed to commit: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,

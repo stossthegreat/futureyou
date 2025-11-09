@@ -1073,10 +1073,46 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _buildHeroSection(),
+                        // Simple title section
+                        Row(
+                          children: [
+                            Icon(LucideIcons.sparkles, color: AppColors.emerald, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Habit Library · Science-Backed Goals',
+                              style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+                            ),
+                          ],
+                        ).animate().fadeIn(duration: 400.ms),
+                        
+                        const SizedBox(height: 8),
+                        
+                        ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: [AppColors.emerald, AppColors.emerald.withOpacity(0.7)],
+                          ).createShader(bounds),
+                          child: const Text(
+                            'Research-Backed Habit Systems',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ).animate().fadeIn(duration: 600.ms, delay: 100.ms).slideY(begin: 0.1, end: 0),
+                        
+                        const SizedBox(height: 8),
+                        
+                        Text(
+                          'Pick a goal. Get a detailed plan backed by research from Harvard, Stanford, NIH. One-click commit.',
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.textTertiary,
+                            height: 1.5,
+                          ),
+                        ).animate().fadeIn(duration: 600.ms, delay: 200.ms),
+                        
                         const SizedBox(height: AppSpacing.xl),
-                        _buildCustomGoalInput(),
-                        const SizedBox(height: AppSpacing.xl),
+                        
                         // Custom goals section
                         if (_customGoals.isNotEmpty) ...[
                           _buildCustomGoalsSection(),
