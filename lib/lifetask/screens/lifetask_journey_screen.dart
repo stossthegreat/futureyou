@@ -8,6 +8,9 @@ import 'chapter_screen.dart';
 /// Main navigation screen showing 7 chapters
 /// Beautiful, immersive, inspiring
 
+// 🔧 DEBUG MODE: Set to true to unlock all chapters for testing
+const bool DEBUG_UNLOCK_ALL_CHAPTERS = true; // TODO: Set to false before release
+
 class LifeTaskJourneyScreen extends StatefulWidget {
   const LifeTaskJourneyScreen({Key? key}) : super(key: key);
 
@@ -22,6 +25,15 @@ class _LifeTaskJourneyScreenState extends State<LifeTaskJourneyScreen> {
   void initState() {
     super.initState();
     chapters = getInitialChapters();
+    
+    // DEBUG: Unlock all chapters for testing
+    if (DEBUG_UNLOCK_ALL_CHAPTERS) {
+      chapters = chapters.map((c) => c.copyWith(
+        status: ChapterStatus.available,
+      )).toList();
+      print('🔧 DEBUG MODE: All chapters unlocked for testing');
+    }
+    
     // TODO: Load saved progress from local storage
   }
 

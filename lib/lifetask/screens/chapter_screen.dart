@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/chapter_model.dart';
 import '../widgets/cinematic_intro.dart';
 import '../widgets/deep_chat.dart';
@@ -115,10 +116,15 @@ class _ChapterScreenState extends State<ChapterScreen> {
   }
 
   Widget _buildChatPlaceholder() {
-    // TODO: Get actual API instance from app-level provider/dependency injection
+    // Use Railway production URL + Firebase auth
     final api = LifeTaskAPI(
-      baseUrl: 'http://your-backend-url',  // TODO: Configure from environment
-      getAuthToken: () => 'your-auth-token',  // TODO: Get from auth service
+      baseUrl: 'https://futureyou-production.up.railway.app',
+      getAuthToken: () {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) return '';
+        // Return user ID as fallback (backend uses x-user-id header)
+        return user.uid;
+      },
     );
 
     return DeepChat(

@@ -60,25 +60,31 @@ class LifeTaskAPI {
     final uri = Uri.parse('$baseUrl/api/lifetask/conversation');
     final token = getAuthToken();
 
-    final response = await http.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'chapterNumber': chapterNumber,
-        'messages': messages.map((m) => m.toJson()).toList(),
-        'sessionStartTime': sessionStartTime.toIso8601String(),
-      }),
-    );
+    try {
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+          'x-user-id': token, // Fallback for backends without Firebase Admin
+        },
+        body: jsonEncode({
+          'chapterNumber': chapterNumber,
+          'messages': messages.map((m) => m.toJson()).toList(),
+          'sessionStartTime': sessionStartTime.toIso8601String(),
+        }),
+      ).timeout(const Duration(seconds: 30));
 
-    if (response.statusCode != 200) {
-      throw Exception('API error: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        throw Exception('API error: ${response.statusCode} - ${response.body}');
+      }
+
+      final data = jsonDecode(response.body);
+      return ConversationResponse.fromJson(data);
+    } catch (e) {
+      print('❌ API Error: $e');
+      rethrow;
     }
-
-    final data = jsonDecode(response.body);
-    return ConversationResponse.fromJson(data);
   }
 
   /// Generate prose chapter (writer mode)
