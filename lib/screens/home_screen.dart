@@ -276,7 +276,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(AppBorderRadius.md),
                       ),
-                      child: Icon(system.icon, color: Colors.white, size: 24),
+                      child: Icon(
+                       IconData(system.iconCodePoint, fontFamily: 'MaterialIcons'),
+                       color: Colors.white,
+                        size: 24,
+                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
