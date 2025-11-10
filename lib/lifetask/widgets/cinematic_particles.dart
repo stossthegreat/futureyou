@@ -324,6 +324,102 @@ const chapterThreeTheme = ChapterTheme(
   ],
 );
 
+/// CHAPTER 4: THE MENTOR
+/// Deep purples, gold, cosmic depth
+const chapterFourTheme = ChapterTheme(
+  name: 'The Mentor',
+  particleColors: [
+    Color(0xFF6b21a8), // Deep purple
+    Color(0xFF9333ea), // Purple
+    Color(0xFFfbbf24), // Gold
+    Color(0xFFfde047), // Yellow
+  ],
+  particleSizeMin: 1.0,
+  particleSizeMax: 3.5,
+  particleSpeedMin: 0.2,
+  particleSpeedMax: 0.4,
+  particleOpacityMin: 0.15,
+  particleOpacityMax: 0.45,
+  particleBlur: 5.0,
+  gradientColors: [
+    Color(0xFF1e1b4b), // Deep space purple
+    Color(0xFF312e81), // Royal purple
+    Color(0xFF000000), // Black
+  ],
+);
+
+/// CHAPTER 5: THE TASK
+/// Orange, amber, fire, forge
+const chapterFiveTheme = ChapterTheme(
+  name: 'The Task',
+  particleColors: [
+    Color(0xFFf97316), // Orange
+    Color(0xFFfbbf24), // Amber
+    Color(0xFFfde047), // Yellow
+    Color(0xFFfef3c7), // Warm glow
+  ],
+  particleSizeMin: 0.8,
+  particleSizeMax: 2.8,
+  particleSpeedMin: 0.3,
+  particleSpeedMax: 0.6,
+  particleOpacityMin: 0.2,
+  particleOpacityMax: 0.5,
+  particleBlur: 4.5,
+  gradientColors: [
+    Color(0xFF0c0a09), // Coal black
+    Color(0xFF1c1917), // Dark brown
+    Color(0xFF451a03), // Burnt orange
+  ],
+);
+
+/// CHAPTER 6: THE PATH
+/// Deep greens, earth tones, growth
+const chapterSixTheme = ChapterTheme(
+  name: 'The Path',
+  particleColors: [
+    Color(0xFF059669), // Emerald
+    Color(0xFF10b981), // Green
+    Color(0xFF84cc16), // Lime
+    Color(0xFFfbbf24), // Golden light
+  ],
+  particleSizeMin: 1.0,
+  particleSizeMax: 3.0,
+  particleSpeedMin: 0.15,
+  particleSpeedMax: 0.35,
+  particleOpacityMin: 0.2,
+  particleOpacityMax: 0.4,
+  particleBlur: 4.0,
+  gradientColors: [
+    Color(0xFF052e16), // Dark forest
+    Color(0xFF14532d), // Forest green
+    Color(0xFF166534), // Green
+  ],
+);
+
+/// CHAPTER 7: THE PROMISE
+/// Golden hour, dawn light, infinite sky
+const chapterSevenTheme = ChapterTheme(
+  name: 'The Promise',
+  particleColors: [
+    Color(0xFFfbbf24), // Gold
+    Color(0xFFfde047), // Bright yellow
+    Color(0xFFf97316), // Orange
+    Color(0xFFfef3c7), // Cream
+  ],
+  particleSizeMin: 1.2,
+  particleSizeMax: 3.5,
+  particleSpeedMin: 0.2,
+  particleSpeedMax: 0.4,
+  particleOpacityMin: 0.25,
+  particleOpacityMax: 0.5,
+  particleBlur: 6.0,
+  gradientColors: [
+    Color(0xFF1e293b), // Pre-dawn
+    Color(0xFF475569), // Dawn gray
+    Color(0xFF94a3b8), // Morning sky
+  ],
+);
+
 /// Get theme for chapter number
 ChapterTheme getChapterTheme(int chapterNumber) {
   switch (chapterNumber) {
@@ -333,7 +429,14 @@ ChapterTheme getChapterTheme(int chapterNumber) {
       return chapterTwoTheme;
     case 3:
       return chapterThreeTheme;
-    // TODO: Add chapters 4-7 themes
+    case 4:
+      return chapterFourTheme;
+    case 5:
+      return chapterFiveTheme;
+    case 6:
+      return chapterSixTheme;
+    case 7:
+      return chapterSevenTheme;
     default:
       return chapterOneTheme;
   }

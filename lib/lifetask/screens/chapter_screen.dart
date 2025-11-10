@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/chapter_model.dart';
 import '../widgets/cinematic_intro.dart';
+import '../widgets/deep_chat.dart';
+import '../services/lifetask_api.dart';
 
 /// CHAPTER SCREEN
 /// 
@@ -100,43 +102,17 @@ class _ChapterScreenState extends State<ChapterScreen> {
     }
   }
 
-  // TODO: Replace with actual deep chat widget
   Widget _buildChatPlaceholder() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Deep Chat Coming Soon',
-            style: TextStyle(
-              fontFamily: 'Crimson Pro',
-              fontSize: 32,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'This is where the hour-long conversation happens',
-            style: TextStyle(
-              fontFamily: 'Crimson Pro',
-              fontSize: 16,
-              color: Colors.white.withOpacity(0.6),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 48),
-          ElevatedButton(
-            onPressed: () {
-              // Simulate chapter completion for now
-              _onChatComplete(
-                'This is a test prose chapter...',
-                {'test': 'pattern'},
-              );
-            },
-            child: const Text('Simulate Complete'),
-          ),
-        ],
-      ),
+    // TODO: Get actual API instance from app-level provider/dependency injection
+    final api = LifeTaskAPI(
+      baseUrl: 'http://your-backend-url',  // TODO: Configure from environment
+      getAuthToken: () => 'your-auth-token',  // TODO: Get from auth service
+    );
+
+    return DeepChat(
+      chapterNumber: currentChapter.number,
+      api: api,
+      onComplete: _onChatComplete,
     );
   }
 

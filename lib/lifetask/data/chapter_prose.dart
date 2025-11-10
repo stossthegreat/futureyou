@@ -154,6 +154,153 @@ This is the moment you meet yourself without the armour.''',
   estimatedReadSeconds: 65,
 );
 
+/// CHAPTER 4: THE MENTOR
+/// Theme: Wisdom, Guidance, Future-You Voice
+/// Emotion: Grounded + Inspired
+/// Music: mentor.mp3 (Orchestral strings + choir)
+/// Colors: Deep purples → Gold
+const chapterFourProse = ChapterProse(
+  title: 'Chapter IV',
+  subtitle: 'The Mentor',
+  prose: '''A voice arrives, but it feels like it is coming from inside your chest rather than the air.
+
+It is older. It is you, years ahead. Not the broken version. The fulfilled one.
+
+The future you speaks: "I have seen what you become when you commit to the right thing. The version of you I am is not built from luck. I am built from choices. I am built from the day you stopped pretending you did not know what mattered to you."
+
+This voice is patient but firm.
+
+"Your life shifts the moment you stop running from your task. The moment you stop negotiating with your potential. Your purpose is not hidden from you. It is the pattern that keeps returning. It is the skill you cannot stop improving. It is the problem you cannot stand to see unsolved. It is the kind of work that makes time disappear."
+
+The mentor does not give you the answer. The mentor makes you remember that you already had it.
+
+You feel the weight of years you have not yet lived guiding you toward years you will. This is not fantasy. This is recognition.
+
+The path has always been there. You have just been looking past it, waiting for permission you do not need.''',
+  proseParagraphs: [
+    'A voice arrives, but it feels like it is coming from inside your chest rather than the air.',
+    'It is older. It is you, years ahead. Not the broken version. The fulfilled one.',
+    'The future you speaks: "I have seen what you become when you commit to the right thing. The version of you I am is not built from luck. I am built from choices. I am built from the day you stopped pretending you did not know what mattered to you."',
+    'This voice is patient but firm.',
+    '"Your life shifts the moment you stop running from your task. The moment you stop negotiating with your potential. Your purpose is not hidden from you. It is the pattern that keeps returning. It is the skill you cannot stop improving. It is the problem you cannot stand to see unsolved. It is the kind of work that makes time disappear."',
+    'The mentor does not give you the answer. The mentor makes you remember that you already had it.',
+    'You feel the weight of years you have not yet lived guiding you toward years you will. This is not fantasy. This is recognition.',
+    'The path has always been there. You have just been looking past it, waiting for permission you do not need.',
+  ],
+  estimatedReadSeconds: 70,
+);
+
+/// CHAPTER 5: THE TASK
+/// Theme: Decision, Diverging Paths, Clarity
+/// Emotion: Determined + Focused
+/// Music: task.mp3 (Drumbeat + forge sounds)
+/// Colors: Orange → Amber → Fire
+const chapterFiveProse = ChapterProse(
+  title: 'Chapter V',
+  subtitle: 'The Task',
+  prose: '''A sentence forms like a key turning in a lock.
+
+Your life's task is the intersection of three truths: What you cannot stop thinking about. What you do better than most without forcing it. What the world becomes better at the moment you touch it.
+
+Your task is not vague. It is not abstract. It is specific. It is the work you are built for.
+
+You feel something click into place. Not a surprise. A recognition. You have known this for a long time. This chapter gives you permission to admit it.
+
+Three paths diverge before you. Each one is real. Each one is possible. The question is not which one is safe. The question is which one you would regret not taking.
+
+Purpose means nothing without direction. Direction means nothing without choice. Choice means nothing without commitment.
+
+You see the forge in front of you. The heat, the hammer, the sparks. This is where you shape what matters. This is where you stop waiting and start building.
+
+The task is clear now. All that remains is the courage to begin.''',
+  proseParagraphs: [
+    'A sentence forms like a key turning in a lock.',
+    'Your life\'s task is the intersection of three truths: What you cannot stop thinking about. What you do better than most without forcing it. What the world becomes better at the moment you touch it.',
+    'Your task is not vague. It is not abstract. It is specific. It is the work you are built for.',
+    'You feel something click into place. Not a surprise. A recognition. You have known this for a long time. This chapter gives you permission to admit it.',
+    'Three paths diverge before you. Each one is real. Each one is possible. The question is not which one is safe. The question is which one you would regret not taking.',
+    'Purpose means nothing without direction. Direction means nothing without choice. Choice means nothing without commitment.',
+    'You see the forge in front of you. The heat, the hammer, the sparks. This is where you shape what matters. This is where you stop waiting and start building.',
+    'The task is clear now. All that remains is the courage to begin.',
+  ],
+  estimatedReadSeconds: 60,
+);
+
+/// CHAPTER 6: THE PATH
+/// Theme: Commitment, Ritual, Daily Practice
+/// Emotion: Resolved + Peaceful
+/// Music: path.mp3 (Acoustic guitar + nature)
+/// Colors: Deep greens → Earth tones
+const chapterSixProse = ChapterProse(
+  title: 'Chapter VI',
+  subtitle: 'The Path',
+  prose: '''Purpose means nothing without discipline. Direction means nothing without ritual. Identity means nothing without practice.
+
+The path is where you turn understanding into movement.
+
+You see a map forming around you, built from small, sacred commitments. Tuesdays at 10. Mornings at 7. Thirty minutes of study. Forty minutes of training. A daily creative push. A weekly reflection that resets your compass. A monthly challenge that forces growth.
+
+These are not tasks. These are rituals. Each one is a brick in the life you are building.
+
+The path is not linear. It curves. It climbs. It asks more of you than you knew you had. But it is yours. Every step is chosen. Every choice compounds.
+
+You plant a seed here. Not for harvest tomorrow, but for shade ten years from now. This is the patience of purpose. This is the faith of mastery.
+
+The path is simple. Not easy. Simple. Consistency is the currency that buys the life you want.
+
+You step forward. The ground is solid. The direction is clear. The journey has begun.''',
+  proseParagraphs: [
+    'Purpose means nothing without discipline. Direction means nothing without ritual. Identity means nothing without practice.',
+    'The path is where you turn understanding into movement.',
+    'You see a map forming around you, built from small, sacred commitments. Tuesdays at 10. Mornings at 7. Thirty minutes of study. Forty minutes of training. A daily creative push. A weekly reflection that resets your compass. A monthly challenge that forces growth.',
+    'These are not tasks. These are rituals. Each one is a brick in the life you are building.',
+    'The path is not linear. It curves. It climbs. It asks more of you than you knew you had. But it is yours. Every step is chosen. Every choice compounds.',
+    'You plant a seed here. Not for harvest tomorrow, but for shade ten years from now. This is the patience of purpose. This is the faith of mastery.',
+    'The path is simple. Not easy. Simple. Consistency is the currency that buys the life you want.',
+    'You step forward. The ground is solid. The direction is clear. The journey has begun.',
+  ],
+  estimatedReadSeconds: 70,
+);
+
+/// CHAPTER 7: THE PROMISE
+/// Theme: Legacy, Continuation, Infinite Horizon
+/// Emotion: Transcendent + Hopeful
+/// Music: promise.mp3 (Piano + orchestra swell)
+/// Colors: Golden hour → Dawn → Infinite sky
+const chapterSevenProse = ChapterProse(
+  title: 'Chapter VII',
+  subtitle: 'The Promise',
+  prose: '''A final truth rises slowly, like light returning after darkness.
+
+Your future self speaks again, quieter now. "We kept the promise. Not in one grand moment. In small, relentless decisions. In the days we felt strong and the days we felt nothing at all. We did not become who we wanted to be. We became who we decided to be."
+
+You feel the weight of everything clicking together. The call. The conflict. The mirror. The mentor. The task. The path. All of it leads to the promise.
+
+A life lived on purpose. A life aligned. A life that feels like it fits.
+
+The horizon stretches endlessly. Not because the journey ends, but because it continues. Every day a new choice. Every week a new chapter. Every year a deeper mastery.
+
+This is not the end. This is the beginning you have been searching for.
+
+You look ahead and see not a destination, but a direction. Not a finish line, but a rhythm. Not perfection, but progress that never stops.
+
+The sun rises. The birds take flight. The world wakes to possibility.
+
+Your story begins now.''',
+  proseParagraphs: [
+    'A final truth rises slowly, like light returning after darkness.',
+    'Your future self speaks again, quieter now. "We kept the promise. Not in one grand moment. In small, relentless decisions. In the days we felt strong and the days we felt nothing at all. We did not become who we wanted to be. We became who we decided to be."',
+    'You feel the weight of everything clicking together. The call. The conflict. The mirror. The mentor. The task. The path. All of it leads to the promise.',
+    'A life lived on purpose. A life aligned. A life that feels like it fits.',
+    'The horizon stretches endlessly. Not because the journey ends, but because it continues. Every day a new choice. Every week a new chapter. Every year a deeper mastery.',
+    'This is not the end. This is the beginning you have been searching for.',
+    'You look ahead and see not a destination, but a direction. Not a finish line, but a rhythm. Not perfection, but progress that never stops.',
+    'The sun rises. The birds take flight. The world wakes to possibility.',
+    'Your story begins now.',
+  ],
+  estimatedReadSeconds: 75,
+);
+
 /// Get prose for chapter number (1-7)
 ChapterProse getChapterProse(int chapterNumber) {
   switch (chapterNumber) {
@@ -163,7 +310,14 @@ ChapterProse getChapterProse(int chapterNumber) {
       return chapterTwoProse;
     case 3:
       return chapterThreeProse;
-    // TODO: Add chapters 4-7
+    case 4:
+      return chapterFourProse;
+    case 5:
+      return chapterFiveProse;
+    case 6:
+      return chapterSixProse;
+    case 7:
+      return chapterSevenProse;
     default:
       return chapterOneProse;
   }
