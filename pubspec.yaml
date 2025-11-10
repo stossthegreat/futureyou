@@ -74,9 +74,6 @@ flutter:
     - assets/images/
     - assets/cinema/music/
     - assets/cinema/anims/
-    # If you add a custom notification sound file later, place it in:
-    # android/app/src/main/res/raw/notification_sound.(mp3|wav)
-    # (No pubspec entry needed for raw/)
 
   # fonts:
   #   - family: Inter
