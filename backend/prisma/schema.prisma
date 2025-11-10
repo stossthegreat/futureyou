@@ -19,50 +19,51 @@ enum Tone {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String?   @unique
-  tz           String    @default("Europe/London")
-  tone         Tone      @default(balanced)
-  intensity    Int       @default(2)
-  consentRoast Boolean   @default(false)
+  id           String  @id @default(cuid())
+  email        String? @unique
+  tz           String  @default("Europe/London")
+  tone         Tone    @default(balanced)
+  intensity    Int     @default(2)
+  consentRoast Boolean @default(false)
   safeWord     String?
-  plan         Plan      @default(FREE)
+  plan         Plan    @default(FREE)
 
   // NEW: OS-specific fields
-  mentorId        String?   // e.g. "marcus" | "drill" | "confucius" | "lincoln" | "buddha"
-  fcmToken        String?   // Firebase Cloud Messaging token for push
-  nudgesEnabled   Boolean   @default(true)
-  briefsEnabled   Boolean   @default(true)
-  debriefsEnabled Boolean   @default(true)
+  mentorId        String? // e.g. "marcus" | "drill" | "confucius" | "lincoln" | "buddha"
+  fcmToken        String? // Firebase Cloud Messaging token for push
+  nudgesEnabled   Boolean @default(true)
+  briefsEnabled   Boolean @default(true)
+  debriefsEnabled Boolean @default(true)
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  habits       Habit[]
-  antiHabits   AntiHabit[]
-  alarms       Alarm[]
-  events       Event[]
-  userFacts    UserFacts?
-  tasks        Task[]
+  habits          Habit[]
+  antiHabits      AntiHabit[]
+  alarms          Alarm[]
+  events          Event[]
+  userFacts       UserFacts?
+  tasks           Task[]
   todaySelections TodaySelection[]
 }
 
 model Habit {
-  id        String    @id @default(cuid())
-  userId    String
-  title     String
-  schedule  Json      @default("{}")
-  streak    Int       @default(0)
-  lastTick  DateTime?
-  color     String    @default("emerald")
-  context   Json      @default("{}")
-  reminderEnabled Boolean @default(false)
-  reminderTime    String? @default("08:00")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  userId          String
+  title           String
+  schedule        Json      @default("{}")
+  streak          Int       @default(0)
+  lastTick        DateTime?
+  color           String    @default("emerald")
+  context         Json      @default("{}")
+  reminderEnabled Boolean   @default(false)
+  reminderTime    String?   @default("08:00")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   todaySelections TodaySelection[]
+
   @@index([userId])
 }
 
@@ -77,7 +78,8 @@ model AntiHabit {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 
@@ -92,7 +94,8 @@ model Alarm {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([nextRun])
 }
@@ -105,7 +108,8 @@ model Event {
   payload   Json     @default("{}")
   embedding Bytes?
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId, ts])
   @@index([type])
 }
@@ -115,7 +119,7 @@ model UserFacts {
   json      Json     @default("{}")
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Task {
@@ -132,23 +136,25 @@ model Task {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   todaySelections TodaySelection[]
+
   @@index([userId])
 }
 
 model TodaySelection {
   id        String   @id @default(cuid())
-  userId  String
-  habitId String?
-  taskId  String?
-  date    String  // YYYY-MM-DD format
-  order   Int     @default(0)
+  userId    String
+  habitId   String?
+  taskId    String?
+  date      String // YYYY-MM-DD format
+  order     Int      @default(0)
   createdAt DateTime @default(now())
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  habit   Habit?  @relation(fields: [habitId], references: [id], onDelete: Cascade)
-  task    Task?   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habit Habit? @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  task  Task?  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
   @@index([userId, date])
 }
 
@@ -158,24 +164,27 @@ model VoiceCache {
   voice     String
   url       String
   createdAt DateTime @default(now())
+
   @@index([createdAt])
 }
 
 model HabitSnapshot {
-  id        String   @id @default(cuid())
-  userId    String
-  at        DateTime @default(now())
-  data      Json
+  id     String   @id @default(cuid())
+  userId String
+  at     DateTime @default(now())
+  data   Json
+
   @@index([userId])
 }
 
 model Completion {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
   habitId     String
   date        DateTime
-  done        Boolean  @default(false)
+  done        Boolean   @default(false)
   completedAt DateTime?
+
   @@unique([userId, habitId, date])
   @@index([userId])
   @@index([date])
@@ -189,46 +198,48 @@ enum CoachMessageKind {
 }
 
 model CoachMessage {
-  id        String            @id @default(cuid())
+  id        String           @id @default(cuid())
   userId    String
   kind      CoachMessageKind
   title     String
   body      String
   meta      Json?
-  createdAt DateTime          @default(now())
+  createdAt DateTime         @default(now())
   readAt    DateTime?
+
   @@index([userId])
 }
 
 model FutureYouPurposeProfile {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  lifeTask      String?
-  strengths     String[] @default([])
-  valuesRank    String[] @default([])
-  sdtAutonomy   Int?
-  sdtCompetence Int?
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  lifeTask       String?
+  strengths      String[]  @default([])
+  valuesRank     String[]  @default([])
+  sdtAutonomy    Int?
+  sdtCompetence  Int?
   sdtRelatedness Int?
-  flowContexts  String[] @default([])
-  redTags       String[] @default([])
-  odysseyPlans  Json?
-  keystones     String[] @default([])
-  antiHabits    String[] @default([])
-  lastReviewAt  DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  flowContexts   String[]  @default([])
+  redTags        String[]  @default([])
+  odysseyPlans   Json?
+  keystones      String[]  @default([])
+  antiHabits     String[]  @default([])
+  lastReviewAt   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 model FutureYouChapter {
-  id         String   @id @default(cuid())
-  userId     String
-  phase      String
-  title      String
-  bodyMd     String
-  words      Int
-  draftHash  String
-  status     String   @default("final")
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  phase     String
+  title     String
+  bodyMd    String
+  words     Int
+  draftHash String
+  status    String   @default("final")
+  createdAt DateTime @default(now())
+
   @@index([userId])
   @@index([userId, phase])
   @@index([draftHash])
@@ -242,20 +253,65 @@ model FutureYouBookEdition {
   bodyMd     String
   chapterIds String[]
   createdAt  DateTime @default(now())
+
   @@index([userId])
 }
 
 model FutureYouJob {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   userId     String
   type       String
   payload    Json
-  status     String   @default("queued")
+  status     String    @default("queued")
   error      String?
-  insertedAt DateTime @default(now())
+  insertedAt DateTime  @default(now())
   startedAt  DateTime?
   finishedAt DateTime?
-  idemKey    String   @unique
+  idemKey    String    @unique
+
   @@index([userId])
 }
 
+// NEW: Life's Task Discovery Engine Tables (Standalone System)
+model LifeTaskChapter {
+  id                     String    @id @default(cuid())
+  userId                 String
+  chapterNumber          Int // 1-7
+  conversationTranscript Json // Full message history
+  extractedPatterns      Json? // Red threads, values, strengths
+  proseText              String? // 350-600 word generated chapter
+  completedAt            DateTime?
+  timeSpentMinutes       Int       @default(0)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@unique([userId, chapterNumber])
+  @@index([userId])
+  @@index([userId, chapterNumber])
+}
+
+model LifeTaskArtifact {
+  id           String   @id @default(cuid())
+  userId       String
+  artifactType String // 'story_map', 'shadow_map', 'strengths_grid', etc.
+  data         Json // Artifact-specific structure
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, artifactType])
+  @@index([userId])
+  @@index([userId, artifactType])
+}
+
+model LifeTaskBook {
+  id               String   @id @default(cuid())
+  userId           String
+  title            String
+  compiledMarkdown String   @db.Text // Full book content
+  chapterIds       String[] // References to LifeTaskChapter ids
+  createdAt        DateTime @default(now())
+  version          Int      @default(1)
+
+  @@index([userId])
+  @@index([userId, version])
+}

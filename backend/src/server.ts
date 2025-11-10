@@ -21,6 +21,7 @@ import { futureYouChatController } from "./controllers/future-you-chat.controlle
 import { whatIfChatController } from "./controllers/what-if-chat.controller";
 import { futureYouChatControllerV2 } from "./controllers/future-you-v2.controller";
 import { futureYouRouter } from "./modules/futureyou/router";
+import { lifeTaskRouter } from "./modules/lifetask/router";
 
 dotenv.config();
 
@@ -111,6 +112,9 @@ const buildServer = () => {
     
     // Future-You Unified Engine (Phase 1: Coaching + Chapters)
     protectedRoutes.register(futureYouRouter); // 7-phase purpose coaching
+    
+    // Life's Task Discovery Engine (New standalone system)
+    protectedRoutes.register(lifeTaskRouter); // Deep excavation + prose chapters
   });
   
   // Test routes (optional - can be public or protected based on needs)
