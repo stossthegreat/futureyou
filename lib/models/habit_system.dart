@@ -35,18 +35,21 @@ class HabitSystem {
   };
   
   // Create from JSON
-  factory HabitSystem.fromJson(Map<String, dynamic> json) => HabitSystem(
-    id: json['id'] as String,
-    name: json['name'] as String,
-    tagline: json['tagline'] as String,
-    icon: IconData(json['iconCodePoint'] as int, fontFamily: 'MaterialIcons'),
-    accentColor: Color(json['accentColorValue'] as int),
-    gradientColors: (json['gradientColorValues'] as List<dynamic>)
-        .map((v) => Color(v as int))
-        .toList(),
-    habitIds: (json['habitIds'] as List<dynamic>).cast<String>(),
-    createdAt: DateTime.parse(json['createdAt'] as String),
-  );
+  factory HabitSystem.fromJson(Map<String, dynamic> json) {
+    final int codePoint = json['iconCodePoint'] as int;
+    return HabitSystem(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      tagline: json['tagline'] as String,
+      icon: IconData(codePoint, fontFamily: 'MaterialIcons'),
+      accentColor: Color(json['accentColorValue'] as int),
+      gradientColors: (json['gradientColorValues'] as List<dynamic>)
+          .map((v) => Color(v as int))
+          .toList(),
+      habitIds: (json['habitIds'] as List<dynamic>).cast<String>(),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+  }
   
   HabitSystem copyWith({
     String? id,
