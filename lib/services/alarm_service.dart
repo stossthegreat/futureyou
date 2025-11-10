@@ -66,12 +66,14 @@ class AlarmService {
   }
 
   static Future<void> _createNotificationChannel() async {
+    // CHANGED: Using UriAndroidNotificationSound to play system alarm sound
     const androidChannel = AndroidNotificationChannel(
       _channelId,
       _channelName,
       description: _channelDescription,
       importance: Importance.max,
       playSound: true,
+      sound: UriAndroidNotificationSound('content://settings/system/alarm_alert'), // ← SYSTEM ALARM SOUND
       enableVibration: true,
       enableLights: true,
     );
@@ -121,6 +123,7 @@ class AlarmService {
     }
     await cancelAlarm(habit.id);
 
+    // CHANGED: Using system alarm sound instead of default notification sound
     const androidDetails = AndroidNotificationDetails(
       _channelId,
       _channelName,
@@ -128,15 +131,17 @@ class AlarmService {
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
+      sound: UriAndroidNotificationSound('content://settings/system/alarm_alert'), // ← SYSTEM ALARM SOUND
       enableVibration: true,
       enableLights: true,
+      audioAttributesUsage: AudioAttributesUsage.alarm, // ← TREAT AS ALARM, NOT NOTIFICATION
     );
 
     const iOSDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
-      // sound: 'default',
+      sound: 'default',
     );
 
     final details = NotificationDetails(android: androidDetails, iOS: iOSDetails);
