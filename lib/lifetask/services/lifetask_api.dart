@@ -1,21 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '../../services/api_client.dart'; // Use existing working API client!
 import '../models/chapter_model.dart';
 
 /// LIFE'S TASK API CLIENT
 /// 
-/// Connects to backend /api/lifetask/* endpoints
-/// Handles streaming AI responses, chapter saves, artifact retrieval
+/// Wraps the existing ApiClient to hit /api/lifetask/* endpoints
+/// Uses the same auth, timeouts, and error handling that already works!
 
 class LifeTaskAPI {
-  final String baseUrl;
-  final String Function() getAuthToken;
-
-  LifeTaskAPI({
-    required this.baseUrl,
-    required this.getAuthToken,
-  });
+  // Use singleton pattern since ApiClient is static
+  LifeTaskAPI();
 
   /// Stream AI conversation responses (excavation mode)
   /// Returns stream of partial responses for real-time typing effect
@@ -51,29 +46,22 @@ class LifeTaskAPI {
     }
   }
 
-  /// Get full conversation response (non-streaming fallback)
+  /// Get full conversation response (uses existing ApiClient)
   Future<ConversationResponse> converse({
     required int chapterNumber,
     required List<Message> messages,
     required DateTime sessionStartTime,
   }) async {
-    final uri = Uri.parse('$baseUrl/api/lifetask/conversation');
-    final token = getAuthToken();
-
     try {
-      final response = await http.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-          'x-user-id': token, // Fallback for backends without Firebase Admin
-        },
-        body: jsonEncode({
+      // Use the existing ApiClient that already works!
+      final response = await ApiClient.post(
+        '/api/lifetask/conversation',
+        {
           'chapterNumber': chapterNumber,
           'messages': messages.map((m) => m.toJson()).toList(),
           'sessionStartTime': sessionStartTime.toIso8601String(),
-        }),
-      ).timeout(const Duration(seconds: 30));
+        },
+      );
 
       if (response.statusCode != 200) {
         throw Exception('API error: ${response.statusCode} - ${response.body}');
@@ -82,7 +70,7 @@ class LifeTaskAPI {
       final data = jsonDecode(response.body);
       return ConversationResponse.fromJson(data);
     } catch (e) {
-      print('❌ API Error: $e');
+      print('❌ Life Task API Error: $e');
       rethrow;
     }
   }
@@ -93,20 +81,13 @@ class LifeTaskAPI {
     required List<Message> messages,
     required Map<String, dynamic> extractedPatterns,
   }) async {
-    final uri = Uri.parse('$baseUrl/api/lifetask/chapters/generate');
-    final token = getAuthToken();
-
-    final response = await http.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final response = await ApiClient.post(
+      '/api/lifetask/chapters/generate',
+      {
         'chapterNumber': chapterNumber,
         'conversationTranscript': messages.map((m) => m.toJson()).toList(),
         'extractedPatterns': extractedPatterns,
-      }),
+      },
     );
 
     if (response.statusCode != 200) {
@@ -125,22 +106,15 @@ class LifeTaskAPI {
     required Map<String, dynamic> extractedPatterns,
     required int timeSpentMinutes,
   }) async {
-    final uri = Uri.parse('$baseUrl/api/lifetask/chapters/save');
-    final token = getAuthToken();
-
-    final response = await http.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final response = await ApiClient.post(
+      '/api/lifetask/chapters/save',
+      {
         'chapterNumber': chapterNumber,
         'conversationTranscript': messages.map((m) => m.toJson()).toList(),
         'extractedPatterns': extractedPatterns,
         'proseText': proseText,
         'timeSpentMinutes': timeSpentMinutes,
-      }),
+      },
     );
 
     if (response.statusCode != 200) {
@@ -150,15 +124,7 @@ class LifeTaskAPI {
 
   /// Get all chapters
   Future<List<Chapter>> getChapters() async {
-    final uri = Uri.parse('$baseUrl/api/lifetask/chapters');
-    final token = getAuthToken();
-
-    final response = await http.get(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
+    final response = await ApiClient.get('/api/lifetask/chapters');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch chapters');
@@ -170,15 +136,7 @@ class LifeTaskAPI {
 
   /// Compile book
   Future<CompiledBook> compileBook() async {
-    final uri = Uri.parse('$baseUrl/api/lifetask/book/compile');
-    final token = getAuthToken();
-
-    final response = await http.post(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
+    final response = await ApiClient.post('/api/lifetask/book/compile', {});
 
     if (response.statusCode != 200) {
       throw Exception('Failed to compile book');
