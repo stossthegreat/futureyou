@@ -74,6 +74,7 @@ flutter:
     - assets/images/
     - assets/cinema/music/
     - assets/cinema/anims/
+    - assets/cinema/audio/
 
   # fonts:
   #   - family: Inter

@@ -3,7 +3,8 @@ import 'dart:async';
 import '../models/chapter_model.dart';
 import '../services/lifetask_api.dart';
 import '../services/conversation_manager.dart';
-import 'cinematic_particles.dart';
+import 'epic_particles.dart';
+import 'cinematic_particles.dart'; // Keep for theme
 
 /// DEEP CHAT
 /// 
@@ -298,13 +299,13 @@ class _DeepChatState extends State<DeepChat> with TickerProviderStateMixin {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background particles (subtle)
+          // EPIC Background particles (more beautiful, multi-layer)
           Opacity(
-            opacity: 0.2,
-            child: CinematicParticles(
-              theme: theme,
+            opacity: 0.4, // Increased from 0.2 for visibility
+            child: EpicParticles(
+              colors: theme.particleColors,
               isPulsing: _isTyping,
-              intensity: 0.3,
+              intensity: 0.5, // Moderate intensity for background ambiance
             ),
           ),
 

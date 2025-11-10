@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'epic_particles.dart';
 import 'cinematic_particles.dart'; // Keep for theme definitions
 import '../data/chapter_prose.dart';
@@ -45,6 +46,10 @@ class _CinematicIntroState extends State<CinematicIntro>
 
   late ChapterProse prose;
   late ChapterTheme theme;
+  
+  // Audio player for TTS narration
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _hasAudio = false;
 
   String visibleText = '';
   int currentParagraphIndex = 0;
@@ -113,7 +118,8 @@ class _CinematicIntroState extends State<CinematicIntro>
     _particleController.forward(); // Particles fade in
 
     await Future.delayed(const Duration(seconds: 3));
-    // TODO: Start music playback
+    // Start TTS narration (if audio file exists)
+    await _playTTSNarration();
 
     await Future.delayed(const Duration(seconds: 15));
     _titleController.forward(); // Title appears
@@ -205,6 +211,31 @@ class _CinematicIntroState extends State<CinematicIntro>
     _proseController.value = 1.0;
   }
 
+  Future<void> _playTTSNarration() async {
+    // Map chapter number to audio file
+    final audioFiles = {
+      1: 'cinema/audio/chapter_1_call.mp3',
+      2: 'cinema/audio/chapter_2_conflict.mp3',
+      3: 'cinema/audio/chapter_3_mirror.mp3',
+      4: 'cinema/audio/chapter_4_mentor.mp3',
+      5: 'cinema/audio/chapter_5_task.mp3',
+      6: 'cinema/audio/chapter_6_path.mp3',
+      7: 'cinema/audio/chapter_7_promise.mp3',
+    };
+
+    final audioPath = audioFiles[widget.chapterNumber];
+    if (audioPath == null) return;
+
+    try {
+      await _audioPlayer.play(AssetSource(audioPath));
+      _hasAudio = true;
+      print('🎵 Playing TTS narration: $audioPath');
+    } catch (e) {
+      print('⚠️ TTS audio not found: $audioPath (Add your ElevenLabs file!)');
+      // Continue without audio - not critical
+    }
+  }
+
   @override
   void dispose() {
     _masterController.dispose();
@@ -214,6 +245,7 @@ class _CinematicIntroState extends State<CinematicIntro>
     _proseController.dispose();
     _glowController.dispose();
     _typingTimer?.cancel();
+    _audioPlayer.dispose(); // Dispose audio player
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
