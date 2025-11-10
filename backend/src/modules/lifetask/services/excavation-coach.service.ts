@@ -199,8 +199,8 @@ FRAMEWORKS TO USE: ${config.frameworks.join(', ')}
 CONVERSATION STATE:
 - Exchange count: ${exchangeCount}
 - Time elapsed: ${timeElapsed} minutes
-- Minimum exchanges needed: ${config.minimumExchanges}
-- Minimum time needed: ${config.minimumTimeMinutes} minutes
+- Estimated exchanges: ${config.estimatedExchanges}
+- Estimated timeframe: ${config.estimatedTimeframe}
 
 KEY THEMES TO EXPLORE:
 ${config.keyThemes.map(theme => `- ${theme}`).join('\n')}

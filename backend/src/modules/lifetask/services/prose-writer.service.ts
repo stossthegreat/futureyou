@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { getChapterConfig } from './chapter-config';
+import { getChapterConfig, ChapterConfig } from './chapter-config';
 
 /**
  * PROSE WRITER - Literary AI for chapter generation

@@ -1,4 +1,5 @@
 import { prisma } from '../../../utils/db';
+import { Prisma } from '@prisma/client';
 import { MessageDTO } from '../dto/conversation.dto';
 
 export class ChaptersRepository {
@@ -20,15 +21,15 @@ export class ChaptersRepository {
       create: {
         userId,
         chapterNumber,
-        conversationTranscript: messages,
-        extractedPatterns: extractedPatterns || {},
+        conversationTranscript: messages as unknown as Prisma.InputJsonValue,
+        extractedPatterns: (extractedPatterns || {}) as Prisma.InputJsonValue,
         proseText,
         timeSpentMinutes,
         completedAt: proseText ? new Date() : null,
       },
       update: {
-        conversationTranscript: messages,
-        extractedPatterns: extractedPatterns || {},
+        conversationTranscript: messages as unknown as Prisma.InputJsonValue,
+        extractedPatterns: (extractedPatterns || {}) as Prisma.InputJsonValue,
         proseText,
         timeSpentMinutes,
         completedAt: proseText ? new Date() : null,
