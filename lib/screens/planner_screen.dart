@@ -1560,6 +1560,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                 ],
               ),
             ),
+            
+            // Bottom padding so button is above nav bar
+            const SizedBox(height: 120),
           ],
         ),
       ),

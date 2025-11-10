@@ -12,6 +12,8 @@ import '../widgets/morning_brief_modal.dart';
 import '../providers/habit_provider.dart';
 import '../services/messages_service.dart';
 import '../services/weekly_stats_service.dart';
+import '../services/local_storage.dart';
+import '../models/habit_system.dart';
 import '../widgets/week_overview_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -63,6 +65,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final dayHabits = allHabits.where((habit) {
       return habit.isScheduledForDate(_selectedDate);
     }).toList();
+    
+    // Load all systems and group habits
+    final allSystems = LocalStorageService.getAllSystems();
+    
+    // Group habits by system
+    final Map<String, List<dynamic>> systemHabitsMap = {};
+    final List<dynamic> standaloneHabits = [];
+    
+    for (final habit in dayHabits) {
+      bool belongsToSystem = false;
+      for (final system in allSystems) {
+        if (system.habitIds.contains(habit.id)) {
+          if (!systemHabitsMap.containsKey(system.id)) {
+            systemHabitsMap[system.id] = [];
+          }
+          systemHabitsMap[system.id]!.add(habit);
+          belongsToSystem = true;
+          break;
+        }
+      }
+      if (!belongsToSystem) {
+        standaloneHabits.add(habit);
+      }
+    }
     
     // ✅ Date-aware completion
     final completedCount = dayHabits.where((h) => h.isDoneOn(_selectedDate)).length;
@@ -120,7 +146,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             
             const SizedBox(height: AppSpacing.lg),
             
-            // Habit cards (React style)
+            // Habit cards (System cards + Standalone habits)
           if (dayHabits.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl * 2),
@@ -156,20 +182,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Column(
-                children: dayHabits.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final habit = entry.value;
-                  final isDone = habit.isDoneOn(_selectedDate);
+                children: [
+                  // System Cards
+                  ...allSystems.where((system) => systemHabitsMap.containsKey(system.id)).map((system) {
+                    final systemHabits = systemHabitsMap[system.id]!;
+                    return _buildSystemCard(
+                      system: system,
+                      habits: systemHabits,
+                      selectedDate: _selectedDate,
+                    );
+                  }).toList(),
                   
-                  return _buildReactHabitCard(
-                    habit: habit,
-                    isDone: isDone,
-                    index: index,
-                    onToggle: () async {
-                      await ref.read(habitEngineProvider).toggleHabitCompletion(habit.id);
-                    },
-                  );
-                }).toList(),
+                  // Standalone Habit Cards
+                  ...standaloneHabits.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final habit = entry.value;
+                    final isDone = habit.isDoneOn(_selectedDate);
+                    
+                    return _buildReactHabitCard(
+                      habit: habit,
+                      isDone: isDone,
+                      index: index + allSystems.length,
+                      onToggle: () async {
+                        await ref.read(habitEngineProvider).toggleHabitCompletion(habit.id);
+                      },
+                    );
+                  }).toList(),
+                ],
               ),
             ),
           
@@ -186,6 +225,195 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     ),
     );
+  }
+  
+  // System Card Widget - looks exactly like viral system cards
+  Widget _buildSystemCard({
+    required HabitSystem system,
+    required List<dynamic> habits,
+    required DateTime selectedDate,
+  }) {
+    // Calculate completion
+    final completedCount = habits.where((h) => h.isDoneOn(selectedDate)).length;
+    final completion = habits.isEmpty ? 0 : ((completedCount / habits.length) * 100).round();
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.45),
+              blurRadius: 40,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header with gradient
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: system.gradientColors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                      ),
+                      child: Icon(system.icon, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            system.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            system.tagline,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 11,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Body with progress + habits
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  children: [
+                    // Progress ring + stats
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 50,
+                          height: 50,
+                          child: Stack(
+                            children: [
+                              CircularProgressIndicator(
+                                value: completion / 100,
+                                strokeWidth: 6,
+                                backgroundColor: Colors.white.withOpacity(0.12),
+                                valueColor: AlwaysStoppedAnimation<Color>(system.accentColor),
+                              ),
+                              Center(
+                                child: Text(
+                                  '$completion%',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '$completedCount/${habits.length} habits today',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: AppSpacing.sm),
+                    
+                    // Habits list - clickable for ticking
+                    ...habits.map((habit) {
+                      final isDone = habit.isDoneOn(selectedDate);
+                      return GestureDetector(
+                        onTap: () async {
+                          await ref.read(habitEngineProvider).toggleHabitCompletion(habit.id);
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                            border: Border.all(color: Colors.white.withOpacity(0.06)),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: isDone ? system.accentColor : Colors.white.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: isDone
+                                    ? const Icon(LucideIcons.check, color: Colors.white, size: 10)
+                                    : null,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  habit.title,
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate()
+        .fadeIn(duration: 400.ms)
+        .slideY(begin: 0.1, end: 0);
   }
   
   Widget _buildReactHabitCard({
