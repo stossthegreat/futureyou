@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/chapter_model.dart';
 import '../widgets/cinematic_intro.dart';
 import '../widgets/deep_chat.dart';
+import '../widgets/chapter_prose_display.dart';
 import '../services/lifetask_api.dart';
 
 /// CHAPTER SCREEN
@@ -116,57 +117,20 @@ class _ChapterScreenState extends State<ChapterScreen> {
     );
   }
 
-  // TODO: Replace with actual chapter display widget
   Widget _buildCompletePlaceholder() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Chapter Complete! 🎉',
-              style: TextStyle(
-                fontFamily: 'Crimson Pro',
-                fontSize: 32,
-                color: const Color(0xFFfbbf24),
-                fontWeight: FontWeight.w700,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Your personalized prose chapter has been generated.',
-              style: TextStyle(
-                fontFamily: 'Crimson Pro',
-                fontSize: 18,
-                color: Colors.white.withOpacity(0.8),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 48),
-            ElevatedButton(
-              onPressed: _finishChapter,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFfbbf24),
-                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-              child: Text(
-                'Continue Journey',
-                style: TextStyle(
-                  fontFamily: 'Crimson Pro',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ChapterProseDisplay(
+      chapterNumber: currentChapter.number,
+      proseText: currentChapter.generatedProseText ?? 'Your chapter text will appear here...',
+      onComplete: _finishChapter,
+      onReplay: () {
+        // TODO: Implement TTS replay
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('TTS narration coming soon'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      },
     );
   }
 }
