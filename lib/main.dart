@@ -28,6 +28,7 @@ import 'screens/terms_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/support_screen.dart';
 import 'cinematic/cinematic_entry.dart';
+import 'lifetask/screens/lifetask_journey_screen.dart';
 import 'design/theme.dart';
 
 Future<void> _initTimezone() async {
@@ -121,7 +122,8 @@ class FutureYouApp extends StatelessWidget {
         '/terms': (context) => const TermsScreen(),
         '/privacy': (context) => const PrivacyScreen(),
         '/support': (context) => const SupportScreen(),
-        '/cinematic': (context) => const CinematicEntry(),
+        '/cinematic': (context) => const LifeTaskJourneyScreen(), // NEW: Life's Task Discovery
+        '/cinematic-old': (context) => const CinematicEntry(), // OLD: Keep for reference
       },
     );
   }
