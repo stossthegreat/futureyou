@@ -276,11 +276,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(AppBorderRadius.md),
                       ),
-                      child: Icon(
-                       system.icon,
-                       color: Colors.white,
-                       size: 24,
-                     ),
+                      child: Text(
+                        system.name.isNotEmpty ? system.name[0].toUpperCase() : '⭐',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
