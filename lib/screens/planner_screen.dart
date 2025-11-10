@@ -9,6 +9,7 @@ import '../widgets/glass_card.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/date_strip.dart';
 import '../widgets/simple_header.dart';
+import '../widgets/system_card.dart';
 import '../providers/habit_provider.dart';
 import '../models/habit.dart';
 import '../models/habit_system.dart';
@@ -731,20 +732,54 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       );
     }
 
+    // Load all systems
+    final allSystems = LocalStorageService.getAllSystems();
+    
+    // Group habits by systemId (same logic as Home screen)
+    final Map<String, List<Habit>> systemHabitsMap = {};
+    final List<Habit> standaloneHabits = [];
+    
+    for (final habit in filtered) {
+      if (habit.systemId != null && habit.systemId!.isNotEmpty) {
+        // Habit belongs to a system
+        if (!systemHabitsMap.containsKey(habit.systemId)) {
+          systemHabitsMap[habit.systemId!] = [];
+        }
+        systemHabitsMap[habit.systemId!]!.add(habit);
+      } else {
+        // Standalone habit
+        standaloneHabits.add(habit);
+      }
+    }
+
     return RefreshIndicator(
       onRefresh: () async => await ref.read(habitEngineProvider).loadHabits(),
-      child: ListView.builder(
+      child: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg, 
           0, 
           AppSpacing.lg, 
           150, // Extra bottom padding for breathing room
         ),
-        itemCount: filtered.length,
-        itemBuilder: (context, i) => Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          child: _buildHabitCard(filtered[i]),
-        ),
+        children: [
+          // System Cards
+          ...allSystems.where((system) => systemHabitsMap.containsKey(system.id)).map((system) {
+            final systemHabits = systemHabitsMap[system.id]!;
+            return SystemCard(
+              system: system,
+              habits: systemHabits,
+              onToggleHabit: (habit) async {
+                await ref.read(habitEngineProvider.notifier).toggleHabitCompletion(habit.id);
+              },
+            );
+          }).toList(),
+          
+          // Standalone Habit Cards
+          ...standaloneHabits.map((habit) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: _buildHabitCard(habit),
+          )).toList(),
+        ],
       ),
     );
   }
@@ -1621,6 +1656,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     // Create all habits
     try {
       final habitIds = <String>[];
+      final systemId = 'system_${DateTime.now().millisecondsSinceEpoch}'; // Generate unique system ID
       
       // Prepare time string
       String timeString = '';
@@ -1642,6 +1678,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           color: _systemColor,
           emoji: habitText.split(' ').first,
           reminderOn: _systemAlarmEnabled,
+          systemId: systemId, // NEW: Link habit to system
         );
         
         await Future.delayed(const Duration(milliseconds: 10));
@@ -1649,7 +1686,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
 
       // Save system metadata
       final system = HabitSystem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: systemId, // Use the same systemId
         name: _systemNameController.text.trim(),
         tagline: _systemTaglineController.text.trim().isEmpty 
             ? 'Custom system' 
