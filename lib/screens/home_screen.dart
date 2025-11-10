@@ -277,7 +277,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         borderRadius: BorderRadius.circular(AppBorderRadius.md),
                       ),
                       child: Icon(
-                       IconData(system.iconCodePoint, fontFamily: 'MaterialIcons'),
+                       system.icon,
                        color: Colors.white,
                        size: 24,
                      ),
