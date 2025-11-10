@@ -96,4 +96,4 @@ ehthumbs.db
 Thumbs.db
 
 # Prisma
-prisma/migrations/
+# prisma/migrations/  # COMMENTED OUT - We need migrations in git for deployment!
