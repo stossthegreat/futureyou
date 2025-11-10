@@ -27,7 +27,11 @@ class SystemCard extends StatelessWidget {
     final completedCount = habits.where((h) => h.done).length;
     final totalCount = habits.length;
     final completion = totalCount > 0 ? (completedCount / totalCount * 100).toInt() : 0;
-    final gradient = _parseGradient(system.gradient);
+    final gradient = LinearGradient(
+      colors: system.gradientColors,
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
 
     return GestureDetector(
       onTap: onTap,
@@ -254,30 +258,7 @@ class SystemCard extends StatelessWidget {
     );
   }
 
-  LinearGradient _parseGradient(String gradientStr) {
-    // Parse CSS linear-gradient string to Flutter gradient
-    // Example: "linear-gradient(135deg,#FF6B35 0%,#F7931E 50%,#FFC837 100%)"
-    
-    final colors = <Color>[];
-    final regex = RegExp(r'#([0-9A-Fa-f]{6})');
-    final matches = regex.allMatches(gradientStr);
-    
-    for (final match in matches) {
-      final hex = match.group(1)!;
-      colors.add(Color(int.parse('FF$hex', radix: 16)));
-    }
-    
-    if (colors.isEmpty) {
-      // Fallback to system colors
-      colors.addAll(system.gradientColors);
-    }
-    
-    return LinearGradient(
-      colors: colors,
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-  }
+  // _parseGradient method removed - now using system.gradientColors directly
 }
 
 class _AnimatedParticles extends StatelessWidget {

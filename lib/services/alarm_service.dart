@@ -237,7 +237,7 @@ class AlarmService {
         wakeup: true,
         allowWhileIdle: true,
         rescheduleOnReboot: true,
-        params: params,
+        params: params ?? {}, // Fix: provide empty map if params is null
       );
       debugPrint('🔁 Rescheduled alarm for next week: $nextWeek');
 
