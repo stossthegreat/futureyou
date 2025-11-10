@@ -279,8 +279,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: Icon(
                        IconData(system.iconCodePoint, fontFamily: 'MaterialIcons'),
                        color: Colors.white,
-                        size: 24,
-                       ),
+                       size: 24,
+                     ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
