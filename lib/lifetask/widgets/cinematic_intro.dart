@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-import 'cinematic_particles.dart';
+import 'epic_particles.dart';
+import 'cinematic_particles.dart'; // Keep for theme definitions
 import '../data/chapter_prose.dart';
 
 /// CINEMATIC INTRO
@@ -52,6 +53,7 @@ class _CinematicIntroState extends State<CinematicIntro>
   bool _isTyping = false;
   bool _canSkip = false;
   bool _hasSkipped = false;
+  bool _sequenceComplete = false; // Button ONLY shows after full 90s
 
   @override
   void initState() {
@@ -180,6 +182,7 @@ class _CinematicIntroState extends State<CinematicIntro>
     if (!mounted) return;
     setState(() {
       _isTyping = false;
+      _sequenceComplete = true; // NOW the button can appear
     });
   }
 
@@ -190,6 +193,7 @@ class _CinematicIntroState extends State<CinematicIntro>
       _hasSkipped = true;
       visibleText = prose.prose;
       _isTyping = false;
+      _sequenceComplete = true; // Allow button to show after skip
     });
 
     _typingTimer?.cancel();
@@ -225,16 +229,16 @@ class _CinematicIntroState extends State<CinematicIntro>
             // Animated gradient background
             _buildGradientBackground(),
 
-            // Particle system
+            // EPIC Particle system (multi-layer, bokeh, god rays)
             AnimatedBuilder(
               animation: _particleController,
               builder: (context, child) {
                 return Opacity(
                   opacity: _particleController.value,
-                  child: CinematicParticles(
-                    theme: theme,
+                  child: EpicParticles(
+                    colors: theme.particleColors,
                     isPulsing: _isTyping,
-                    intensity: 0.5,
+                    intensity: 0.9, // Cranked up to 0.9 for IMPACT
                   ),
                 );
               },
@@ -275,15 +279,56 @@ class _CinematicIntroState extends State<CinematicIntro>
   }
 
   Widget _buildGradientBackground() {
-    return AnimatedContainer(
-      duration: const Duration(seconds: 15),
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment.topCenter,
-          radius: 1.5,
-          colors: theme.gradientColors,
+    // Multi-layer gradient for DEPTH
+    return Stack(
+      children: [
+        // Base gradient
+        AnimatedContainer(
+          duration: const Duration(seconds: 20),
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.topCenter,
+              radius: 2.0,
+              colors: [
+                theme.gradientColors.first.withOpacity(0.4),
+                theme.gradientColors[1].withOpacity(0.3),
+                Colors.black,
+              ],
+              stops: const [0.0, 0.4, 1.0],
+            ),
+          ),
         ),
-      ),
+        // Overlay gradient (moves slowly)
+        AnimatedContainer(
+          duration: const Duration(seconds: 25),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                theme.gradientColors.last.withOpacity(0.2),
+                Colors.transparent,
+                theme.gradientColors.first.withOpacity(0.1),
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
+          ),
+        ),
+        // Vignette (darker edges)
+        Container(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.center,
+              radius: 1.0,
+              colors: [
+                Colors.transparent,
+                Colors.black.withOpacity(0.6),
+              ],
+              stops: const [0.4, 1.0],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -304,23 +349,42 @@ class _CinematicIntroState extends State<CinematicIntro>
             child: AnimatedBuilder(
               animation: _glowController,
               builder: (context, child) {
+                // EPIC GLOW - Multi-layer shadows for depth
+                final glowIntensity = 0.5 + (_glowController.value * 0.5);
                 return Text(
                   prose.title,
                   style: TextStyle(
                     fontFamily: 'Crimson Pro',
-                    fontSize: 48,
+                    fontSize: 52,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
-                    letterSpacing: 1.5,
+                    letterSpacing: 2.0,
                     shadows: [
+                      // Outer glow (theme color)
                       Shadow(
-                        color: theme.particleColors[2]
-                            .withOpacity(0.3 + (_glowController.value * 0.3)),
-                        blurRadius: 20,
+                        color: theme.particleColors[2].withOpacity(glowIntensity * 0.8),
+                        blurRadius: 60,
                       ),
+                      // Mid glow (brighter)
                       Shadow(
-                        color: Colors.white.withOpacity(0.2),
+                        color: theme.particleColors[2].withOpacity(glowIntensity * 0.6),
+                        blurRadius: 40,
+                      ),
+                      // Inner glow (white)
+                      Shadow(
+                        color: Colors.white.withOpacity(glowIntensity * 0.5),
+                        blurRadius: 25,
+                      ),
+                      // Sharp highlight
+                      Shadow(
+                        color: Colors.white.withOpacity(0.3),
                         blurRadius: 10,
+                      ),
+                      // Subtle depth shadow
+                      Shadow(
+                        color: Colors.black.withOpacity(0.5),
+                        offset: const Offset(0, 4),
+                        blurRadius: 8,
                       ),
                     ],
                   ),
@@ -400,28 +464,41 @@ class _CinematicIntroState extends State<CinematicIntro>
           ),
         ),
       );
-    } else if (!_isTyping) {
+    } else if (_sequenceComplete) {
+      // Button ONLY shows after full sequence completes
       return Center(
         child: AnimatedOpacity(
           opacity: 1.0,
           duration: const Duration(milliseconds: 800),
-          child: ElevatedButton(
-            onPressed: widget.onComplete,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.particleColors[2].withOpacity(0.3),
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.particleColors[2].withOpacity(0.5),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
             ),
-            child: Text(
-              'Begin Journey',
-              style: TextStyle(
-                fontFamily: 'Crimson Pro',
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-                letterSpacing: 1.0,
+            child: ElevatedButton(
+              onPressed: widget.onComplete,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.particleColors[2].withOpacity(0.3),
+                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: Text(
+                'Begin Journey',
+                style: TextStyle(
+                  fontFamily: 'Crimson Pro',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  letterSpacing: 1.0,
+                ),
               ),
             ),
           ),

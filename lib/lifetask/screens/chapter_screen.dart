@@ -40,12 +40,18 @@ class _ChapterScreenState extends State<ChapterScreen> {
     super.initState();
     currentChapter = widget.chapter;
     
+    // DEBUG: Print chapter status
+    print('🎬 ChapterScreen Init - Chapter ${currentChapter.number} - Status: ${currentChapter.status}');
+    
     // If chapter already in progress or completed, skip intro
     if (currentChapter.status == ChapterStatus.inProgress ||
         currentChapter.status == ChapterStatus.completed) {
       currentPhase = currentChapter.status == ChapterStatus.completed
           ? ChapterPhase.complete
           : ChapterPhase.chat;
+      print('🎬 Skipping intro - going to ${currentPhase}');
+    } else {
+      print('🎬 Starting with INTRO phase');
     }
     
     sessionStartTime = DateTime.now();
@@ -88,17 +94,22 @@ class _ChapterScreenState extends State<ChapterScreen> {
   }
 
   Widget _buildCurrentPhase() {
+    print('🎬 Building phase: $currentPhase');
+    
     switch (currentPhase) {
       case ChapterPhase.intro:
+        print('🎬 Rendering CinematicIntro for Chapter ${currentChapter.number}');
         return CinematicIntro(
           chapterNumber: currentChapter.number,
           onComplete: _onIntroComplete,
         );
 
       case ChapterPhase.chat:
+        print('🎬 Rendering DeepChat for Chapter ${currentChapter.number}');
         return _buildChatPlaceholder();
 
       case ChapterPhase.complete:
+        print('🎬 Rendering ChapterProseDisplay for Chapter ${currentChapter.number}');
         return _buildCompletePlaceholder();
     }
   }

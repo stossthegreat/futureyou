@@ -26,6 +26,8 @@ class _LifeTaskJourneyScreenState extends State<LifeTaskJourneyScreen> {
   }
 
   void _openChapter(Chapter chapter) {
+    print('🚪 Opening Chapter ${chapter.number} - Status: ${chapter.status}');
+    
     if (chapter.status == ChapterStatus.locked) {
       _showLockedDialog(chapter);
       return;
