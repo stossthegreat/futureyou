@@ -1654,7 +1654,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         tagline: _systemTaglineController.text.trim().isEmpty 
             ? 'Custom system' 
             : _systemTaglineController.text.trim(),
-        icon: Icons.star, // Default icon
+        iconCodePoint: _systemEmoji.isNotEmpty ? _systemEmoji.codeUnitAt(0) : Icons.star.codePoint,
         accentColor: _systemColor,
         gradientColors: _systemGradientColors,
         habitIds: habitIds,
