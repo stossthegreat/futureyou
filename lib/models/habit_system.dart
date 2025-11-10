@@ -21,10 +21,11 @@ class HabitSystem {
     required this.habitIds,
     required this.createdAt,
   });
-  
-  // Helper to get IconData from codePoint
-  IconData get icon => IconData(iconCodePoint, fontFamily: 'MaterialIcons');
-  
+
+  // REMOVED:
+  // IconData get icon => IconData(iconCodePoint, fontFamily: 'MaterialIcons');
+  // Models must not instantiate IconData in release builds (breaks tree-shaking)
+
   // Convert to JSON for storage
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -71,4 +72,3 @@ class HabitSystem {
     createdAt: createdAt ?? this.createdAt,
   );
 }
-
