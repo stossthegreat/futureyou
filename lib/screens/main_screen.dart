@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'dart:ui';
 
 import '../design/tokens.dart';
+import 'command_center_screen.dart';
 import 'home_screen.dart';
 import 'planner_screen.dart';
 import 'future_you_screen.dart';
@@ -26,6 +27,11 @@ class _MainScreenState extends State<MainScreen>
   
   final List<TabItem> _tabs = [
     TabItem(
+      icon: LucideIcons.sparkles,
+      label: 'Discover',
+      screen: const CommandCenterScreen(),
+    ),
+    TabItem(
       icon: LucideIcons.flame,
       label: 'Home',
       screen: const HomeScreen(),
@@ -41,19 +47,14 @@ class _MainScreenState extends State<MainScreen>
       screen: const FutureYouScreen(),
     ),
     TabItem(
-      icon: LucideIcons.sparkles,
+      icon: LucideIcons.target,
       label: 'What-If',
       screen: const WhatIfRedesignScreen(),
     ),
     TabItem(
       icon: LucideIcons.bookOpen,
-      label: 'Reflections',
+      label: 'Reflect',
       screen: const ReflectionsScreen(),
-    ),
-    TabItem(
-      icon: LucideIcons.star,
-      label: 'Mirror',
-      screen: const MirrorScreen(),
     ),
   ];
   
