@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../services/api_client.dart';
 import '../widgets/simple_header.dart';
+import '../lifetask/widgets/feature_card.dart';
 
 class VideoData {
   final int id;
@@ -246,7 +247,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
                     children: [
                       _buildHeroSection(),
                       const SizedBox(height: AppSpacing.xl),
-                      _buildBookOfPurposeButton(),
+                      _buildLifeTaskFeatureCards(),
                       const SizedBox(height: AppSpacing.xl),
                       _buildVisualizationVideos(),
                       const SizedBox(height: AppSpacing.xl),
@@ -350,118 +351,91 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
     ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0);
   }
 
-  Widget _buildBookOfPurposeButton() {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(context, '/cinematic');
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFFD4AF37).withOpacity(0.15), // Gold
-              const Color(0xFFA855F7).withOpacity(0.1),  // Purple
-              Colors.transparent,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          border: Border.all(
-            color: const Color(0xFFD4AF37).withOpacity(0.3),
+  Widget _buildLifeTaskFeatureCards() {
+    // TODO: Track actual progress from backend
+    final chaptersComplete = 0; // Will be dynamic later
+    final progressPercent = (chaptersComplete / 7 * 100).round();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: Text(
+            'Purpose Discovery',
+            style: AppTextStyles.h3.copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+              letterSpacing: 1.2,
+            ),
           ),
         ),
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Row(
-          children: [
-            // Icon
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD4AF37).withOpacity(0.2),
-                borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                border: Border.all(
-                  color: const Color(0xFFD4AF37).withOpacity(0.4),
-                ),
-              ),
-              child: const Icon(
-                LucideIcons.bookOpen,
-                size: 28,
-                color: Color(0xFFD4AF37),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.lg),
-            // Text content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD4AF37).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(AppBorderRadius.full),
-                      border: Border.all(
-                        color: const Color(0xFFD4AF37).withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          LucideIcons.sparkles,
-                          size: 12,
-                          color: Color(0xFFD4AF37),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '7 Chapter Journey',
-                          style: AppTextStyles.captionSmall.copyWith(
-                            color: const Color(0xFFD4AF37),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  // Title
-                  Text(
-                    'The Book of Purpose',
-                    style: AppTextStyles.h3.copyWith(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  // Description
-                  Text(
-                    'Begin your cinematic journey through purpose discovery',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.textTertiary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            // Arrow
-            const Icon(
-              LucideIcons.arrowRight,
-              color: Color(0xFFD4AF37),
-              size: 24,
-            ),
+
+        // Card 1: The Book of Purpose (Main Journey)
+        FeatureCard(
+          title: 'The Book of Purpose',
+          subtitle: 'Begin your 7-chapter cinematic journey of purpose discovery',
+          badge: '7 Chapter Journey',
+          icon: LucideIcons.bookOpen,
+          gradientColors: [
+            const Color(0xFFD4AF37), // Gold
+            const Color(0xFFA855F7), // Purple
           ],
+          progressText: chaptersComplete > 0 ? '$chaptersComplete of 7 Chapters' : 'Start Journey',
+          progressValue: chaptersComplete > 0 ? progressPercent : null,
+          glowEffect: true, // Main feature - always glowing
+          onTap: () => Navigator.pushNamed(context, '/cinematic'),
         ),
-      ),
-    ).animate().fadeIn(duration: 600.ms, delay: 100.ms).slideY(begin: 0.1, end: 0);
+
+        // Card 2: Vault (Artifacts)
+        FeatureCard(
+          title: 'Purpose Vault',
+          subtitle: 'Your story map, flow states, and life\'s task artifacts',
+          badge: '8 Artifacts',
+          icon: LucideIcons.archive,
+          gradientColors: [
+            const Color(0xFF10b981), // Emerald
+            const Color(0xFF3b82f6), // Blue
+          ],
+          progressText: 'Complete chapters to unlock',
+          onTap: () {
+            // TODO: Navigate to vault when ready
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Complete Chapter 1 to unlock your vault'),
+                backgroundColor: AppColors.emerald,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
+        ),
+
+        // Card 3: Your Book (Final compilation)
+        FeatureCard(
+          title: 'Your Purpose Book',
+          subtitle: 'Read, share, and export your completed 3,500-word book',
+          badge: 'Publishable',
+          icon: LucideIcons.fileText,
+          gradientColors: [
+            const Color(0xFFf59e0b), // Amber
+            const Color(0xFFef4444), // Red
+          ],
+          progressText: 'Complete all 7 chapters',
+          onTap: () {
+            // TODO: Navigate to book reader when ready
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Complete all chapters to compile your book'),
+                backgroundColor: AppColors.emerald,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
+        ),
+      ],
+    );
   }
 
   Widget _buildVisualizationVideos() {
