@@ -5,6 +5,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../widgets/simple_header.dart';
 import '../providers/habit_provider.dart';
+import '../models/habit_system.dart';
+import '../services/local_storage.dart';
 
 class ViralSystemsScreen extends ConsumerStatefulWidget {
   const ViralSystemsScreen({super.key});
@@ -764,6 +766,7 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                       // Commit only selected habits
                       try {
                         final habitIds = <String>[];
+                        final systemId = 'system_${DateTime.now().millisecondsSinceEpoch}'; // Generate unique system ID
                         
                         for (int i = 0; i < widget.system.habits.length; i++) {
                           if (_selectedHabits[i]) {
@@ -780,6 +783,7 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                               color: widget.system.accentColor,
                               emoji: widget.system.habits[i].split(' ').first, // Extract emoji
                               reminderOn: _alarmEnabled,
+                              systemId: systemId, // NEW: Link habit to system
                             );
                             
                             // Small delay to ensure unique IDs
@@ -787,8 +791,18 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                           }
                         }
                         
-                        // TODO: Store system metadata linking to habit IDs
-                        // This will be used to show system cards on Home/Planner
+                        // Store system metadata
+                        final habitSystem = HabitSystem(
+                          id: systemId,
+                          name: widget.system.name,
+                          tagline: widget.system.tagline,
+                          iconCodePoint: widget.system.icon(IconData(0)).icon.codePoint,
+                          gradient: widget.system.gradient,
+                          accentColor: widget.system.accentColor,
+                          habitIds: habitIds,
+                          createdAt: DateTime.now(),
+                        );
+                        LocalStorageService.saveSystem(habitSystem);
                         
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(

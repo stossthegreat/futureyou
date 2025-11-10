@@ -38,10 +38,10 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
         decoration: BoxDecoration(
           gradient: RadialGradient(
             center: Alignment.topCenter,
-            radius: 1.5,
+            radius: 1.8,
             colors: [
-              AppColors.emerald.withOpacity(0.1),
-              Colors.black,
+              AppColors.emerald.withOpacity(0.15),
+              AppColors.cyan.withOpacity(0.08),
               Colors.black,
             ],
           ),
@@ -49,19 +49,24 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
         child: SafeArea(
           child: CustomScrollView(
             slivers: [
-              // Hero Header
+              // Future-You OS Header with Settings
               SliverToBoxAdapter(
-                child: _buildHeroHeader(),
+                child: _buildFutureYouHeader(),
               ),
 
-              // Personal OS Card - OUR CORE STRENGTH
+              // HERO SECTION - THE MANIFESTO
               SliverToBoxAdapter(
-                child: _buildPersonalOSCard(),
+                child: _buildManifesto(),
+              ),
+
+              // THE CORE: AI-POWERED PURPOSE ENGINE
+              SliverToBoxAdapter(
+                child: _buildCoreEngine(),
               ),
 
               // AI-Powered Tools Section
               SliverToBoxAdapter(
-                child: _buildSectionTitle('🤖 AI-POWERED TRANSFORMATION'),
+                child: _buildSectionTitle('YOUR WEAPONS'),
               ),
 
               // Feature Cards Grid
@@ -77,7 +82,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                   delegate: SliverChildListDelegate([
                     _buildFeatureCard(
                       title: 'Book of Purpose',
-                      subtitle: 'Cinematic Journey',
+                      subtitle: '7-phase deep interrogation to find your life\'s task. No bullshit. No fluff.',
                       emoji: '📖',
                       gradient: LinearGradient(
                         colors: [Color(0xFF8B5CF6), Color(0xFFFBBF24)],
@@ -85,41 +90,42 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                         end: Alignment.bottomRight,
                       ),
                       onTap: () => Navigator.pushNamed(context, '/cinematic'),
-                      badge: 'NEW',
+                      badge: 'CORE',
                     ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.3),
 
                     _buildFeatureCard(
                       title: 'What-If Simulator',
-                      subtitle: 'Predict Future',
-                      emoji: '✨',
+                      subtitle: 'GPT-5 simulates your future in terrifying detail. See the consequences before you choose.',
+                      emoji: '⚡',
                       gradient: LinearGradient(
                         colors: [Color(0xFF06B6D4), Color(0xFF3B82F6)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 3),
-                      badge: 'HOT',
+                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 4),
+                      badge: 'POWERFUL',
                     ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.3),
 
                     _buildFeatureCard(
-                      title: 'AI Visualization',
-                      subtitle: 'Funeral Exercise',
-                      emoji: '🎬',
+                      title: 'Funeral Exercise',
+                      subtitle: 'Face your death. Then live like you mean it. AI-guided visualization.',
+                      emoji: '💀',
                       gradient: LinearGradient(
                         colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
                       ),
                       onTap: () {
                         // Navigate to visualization videos
                       },
-                      badge: 'ELITE',
+                      badge: 'RUTHLESS',
                     ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.3),
 
                     _buildFeatureCard(
-                      title: 'AI Coach',
-                      subtitle: '24/7 Guidance',
-                      emoji: '🧠',
+                      title: 'AI Accountability',
+                      subtitle: 'GPT-5 watches everything. Checks in daily. Refuses to let you quit.',
+                      emoji: '👁️',
                       gradient: LinearGradient(
                         colors: [Color(0xFF10B981), Color(0xFF06B6D4)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 2),
+                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 3),
+                      badge: 'ALWAYS ON',
                     ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.3),
                   ]),
                 ),
@@ -127,7 +133,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
 
               // Habit Systems Section
               SliverToBoxAdapter(
-                child: _buildSectionTitle('💎 VIRAL HABIT SYSTEMS'),
+                child: _buildSectionTitle('HABIT WARFARE'),
               ),
 
               SliverPadding(
@@ -135,14 +141,14 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.75,
+                    childAspectRatio: 0.7,
                     crossAxisSpacing: AppSpacing.md,
                     mainAxisSpacing: AppSpacing.md,
                   ),
                   delegate: SliverChildListDelegate([
                     _buildFeatureCard(
-                      title: '15 Viral Systems',
-                      subtitle: 'Proven Frameworks',
+                      title: 'Viral Systems',
+                      subtitle: '15 battle-tested systems used by millions. 5AM Club. 75 Hard. Monk Mode.',
                       emoji: '🔥',
                       gradient: LinearGradient(
                         colors: [Color(0xFFEF4444), Color(0xFFF59E0B)],
@@ -150,12 +156,11 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                       onTap: () {
                         // Navigate to viral systems
                       },
-                      stats: '15 Systems',
                     ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.3),
 
                     _buildFeatureCard(
                       title: 'Habit Library',
-                      subtitle: 'Science-Backed',
+                      subtitle: '100+ science-backed habits. Pre-built. Ready to commit.',
                       emoji: '📚',
                       gradient: LinearGradient(
                         colors: [Color(0xFF0EA5E9), Color(0xFF8B5CF6)],
@@ -163,27 +168,26 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                       onTap: () {
                         // Navigate to habit library
                       },
-                      stats: '100+ Habits',
                     ).animate().fadeIn(delay: 600.ms).slideX(begin: 0.3),
 
                     _buildFeatureCard(
                       title: 'System Creator',
-                      subtitle: 'Build Custom',
+                      subtitle: 'Build your own habit system. Custom colors. Custom schedule.',
                       emoji: '🎨',
                       gradient: LinearGradient(
                         colors: [Color(0xFFF59E0B), Color(0xFFEC4899)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 1),
+                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 2),
                     ).animate().fadeIn(delay: 700.ms).slideX(begin: 0.3),
 
                     _buildFeatureCard(
                       title: 'Habit Master',
-                      subtitle: '3-Phase Plans',
+                      subtitle: 'GPT-5 creates personalized 3-phase transformation plans.',
                       emoji: '⚡',
                       gradient: LinearGradient(
                         colors: [Color(0xFF10B981), Color(0xFFFBBF24)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 3),
+                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 4),
                     ).animate().fadeIn(delay: 800.ms).slideX(begin: 0.3),
                   ]),
                 ),
@@ -206,175 +210,264 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
     );
   }
 
-  Widget _buildHeroHeader() {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
+  Widget _buildFutureYouHeader() {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Animated logo/icon
-          AnimatedBuilder(
-            animation: _glowController,
-            builder: (context, child) {
-              return Container(
-                width: 80,
-                height: 80,
+          // Future-You OS Logo
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: [
-                      AppColors.emerald.withOpacity(0.8),
-                      AppColors.cyan.withOpacity(0.8),
-                    ],
+                    colors: [AppColors.emerald, AppColors.cyan],
                   ),
+                  borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.emerald
-                          .withOpacity(0.4 + (_glowController.value * 0.3)),
-                      blurRadius: 40,
-                      spreadRadius: 10,
+                      color: AppColors.emerald.withOpacity(0.5),
+                      blurRadius: 20,
+                      spreadRadius: 2,
                     ),
                   ],
                 ),
                 child: const Icon(
-                  LucideIcons.sparkles,
-                  size: 40,
+                  LucideIcons.brain,
                   color: Colors.white,
+                  size: 22,
                 ),
-              );
-            },
-          ).animate(onPlay: (controller) => controller.repeat())
-            .shimmer(duration: 2000.ms, color: Colors.white.withOpacity(0.2)),
-
-          const SizedBox(height: AppSpacing.lg),
-
-          // Title
-          Text(
-            'COMMAND CENTER',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              foreground: Paint()
-                ..shader = LinearGradient(
-                  colors: [
-                    AppColors.emerald,
-                    AppColors.cyan,
-                    AppColors.emerald,
-                  ],
-                ).createShader(const Rect.fromLTWH(0, 0, 300, 70)),
-              letterSpacing: 2,
-            ),
-          ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.3),
-
-          const SizedBox(height: AppSpacing.sm),
-
-          Text(
-            'Your Personal Transformation OS',
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 16,
-            ),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(delay: 200.ms, duration: 800.ms),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPersonalOSCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
-      ),
-      child: GlassCard(
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppBorderRadius.xl),
-            gradient: LinearGradient(
-              colors: [
-                AppColors.emerald.withOpacity(0.2),
-                AppColors.cyan.withOpacity(0.1),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.emerald.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                    ),
-                    child: const Icon(
-                      LucideIcons.cpu,
-                      color: AppColors.emerald,
-                      size: 32,
+                  Text(
+                    'FUTURE-YOU OS',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      foreground: Paint()
+                        ..shader = LinearGradient(
+                          colors: [AppColors.emerald, AppColors.cyan],
+                        ).createShader(const Rect.fromLTWH(0, 0, 200, 24)),
+                      letterSpacing: 1.2,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'YOUR PERSONAL OS',
-                          style: AppTextStyles.h3.copyWith(
-                            color: AppColors.emerald,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 20,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'The only app that adapts to YOU',
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    'Powered by GPT-5',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textTertiary,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.lg),
-              
-              // Key Features
-              _buildOSFeature('🧠', 'AI learns your patterns'),
-              _buildOSFeature('🎯', 'Adapts to your goals'),
-              _buildOSFeature('⚡', 'Evolves with you'),
-              _buildOSFeature('💎', 'Unique to YOU'),
             ],
           ),
-        ),
-      ),
-    ).animate().fadeIn(delay: 400.ms).scale(delay: 400.ms);
-  }
-
-  Widget _buildOSFeature(String emoji, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 16)),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            text,
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.textPrimary,
-              fontSize: 14,
+          // Settings Icon
+          IconButton(
+            onPressed: () {
+              // Navigate to settings
+            },
+            icon: const Icon(
+              LucideIcons.settings,
+              color: Colors.white,
+              size: 24,
             ),
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 600.ms);
   }
+
+  Widget _buildManifesto() {
+    return Container(
+      margin: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.emerald.withOpacity(0.15),
+            AppColors.cyan.withOpacity(0.15),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: AppColors.emerald.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.emerald.withOpacity(0.2),
+            blurRadius: 30,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'THE WORLD\'S FIRST\nPURPOSE OPERATING SYSTEM',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              height: 1.2,
+              foreground: Paint()
+                ..shader = LinearGradient(
+                  colors: [Colors.white, AppColors.emerald],
+                ).createShader(const Rect.fromLTWH(0, 0, 400, 60)),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'Most people never discover who they truly are. They drift. They settle. They die with their purpose locked inside.\n\nNot you.\n\nFuture-You OS uses the world\'s most powerful AI (GPT-5) to hunt down your life\'s task with ruthless precision. It watches over you. Holds you accountable. Refuses to let you quit.\n\nThis isn\'t a habit tracker. This is an operating system for your life. The first of its kind. And it will not let you stay ordinary.',
+            style: TextStyle(
+              fontSize: 15,
+              height: 1.6,
+              color: Colors.white.withOpacity(0.9),
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 200.ms, duration: 800.ms).slideY(begin: 0.2);
+  }
+
+  Widget _buildCoreEngine() {
+    return Container(
+      margin: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+        gradient: LinearGradient(
+          colors: [
+            Colors.black,
+            AppColors.cyan.withOpacity(0.1),
+          ],
+        ),
+        border: Border.all(
+          color: AppColors.cyan.withOpacity(0.3),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cyan.withOpacity(0.2),
+            blurRadius: 30,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              AnimatedBuilder(
+                animation: _glowController,
+                builder: (context, child) {
+                  return Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.cyan, AppColors.emerald],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.cyan
+                              .withOpacity(0.4 + (_glowController.value * 0.3)),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      LucideIcons.zap,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI PURPOSE ENGINE',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.cyan,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    Text(
+                      'GPT-5 · Always Watching',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          ..._buildEngineBullets(),
+        ],
+      ),
+    ).animate().fadeIn(delay: 400.ms, duration: 800.ms).slideY(begin: 0.2);
+  }
+
+  List<Widget> _buildEngineBullets() {
+    final bullets = [
+      ('🎯', 'FINDS your life\'s task through 7-phase deep interrogation'),
+      ('🧠', 'LEARNS your patterns, strengths, and psychological drivers'),
+      ('⚡', 'ADAPTS your habits and goals as you evolve'),
+      ('💎', 'HOLDS you accountable with AI-powered check-ins'),
+      ('🔥', 'REFUSES to let you settle for mediocrity'),
+    ];
+
+    return bullets.map((bullet) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              bullet.$1,
+              style: const TextStyle(fontSize: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                bullet.$2,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.9),
+                  height: 1.4,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
+  }
+
+  // OLD Personal OS Card removed - replaced with Manifesto and Core Engine
 
   Widget _buildSectionTitle(String title) {
     return Padding(
@@ -471,14 +564,16 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
 
                     const SizedBox(height: 4),
 
-                    // Subtitle
+                    // Subtitle (longer description)
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 12,
+                        height: 1.4,
+                        fontWeight: FontWeight.w400,
                       ),
-                      maxLines: 1,
+                      maxLines: 4,
                       overflow: TextOverflow.ellipsis,
                     ),
 

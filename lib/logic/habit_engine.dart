@@ -75,6 +75,7 @@ class HabitEngine extends ChangeNotifier {
     Color? color,
     String? emoji,
     bool reminderOn = false, // default OFF
+    String? systemId, // NEW: Link to parent system
   }) async {
     final habit = Habit(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -88,6 +89,7 @@ class HabitEngine extends ChangeNotifier {
       colorValue: color?.value ?? 0xFF10B981,
       emoji: emoji,
       reminderOn: reminderOn,
+      systemId: systemId, // NEW: Set systemId
     );
 
     await addHabit(habit);

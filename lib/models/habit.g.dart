@@ -32,13 +32,14 @@ class HabitAdapter extends TypeAdapter<Habit> {
       xp: fields[12] as int,
       colorValue: fields[13] as int,
       emoji: fields[14] as String?,
+      systemId: fields[15] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Habit obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(16)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -68,7 +69,9 @@ class HabitAdapter extends TypeAdapter<Habit> {
       ..writeByte(13)
       ..write(obj.colorValue)
       ..writeByte(14)
-      ..write(obj.emoji);
+      ..write(obj.emoji)
+      ..writeByte(15)
+      ..write(obj.systemId);
   }
 
   @override

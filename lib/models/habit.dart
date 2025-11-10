@@ -50,6 +50,9 @@ class Habit extends HiveObject {
   @HiveField(14)
   String? emoji;
 
+  @HiveField(15)
+  String? systemId; // Link to parent system
+
   Habit({
     required this.id,
     required this.title,
@@ -66,6 +69,7 @@ class Habit extends HiveObject {
     this.xp = 0,
     this.colorValue = 0xFF10B981, // Default emerald color
     this.emoji,
+    this.systemId,
   });
 
   TimeOfDay get timeOfDay {
@@ -116,6 +120,7 @@ class Habit extends HiveObject {
     int? xp,
     int? colorValue,
     String? emoji,
+    String? systemId,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -133,6 +138,7 @@ class Habit extends HiveObject {
       xp: xp ?? this.xp,
       colorValue: colorValue ?? this.colorValue,
       emoji: emoji ?? this.emoji,
+      systemId: systemId ?? this.systemId,
     );
   }
 
@@ -152,6 +158,7 @@ class Habit extends HiveObject {
         'xp': xp,
         'colorValue': colorValue,
         'emoji': emoji,
+        'systemId': systemId,
       };
 
   factory Habit.fromJson(Map<String, dynamic> json) => Habit(
@@ -172,5 +179,6 @@ class Habit extends HiveObject {
         xp: json['xp'] ?? 0,
         colorValue: json['colorValue'] ?? 0xFF10B981,
         emoji: json['emoji'],
+        systemId: json['systemId'],
       );
 }
