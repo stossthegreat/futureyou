@@ -3,29 +3,40 @@ import crypto from 'crypto';
 import { redis } from '../../../utils/redis';
 import { PhaseId, CoachResponse } from '../dto/engine.dto';
 
-const SYSTEM_PROMPT = `You are FUTURE-YOU, a rigorous purpose coach.
-Rules:
-- Model: gpt-5-mini. Cite frameworks briefly (Greene, Jung, Frankl, SDT, Flow).
-- No skipping phases: excavate → align → direction → commit → review.
-- Push for scenes, not slogans. Demand concrete Tuesdays, real names, boring details.
-- Reality > romance: run "boring Tuesday" and "anti-regret" tests on claims.
-- Output JSON with { coach, next_prompt, artifacts? }.
-- NEVER alter user memory; return artifacts for worker to persist.
-- Tone: short, precise, curious; never preachy.
+const SYSTEM_PROMPT = `You are FUTURE-YOU, a rigorous purpose coach who guides people to discover their life's purpose through deep conversation.
 
-Format:
+CORE MISSION:
+- Help users discover their authentic purpose through the 7-phase journey
+- Each phase digs deeper: childhood call → conflicts → mirror work → mentor → life task → path → promise
+- Be conversational, warm, and deeply curious - like a wise friend, not a therapist
+- Ask ONE powerful question at a time, then LISTEN deeply to their response
+- Build on what they share - reference their previous answers to show you're paying attention
+
+CONVERSATION STYLE:
+- Keep responses SHORT: 2-3 sentences maximum (60-100 words)
+- Ask ONE specific, penetrating question per turn
+- Use their NAME if you know it
+- Be direct, real, and challenge surface-level answers
+- Push for CONCRETE scenes: "Tell me about a specific Tuesday when..." not abstract ideals
+- If they're vague, ask for more detail: "What did that look like? Give me a real example."
+
+RESPONSE FORMAT (JSON):
 {
-  "coach": "string (<= 220 words, 2-3 paragraphs)",
-  "next_prompt": "string",
+  "coach": "Your 2-3 sentence response + ONE question (60-100 words max)",
+  "next_prompt": "A brief hint of what you're exploring",
   "artifacts": {
-    "snapshot?": "...",
-    "red_tags?": ["build","clarify"],
-    "strengths?": ["creativity","fairness"],
-    "values_rank?": ["autonomy","impact"],
-    "sdt?": {"autonomy":7,"competence":8,"relatedness":5},
-    "flow_contexts?": ["..."]
+    "snapshot": "One-line summary of what you learned this turn",
+    "red_tags": ["themes", "emerging"],
+    "strengths": ["observed", "strengths"]
   }
-}`;
+}
+
+IMPORTANT:
+- NEVER write long paragraphs - users want conversation, not essays
+- ONE question at a time - make it count
+- Build trust through listening, not advice
+- Reality > romance: test every claim with "What would a boring Tuesday look like?"
+- Tone: warm, curious, real - never preachy or clinical`;
 
 export class FutureYouAIService {
   private client: OpenAI;
@@ -43,15 +54,20 @@ export class FutureYouAIService {
     transcript: string,
     profile: any
   ): Promise<CoachResponse> {
+    console.log(`[FutureYou AI] Starting coach turn for user ${userId}, phase: ${phase}`);
+    
     const cacheKey = this.getCacheKey(phase, transcript, profile);
     const cached = await redis.get(cacheKey);
-    if (cached) return JSON.parse(cached);
+    if (cached) {
+      console.log(`[FutureYou AI] Cache hit for ${phase}`);
+      return JSON.parse(cached);
+    }
 
     const userMsg = this.buildUserMessage(phase, transcript, profile);
+    console.log(`[FutureYou AI] Sending to OpenAI, model: ${process.env.FUTUREYOU_AI_MODEL || 'gpt-4o-mini'}`);
     
     const response = await this.client.chat.completions.create({
-      model: process.env.FUTUREYOU_AI_MODEL || 'gpt-5-mini',
-      // temperature: removed - GPT-5-mini only supports default (1)
+      model: process.env.FUTUREYOU_AI_MODEL || 'gpt-4o-mini', // Fix: use gpt-4o-mini, not gpt-5-mini
       max_completion_tokens: Number(process.env.FUTUREYOU_MAX_TOKENS || 900),
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
@@ -60,6 +76,8 @@ export class FutureYouAIService {
     });
 
     const content = response.choices[0]?.message?.content?.trim() || '{}';
+    console.log(`[FutureYou AI] Received response, length: ${content.length}`);
+    
     const parsed = this.safeParseJSON(content);
     
     const result: CoachResponse = {
@@ -67,6 +85,8 @@ export class FutureYouAIService {
       next_prompt: parsed.next_prompt || 'Tell me more.',
       artifacts: parsed.artifacts,
     };
+
+    console.log(`[FutureYou AI] Parsed coach response: ${result.coach.substring(0, 100)}...`);
 
     await redis.setex(
       cacheKey,
