@@ -22,19 +22,14 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen>
     with TickerProviderStateMixin {
-  int _currentIndex = 1; // Default to Home tab (index 1)
-  late PageController _pageController = PageController(initialPage: 1); // Initialize immediately
+  int _currentIndex = 0; // Default to Today tab (index 0)
+  late PageController _pageController = PageController(initialPage: 0); // Initialize immediately
   late AnimationController _tabAnimationController;
   
   final List<TabItem> _tabs = [
     TabItem(
-      icon: LucideIcons.sparkles,
-      label: 'Discover',
-      screen: const CommandCenterScreen(),
-    ),
-    TabItem(
       icon: LucideIcons.flame,
-      label: 'Home',
+      label: 'Today', // ✅ Changed from 'Home'
       screen: const HomeScreen(),
     ),
     TabItem(
@@ -43,8 +38,13 @@ class _MainScreenState extends State<MainScreen>
       screen: const PlannerScreen(),
     ),
     TabItem(
+      icon: LucideIcons.sparkles,
+      label: 'Discover', // ✅ Moved after Planner
+      screen: const CommandCenterScreen(),
+    ),
+    TabItem(
       icon: LucideIcons.brain,
-      label: 'Future\nYou',
+      label: 'Purpose\nEngine', // ✅ Changed from 'Future\nYou'
       screen: const FutureYouScreen(),
     ),
     TabItem(
@@ -71,16 +71,16 @@ class _MainScreenState extends State<MainScreen>
     final isFirstTimeAfterOnboarding = prefs.getBool('first_time_after_onboarding') ?? true;
     
     if (isFirstTimeAfterOnboarding) {
-      // First time - jump to Discover tab (index 0)
+      // First time - jump to Discover tab (index 2 now)
       if (!mounted) return;
       setState(() {
-        _currentIndex = 0;
+        _currentIndex = 2;
       });
-      _pageController.jumpToPage(0);
+      _pageController.jumpToPage(2);
       // Mark as no longer first time
       await prefs.setBool('first_time_after_onboarding', false);
     }
-    // Otherwise stay on Home tab (default initialPage: 1)
+    // Otherwise stay on Today tab (default initialPage: 0)
   }
   
   @override
