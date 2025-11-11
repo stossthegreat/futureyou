@@ -393,7 +393,7 @@ class _SystemDetailSheet extends ConsumerWidget {
 
                   // Commit button
                   GestureDetector(
-                    onTap: () => _commitSystem(context, ref, system),
+                    onTap: () => _showCommitDialog(system),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
@@ -433,34 +433,209 @@ class _SystemDetailSheet extends ConsumerWidget {
     );
   }
 
-  Future<void> _commitSystem(BuildContext context, WidgetRef ref, CelebritySystem system) async {
-    // Create habits from the system
-    final now = DateTime.now();
-    for (var habitText in system.habits) {
-      final habit = Habit(
-        id: '${now.millisecondsSinceEpoch}_${system.habits.indexOf(habitText)}',
-        title: habitText,
-        type: 'habit',
-        time: '09:00',
-        startDate: now,
-        endDate: now.add(const Duration(days: 365)),
-        repeatDays: [1, 2, 3, 4, 5, 6, 0], // All days
-        createdAt: now,
-        systemId: system.name,
-      );
-      ref.read(habitEngineProvider.notifier).addHabit(habit);
-    }
+  void _showCommitDialog(CelebritySystem system) {
+    showDialog(
+      context: context,
+      builder: (context) => _CommitDialog(system: system),
+    );
+  }
+}
 
-    if (context.mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✅ Added ${system.habits.length} habits from ${system.name}\'s system!'),
-          backgroundColor: AppColors.emerald,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+// Commit Dialog Widget (copied from Viral Systems)
+class _CommitDialog extends ConsumerStatefulWidget {
+  final CelebritySystem system;
+
+  const _CommitDialog({required this.system});
+
+  @override
+  ConsumerState<_CommitDialog> createState() => _CommitDialogState();
+}
+
+class _CommitDialogState extends ConsumerState<_CommitDialog> {
+  DateTime _startDate = DateTime.now();
+  DateTime _endDate = DateTime.now();
+  bool _alarmEnabled = false;
+  TimeOfDay _alarmTime = const TimeOfDay(hour: 9, minute: 0);
+  late List<bool> _selectedHabits;
+  String _scheduleType = 'everyday';
+  
+  @override
+  void initState() {
+    super.initState();
+    _selectedHabits = List.filled(widget.system.habits.length, true);
+  }
+  
+  Color _getTextColor() {
+    final colors = widget.system.gradientColors;
+    double totalBrightness = 0;
+    for (int i = 0; i < colors.length; i += 3) {
+      final r = colors[i] / 255.0;
+      final g = colors[i + 1] / 255.0;
+      final b = colors[i + 2] / 255.0;
+      totalBrightness += (0.299 * r + 0.587 * g + 0.114 * b);
     }
+    return (totalBrightness / (colors.length / 3)) > 0.5 ? Colors.black : Colors.white;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color.fromARGB(255, widget.system.gradientColors[0], widget.system.gradientColors[1], widget.system.gradientColors[2]),
+              Color.fromARGB(255, widget.system.gradientColors[3], widget.system.gradientColors[4], widget.system.gradientColors[5]),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppBorderRadius.xl),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Commit to ${widget.system.name}',
+                style: TextStyle(
+                  color: _getTextColor(),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              
+              // Habits Selection
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Select Habits (${_selectedHabits.where((s) => s).length}/${widget.system.habits.length})',
+                      style: TextStyle(
+                        color: _getTextColor(),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    ...List.generate(widget.system.habits.length, (index) {
+                      return CheckboxListTile(
+                        title: Text(
+                          widget.system.habits[index],
+                          style: TextStyle(color: _getTextColor(), fontSize: 14),
+                        ),
+                        value: _selectedHabits[index],
+                        onChanged: (val) {
+                          setState(() => _selectedHabits[index] = val ?? false);
+                        },
+                        activeColor: Colors.white,
+                        checkColor: Color.fromARGB(255, widget.system.gradientColors[0], widget.system.gradientColors[1], widget.system.gradientColors[2]),
+                        dense: true,
+                      );
+                    }),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: AppSpacing.lg),
+              
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        foregroundColor: _getTextColor(),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final selectedCount = _selectedHabits.where((s) => s).length;
+                        if (selectedCount == 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please select at least one habit')),
+                          );
+                          return;
+                        }
+
+                        try {
+                          final now = DateTime.now();
+                          for (int i = 0; i < widget.system.habits.length; i++) {
+                            if (_selectedHabits[i]) {
+                              final habit = Habit(
+                                id: '${now.millisecondsSinceEpoch}_$i',
+                                title: widget.system.habits[i],
+                                type: 'habit',
+                                time: '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}',
+                                startDate: _startDate,
+                                endDate: _endDate,
+                                repeatDays: _scheduleType == 'everyday' 
+                                    ? [0, 1, 2, 3, 4, 5, 6]
+                                    : _scheduleType == 'weekdays'
+                                    ? [1, 2, 3, 4, 5]
+                                    : [0, 6],
+                                createdAt: now,
+                                systemId: widget.system.name,
+                                reminderOn: _alarmEnabled,
+                              );
+                              ref.read(habitEngineProvider.notifier).addHabit(habit);
+                            }
+                          }
+
+                          if (mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('✅ Committed $selectedCount habits from ${widget.system.name}!'),
+                                backgroundColor: Color.fromARGB(255, widget.system.gradientColors[0], widget.system.gradientColors[1], widget.system.gradientColors[2]),
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('❌ Failed to commit: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Color.fromARGB(255, widget.system.gradientColors[0], widget.system.gradientColors[1], widget.system.gradientColors[2]),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text(
+                        'COMMIT',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
