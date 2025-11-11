@@ -182,8 +182,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
-          ),
+          ],
         ),
       ),
     );
