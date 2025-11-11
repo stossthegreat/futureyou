@@ -7,6 +7,8 @@ import 'what_if_redesign.dart';
 import 'habit_library_screen.dart';
 import 'viral_systems_screen.dart';
 import 'habit_vault_screen.dart';
+import 'celebrity_systems_screen.dart';
+import 'mastery_lessons_screen.dart';
 
 /// 🎯 HABIT MASTER TAB
 /// Central hub for all habit-related features:
@@ -112,21 +114,17 @@ class HabitMasterScreen extends StatelessWidget {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // 🎯 CARD 4: Celebrity Systems (NEW)
+                // 🎯 CARD 4: Celebrity Systems
                 _MasterCard(
-                  title: 'Icon Routines',
-                  subtitle: 'Habits of high performers',
+                  title: 'Celebrity Systems',
+                  subtitle: '25 viral celebrity routines',
                   icon: LucideIcons.star,
                   gradientColors: const [Color(0xFFDA22FF), Color(0xFF9733EE), Color(0xFF4F46E5)],
                   accentColor: const Color(0xFFDA22FF),
-                  badge: 'COMING SOON',
                   onTap: () {
-                    // TODO: Navigate to celebrity systems screen
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('🌟 Icon Routines coming soon!'),
-                        backgroundColor: Color(0xFFDA22FF),
-                      ),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CelebritySystemsScreen()),
                     );
                   },
                 ).animate().fadeIn(duration: 400.ms, delay: 500.ms).slideX(begin: 0.1, end: 0),
@@ -150,21 +148,17 @@ class HabitMasterScreen extends StatelessWidget {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // 🎯 CARD 6: Habit Lessons (NEW)
+                // 🎯 CARD 6: Mastery Lessons
                 _MasterCard(
                   title: 'Mastery Lessons',
-                  subtitle: 'Learn the science of habits',
+                  subtitle: '25 viral habit formation rules',
                   icon: LucideIcons.bookOpen,
                   gradientColors: const [Color(0xFFFF0080), Color(0xFFFF8C00), Color(0xFF40E0D0)],
                   accentColor: const Color(0xFFFF0080),
-                  badge: 'COMING SOON',
                   onTap: () {
-                    // TODO: Navigate to habit lessons screen
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('📚 Mastery Lessons coming soon!'),
-                        backgroundColor: Color(0xFFFF0080),
-                      ),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MasteryLessonsScreen()),
                     );
                   },
                 ).animate().fadeIn(duration: 400.ms, delay: 700.ms).slideX(begin: 0.1, end: 0),
