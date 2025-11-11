@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
 
 import '../design/tokens.dart';
@@ -21,7 +22,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen>
     with TickerProviderStateMixin {
-  int _currentIndex = 0;
+  int _currentIndex = 0; // Will be set in initState
   late PageController _pageController;
   late AnimationController _tabAnimationController;
   
@@ -61,11 +62,30 @@ class _MainScreenState extends State<MainScreen>
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    _checkFirstTimeAfterOnboarding();
     _tabAnimationController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
+  }
+
+  // ✅ Check if first time after onboarding - start at Discover tab
+  Future<void> _checkFirstTimeAfterOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isFirstTimeAfterOnboarding = prefs.getBool('first_time_after_onboarding') ?? true;
+    
+    if (isFirstTimeAfterOnboarding) {
+      // First time - start at Discover tab (index 4)
+      setState(() {
+        _currentIndex = 4;
+      });
+      _pageController = PageController(initialPage: 4);
+      // Mark as no longer first time
+      await prefs.setBool('first_time_after_onboarding', false);
+    } else {
+      // Regular app open - start at Home tab (index 0)
+      _pageController = PageController(initialPage: 0);
+    }
   }
   
   @override

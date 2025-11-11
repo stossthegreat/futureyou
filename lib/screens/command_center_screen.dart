@@ -37,9 +37,9 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // Future-You OS Header with Settings
+            // ✅ NEW: Welcome header - centered, no logo
             SliverToBoxAdapter(
-              child: _buildFutureYouHeader(),
+              child: _buildWelcomeHeader(),
             ),
 
             // ✅ CHANGE 1: Removed _buildManifesto() - the big box at top
@@ -96,9 +96,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                       gradient: LinearGradient(
                         colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
                       ),
-                      onTap: () {
-                        // Navigate to visualization videos
-                      },
+                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 1), // Future-You tab
                       badge: 'RUTHLESS',
                     ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.3),
 
@@ -138,9 +136,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                       gradient: LinearGradient(
                         colors: [Color(0xFFEF4444), Color(0xFFF59E0B)],
                       ),
-                      onTap: () {
-                        // Navigate to viral systems
-                      },
+                      onTap: () => Navigator.pushNamed(context, '/viral-systems'),
                     ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.3),
 
                     _buildFeatureCard(
@@ -150,9 +146,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                       gradient: LinearGradient(
                         colors: [Color(0xFF0EA5E9), Color(0xFF8B5CF6)],
                       ),
-                      onTap: () {
-                        // Navigate to habit library
-                      },
+                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 2), // Planner tab
                     ).animate().fadeIn(delay: 600.ms).slideX(begin: 0.3),
 
                     _buildFeatureCard(
@@ -195,80 +189,53 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
     );
   }
 
-  Widget _buildFutureYouHeader() {
+  // ✅ NEW: Welcome header - centered, no logo
+  Widget _buildWelcomeHeader() {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.xxl,
+        AppSpacing.xl,
+        AppSpacing.xl,
+      ),
+      child: Column(
         children: [
-          // Future-You OS Logo
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.emerald, AppColors.cyan],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.emerald.withOpacity(0.5),
-                      blurRadius: 20,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  LucideIcons.brain,
-                  color: Colors.white,
-                  size: 22,
-                ),
+          // Big beautiful title
+          ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              colors: [
+                AppColors.emerald,
+                AppColors.cyan,
+                AppColors.emerald,
+              ],
+            ).createShader(bounds),
+            child: const Text(
+              'WELCOME TO\nFUTURE-YOU OS',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 1.5,
+                height: 1.2,
               ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'FUTURE-YOU OS',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      foreground: Paint()
-                        ..shader = LinearGradient(
-                          colors: [AppColors.emerald, AppColors.cyan],
-                        ).createShader(const Rect.fromLTWH(0, 0, 200, 24)),
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  Text(
-                    'Powered by GPT-5',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textTertiary,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
-          // Settings Icon
-          IconButton(
-            onPressed: () {
-              // Navigate to settings
-            },
-            icon: const Icon(
-              LucideIcons.settings,
-              color: Colors.white,
-              size: 24,
+          const SizedBox(height: AppSpacing.md),
+          // Subtitle
+          Text(
+            'The first AI Operating System that helps you\nbecome who you\'re meant to be',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w400,
+              height: 1.6,
             ),
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 600.ms);
+    ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.1, end: 0);
   }
 
   // ✅ _buildManifesto() removed - no longer needed
