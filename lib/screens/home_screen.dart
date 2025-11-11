@@ -188,59 +188,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     return SystemCard(
                       system: system,
                       habits: systemHabits,
-                      onEdit: () {
-                        // TODO: Implement edit system functionality
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Edit system: ${system.name}'),
-                            backgroundColor: AppColors.emerald,
-                          ),
-                        );
-                      },
-                      onDelete: () async {
-                        // Show confirmation dialog
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            backgroundColor: AppColors.surface,
-                            title: Text('Delete System?', style: AppTextStyles.h4),
-                            content: Text(
-                              'This will delete "${system.name}" and all ${systemHabits.length} habits in it.',
-                              style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                style: TextButton.styleFrom(
-                                  backgroundColor: Colors.red.withOpacity(0.2),
-                                ),
-                                child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                              ),
-                            ],
-                          ),
-                        );
-                        
-                        if (confirmed == true) {
-                          // Delete all habits in the system
-                          for (final habit in systemHabits) {
-                            await ref.read(habitEngineProvider.notifier).deleteHabit(habit.id);
-                          }
-                          // Delete the system itself
-                          await LocalStorageService.deleteSystem(system.id);
-                          
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${system.name} deleted'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        }
+                      onToggleHabit: (habit) async {
+                        // ✅ HOME PAGE: Enable habit ticking
+                        await ref.read(habitEngineProvider.notifier).toggleHabitCompletion(habit.id);
                       },
                     );
                   }).toList(),

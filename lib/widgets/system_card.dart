@@ -5,21 +5,21 @@ import '../models/habit_system.dart';
 import '../design/tokens.dart';
 
 /// Beautiful glass morphism card for displaying habit systems
-/// Shows system name and habits (READ-ONLY - no ticking allowed for system habits)
+/// Two modes: Tickable (Home) or Read-only with Edit/Delete (Planner)
 class SystemCard extends StatelessWidget {
   final HabitSystem system;
   final List<Habit> habits;
-  final Function(Habit)? onToggleHabit; // Made optional, not used for systems
+  final Function(Habit)? onToggleHabit; // For Home page - ticking enabled
   final VoidCallback? onTap;
-  final VoidCallback? onEdit; // NEW: Edit system
-  final VoidCallback? onDelete; // NEW: Delete system
+  final VoidCallback? onEdit; // For Planner page - shows edit button
+  final VoidCallback? onDelete; // For Planner page - shows delete button
   final bool showProgress;
 
   const SystemCard({
     super.key,
     required this.system,
     required this.habits,
-    this.onToggleHabit, // Optional now
+    this.onToggleHabit,
     this.onTap,
     this.onEdit,
     this.onDelete,
@@ -126,11 +126,13 @@ class SystemCard extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '${habits.length} habits • Read-only',
+                                onEdit != null || onDelete != null
+                                    ? '${habits.length} habits • Read-only'
+                                    : '$completedCount/$totalCount habits today',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
-                                  fontSize: 12,
-                                  fontStyle: FontStyle.italic,
+                                  color: Colors.white.withOpacity(onEdit != null || onDelete != null ? 0.6 : 0.8),
+                                  fontSize: 13,
+                                  fontStyle: onEdit != null || onDelete != null ? FontStyle.italic : FontStyle.normal,
                                 ),
                               ),
                             ],
@@ -232,74 +234,105 @@ class SystemCard extends StatelessWidget {
 
   Widget _buildHabitTile(Habit habit) {
     final accentColor = system.gradientColors.first;
+    final isReadOnly = onToggleHabit == null; // Read-only if no toggle callback
     
-    // ✅ SYSTEM HABITS ARE READ-ONLY - No ticking allowed
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(AppBorderRadius.md),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.05),
+    return GestureDetector(
+      // Only allow tapping if onToggleHabit is provided AND habit not already done
+      onTap: (onToggleHabit != null && !habit.done) 
+          ? () => onToggleHabit!(habit) 
+          : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(isReadOnly ? 0.08 : 0.1),
+          borderRadius: BorderRadius.circular(AppBorderRadius.md),
+          border: Border.all(
+            color: Colors.white.withOpacity(isReadOnly ? 0.05 : 0.08),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          // Icon (no checkbox - just a bullet)
-          Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: accentColor.withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            child: Center(
-              child: Container(
-                width: 6,
-                height: 6,
+        child: Row(
+          children: [
+            // Checkbox (tickable on Home) or Bullet (read-only on Planner)
+            if (isReadOnly)
+              // Read-only bullet indicator
+              Container(
+                width: 18,
+                height: 18,
                 decoration: BoxDecoration(
-                  color: accentColor,
-                  shape: BoxShape.circle,
+                  color: accentColor.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: accentColor.withOpacity(0.5),
+                    width: 1.5,
+                  ),
                 ),
+                child: Center(
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              )
+            else
+              // Tickable checkbox (Home page)
+              Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: habit.done ? accentColor : Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: habit.done ? accentColor : Colors.white.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: habit.done
+                    ? const Icon(
+                        Icons.check,
+                        size: 12,
+                        color: Colors.white,
+                      )
+                    : null,
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Title
-          Expanded(
-            child: Text(
-              habit.title,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.85),
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          // Time if available
-          if (habit.time != null && habit.time!.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
+            const SizedBox(width: isReadOnly ? 10 : 8),
+            // Title
+            Expanded(
               child: Text(
-                habit.time!,
+                habit.title,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withOpacity(isReadOnly ? 0.85 : 0.95),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  decoration: (!isReadOnly && habit.done) ? TextDecoration.lineThrough : null,
+                  decorationColor: Colors.white.withOpacity(0.5),
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-        ],
+            // Time if available (only show on read-only mode)
+            if (isReadOnly && habit.time != null && habit.time!.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  habit.time!,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
