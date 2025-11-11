@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../models/chapter_model.dart';
 import '../widgets/cinematic_particles.dart';
 import 'chapter_screen.dart';
@@ -24,17 +26,51 @@ class _LifeTaskJourneyScreenState extends State<LifeTaskJourneyScreen> {
   @override
   void initState() {
     super.initState();
-    chapters = getInitialChapters();
+    _loadChapterProgress();
+  }
+  
+  /// Load chapter progress from local storage
+  Future<void> _loadChapterProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedProgress = prefs.getString('lifetask_chapters_progress');
     
-    // DEBUG: Unlock all chapters for testing
-    if (DEBUG_UNLOCK_ALL_CHAPTERS) {
-      chapters = chapters.map((c) => c.copyWith(
-        status: ChapterStatus.available,
-      )).toList();
-      print('🔧 DEBUG MODE: All chapters unlocked for testing');
+    if (savedProgress != null) {
+      try {
+        final List<dynamic> savedData = jsonDecode(savedProgress);
+        setState(() {
+          chapters = savedData.map((json) => Chapter.fromJson(json)).toList();
+        });
+        print('📖 Loaded saved chapter progress');
+      } catch (e) {
+        print('⚠️ Error loading chapter progress: $e');
+        _initializeDefaultChapters();
+      }
+    } else {
+      _initializeDefaultChapters();
     }
-    
-    // TODO: Load saved progress from local storage
+  }
+  
+  /// Initialize chapters with default state
+  void _initializeDefaultChapters() {
+    setState(() {
+      chapters = getInitialChapters();
+      
+      // DEBUG: Unlock all chapters for testing
+      if (DEBUG_UNLOCK_ALL_CHAPTERS) {
+        chapters = chapters.map((c) => c.copyWith(
+          status: ChapterStatus.available,
+        )).toList();
+        print('🔧 DEBUG MODE: All chapters unlocked for testing');
+      }
+    });
+  }
+  
+  /// Save chapter progress to local storage
+  Future<void> _saveChapterProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final progressJson = jsonEncode(chapters.map((c) => c.toJson()).toList());
+    await prefs.setString('lifetask_chapters_progress', progressJson);
+    print('💾 Saved chapter progress');
   }
 
   void _openChapter(Chapter chapter) {
@@ -66,7 +102,8 @@ class _LifeTaskJourneyScreenState extends State<LifeTaskJourneyScreen> {
             }
           }
         });
-        // TODO: Save progress to local storage
+        // Save progress to local storage
+        _saveChapterProgress();
       }
     });
   }

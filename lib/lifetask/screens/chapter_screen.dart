@@ -64,6 +64,7 @@ class _ChapterScreenState extends State<ChapterScreen> {
         status: ChapterStatus.inProgress,
       );
     });
+    print('✅ Intro complete - Chapter ${currentChapter.number} now IN PROGRESS');
   }
 
   void _onChatComplete(String generatedProse, Map<String, dynamic> patterns) {
@@ -87,9 +88,19 @@ class _ChapterScreenState extends State<ChapterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: _buildCurrentPhase(),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) async {
+        if (!didPop) {
+          // Return updated chapter when user backs out
+          print('🔙 User backing out - returning chapter with status: ${currentChapter.status}');
+          Navigator.of(context).pop(currentChapter);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: _buildCurrentPhase(),
+      ),
     );
   }
 
