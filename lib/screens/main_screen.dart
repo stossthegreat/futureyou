@@ -9,7 +9,7 @@ import 'command_center_screen.dart';
 import 'home_screen.dart';
 import 'planner_screen.dart';
 import 'future_you_screen.dart';
-import 'what_if_redesign.dart';
+import 'habit_master_screen.dart'; // New Habit Master tab
 import 'reflections_screen.dart';
 import 'mirror_screen.dart';
 
@@ -48,9 +48,9 @@ class _MainScreenState extends State<MainScreen>
       screen: const FutureYouScreen(),
     ),
     TabItem(
-      icon: LucideIcons.target,
-      label: 'What-If',
-      screen: const WhatIfRedesignScreen(),
+      icon: LucideIcons.trophy,
+      label: 'Habit\nMaster',
+      screen: const HabitMasterScreen(),
     ),
     TabItem(
       icon: LucideIcons.bookOpen,
