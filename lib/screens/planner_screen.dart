@@ -281,59 +281,58 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          CustomScrollView(
-            slivers: [
-              // Header that disappears when scrolling
-              SliverAppBar(
-                expandedHeight: 80,
-                floating: true,
-                snap: true,
-                pinned: false,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                flexibleSpace: const SimpleHeader(),
-              ),
-                    // Date strip
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
-                    const SizedBox(height: AppSpacing.md),
-                    
-                    // Habit Library Card
-                    _buildHabitLibraryCard(),
-                    
-                    const SizedBox(height: AppSpacing.md),
-                    
-                    // Viral Habit Systems Card
-                    _buildViralSystemsCard(),
-                    
-                    const SizedBox(height: AppSpacing.sm),
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                      decoration: BoxDecoration(
-                        color: AppColors.glassBackground,
-                        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                        border: Border.all(color: AppColors.glassBorder),
-                      ),
-                      child: TabBar(
-                        controller: _tabController,
-                        tabs: const [Tab(text:'Add New'),Tab(text:'Manage'),Tab(text:'System')],
-                      ),
+          NestedScrollView(
+            headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+              return [
+                // Header
+                SliverToBoxAdapter(
+                  child: const SimpleHeader(),
+                ),
+                // Date strip
+                SliverToBoxAdapter(
+                  child: DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
+                ),
+                SliverToBoxAdapter(
+                  child: const SizedBox(height: AppSpacing.md),
+                ),
+                // Habit Library Card
+                SliverToBoxAdapter(
+                  child: _buildHabitLibraryCard(),
+                ),
+                SliverToBoxAdapter(
+                  child: const SizedBox(height: AppSpacing.md),
+                ),
+                // Viral Habit Systems Card
+                SliverToBoxAdapter(
+                  child: _buildViralSystemsCard(),
+                ),
+                SliverToBoxAdapter(
+                  child: const SizedBox(height: AppSpacing.sm),
+                ),
+                // Tab bar
+                SliverToBoxAdapter(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: AppColors.glassBackground,
+                      borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                      border: Border.all(color: AppColors.glassBorder),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                  ],
+                    child: TabBar(
+                      controller: _tabController,
+                      tabs: const [Tab(text:'Add New'),Tab(text:'Manage'),Tab(text:'System')],
+                    ),
+                  ),
                 ),
-              ),
-              // Tab content - ✅ FIX: Allow scrolling within tabs
-              SliverFillRemaining(
-                hasScrollBody: true, // Enable inner scroll bodies
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [_buildAddNewTab(), _buildManageTab(), _buildSystemTab()],
+                SliverToBoxAdapter(
+                  child: const SizedBox(height: AppSpacing.lg),
                 ),
-              ),
-            ],
+              ];
+            },
+            body: TabBarView(
+              controller: _tabController,
+              children: [_buildAddNewTab(), _buildManageTab(), _buildSystemTab()],
+            ),
           ),
           // Floating "Create" button only visible on Manage tab
           if (_tabController.index == 1)

@@ -22,8 +22,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen>
     with TickerProviderStateMixin {
-  int _currentIndex = 0; // Will be set in initState
-  late PageController _pageController;
+  int _currentIndex = 1; // Default to Home tab (index 1)
+  late PageController _pageController = PageController(initialPage: 1); // Initialize immediately
   late AnimationController _tabAnimationController;
   
   final List<TabItem> _tabs = [
@@ -75,17 +75,16 @@ class _MainScreenState extends State<MainScreen>
     final isFirstTimeAfterOnboarding = prefs.getBool('first_time_after_onboarding') ?? true;
     
     if (isFirstTimeAfterOnboarding) {
-      // First time - start at Discover tab (index 0)
+      // First time - jump to Discover tab (index 0)
+      if (!mounted) return;
       setState(() {
         _currentIndex = 0;
       });
-      _pageController = PageController(initialPage: 0);
+      _pageController.jumpToPage(0);
       // Mark as no longer first time
       await prefs.setBool('first_time_after_onboarding', false);
-    } else {
-      // Regular app open - start at Home tab (index 1)
-      _pageController = PageController(initialPage: 1);
     }
+    // Otherwise stay on Home tab (default initialPage: 1)
   }
   
   @override
