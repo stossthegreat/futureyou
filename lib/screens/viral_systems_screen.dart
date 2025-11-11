@@ -168,15 +168,11 @@ class _ViralSystemsScreenState extends ConsumerState<ViralSystemsScreen> {
             padding: const EdgeInsets.all(AppSpacing.lg),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Title
-                // ✅ Removed "Future-You OS" prefix per user request
+                // ✅ Removed old title section - cleaner header
                 
-                const SizedBox(height: 8),
-                
+                // Title - changed to emerald green gradient, pushed higher
                 ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFFE879F9), Color(0xFF34D399), Color(0xFF22D3EE)],
-                  ).createShader(bounds),
+                  shaderCallback: (bounds) => AppColors.emeraldGradient.createShader(bounds),
                   child: const Text(
                     'The 15 Most Viral Habit Systems',
                     style: TextStyle(
@@ -187,7 +183,7 @@ class _ViralSystemsScreenState extends ConsumerState<ViralSystemsScreen> {
                   ),
                 ).animate().fadeIn(duration: 600.ms, delay: 100.ms).slideY(begin: 0.1, end: 0),
 
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.lg), // ✅ Reduced from xl to lg - pushes systems higher
 
                 // Grid of systems - 1 column to show all habits
                 ListView.builder(
