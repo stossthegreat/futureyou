@@ -192,7 +192,7 @@ class _DeepChatState extends State<DeepChat> with TickerProviderStateMixin {
       setState(() {
         _isTyping = false;
         _currentDepthMetrics = response.depthMetrics;
-        _canComplete = response.depthMetrics.canComplete;
+        _canComplete = response.depthMetrics.qualityChecksPassed;
         _nextPromptHint = response.nextPromptHint;
       });
 
@@ -402,9 +402,10 @@ class _DeepChatState extends State<DeepChat> with TickerProviderStateMixin {
 
   Widget _buildDepthIndicator() {
     final metrics = _currentDepthMetrics!;
-    final overallScore = (metrics.specificityScore +
-            metrics.authenticityScore +
-            metrics.emotionalDepth) /
+    // Calculate a rough progress score based on metrics
+    final progressScore = ((metrics.specificScenesCollected / 5.0).clamp(0.0, 1.0) +
+            (metrics.emotionalMarkersDetected / 3.0).clamp(0.0, 1.0) +
+            (1.0 - metrics.vagueResponseRatio)) /
         3;
 
     return Padding(
@@ -416,15 +417,15 @@ class _DeepChatState extends State<DeepChat> with TickerProviderStateMixin {
               Expanded(
                 child: _buildMetricBar(
                   'Depth',
-                  overallScore,
-                  overallScore >= 0.7
+                  progressScore,
+                  progressScore >= 0.7
                       ? const Color(0xFFfbbf24)
                       : Colors.white.withOpacity(0.5),
                 ),
               ),
             ],
           ),
-          if (!metrics.canComplete && _nextPromptHint != null)
+          if (!metrics.qualityChecksPassed && _nextPromptHint != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
@@ -717,18 +718,27 @@ class _DeepChatState extends State<DeepChat> with TickerProviderStateMixin {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildMetricRow('Specificity', metrics.specificityScore),
-            _buildMetricRow('Authenticity', metrics.authenticityScore),
-            _buildMetricRow('Emotional Depth', metrics.emotionalDepth),
+            _buildMetricRow('Scenes Collected', metrics.specificScenesCollected / 10.0),
+            _buildMetricRow('Emotional Markers', metrics.emotionalMarkersDetected / 5.0),
+            _buildMetricRow('Clarity', 1.0 - metrics.vagueResponseRatio),
             const SizedBox(height: 16),
             Text(
-              metrics.canComplete
+              '⏱️ ${metrics.timeElapsedMinutes} min  |  💬 ${metrics.exchangeCount} exchanges',
+              style: TextStyle(
+                fontFamily: 'Crimson Pro',
+                fontSize: 12,
+                color: Colors.white.withOpacity(0.5),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              metrics.qualityChecksPassed
                   ? '✓ Ready to complete'
-                  : 'Still needed: ${metrics.missingElements.join(", ")}',
+                  : _nextPromptHint ?? 'Keep exploring...',
               style: TextStyle(
                 fontFamily: 'Crimson Pro',
                 fontSize: 14,
-                color: metrics.canComplete
+                color: metrics.qualityChecksPassed
                     ? const Color(0xFFfbbf24)
                     : Colors.white.withOpacity(0.6),
                 fontStyle: FontStyle.italic,

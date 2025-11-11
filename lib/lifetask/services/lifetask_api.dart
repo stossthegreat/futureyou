@@ -122,32 +122,37 @@ class ConversationResponse {
 
 class DepthMetrics {
   final int exchangeCount;
-  final int timeElapsed;
-  final double specificityScore;
-  final double authenticityScore;
-  final double emotionalDepth;
-  final bool canComplete;
-  final List<String> missingElements;
+  final int timeElapsedMinutes;
+  final int specificScenesCollected;
+  final int emotionalMarkersDetected;
+  final double vagueResponseRatio;
+  final bool minimumExchangesMet;
+  final bool minimumTimeMet;
+  final bool qualityChecksPassed;
 
   DepthMetrics({
     required this.exchangeCount,
-    required this.timeElapsed,
-    required this.specificityScore,
-    required this.authenticityScore,
-    required this.emotionalDepth,
-    required this.canComplete,
-    required this.missingElements,
+    required this.timeElapsedMinutes,
+    required this.specificScenesCollected,
+    required this.emotionalMarkersDetected,
+    required this.vagueResponseRatio,
+    required this.minimumExchangesMet,
+    required this.minimumTimeMet,
+    required this.qualityChecksPassed,
   });
 
   factory DepthMetrics.fromJson(Map<String, dynamic> json) {
     return DepthMetrics(
-      exchangeCount: json['exchangeCount'],
-      timeElapsed: json['timeElapsed'],
-      specificityScore: (json['specificityScore'] as num).toDouble(),
-      authenticityScore: (json['authenticityScore'] as num).toDouble(),
-      emotionalDepth: (json['emotionalDepth'] as num).toDouble(),
-      canComplete: json['canComplete'],
-      missingElements: List<String>.from(json['missingElements'] ?? []),
+      exchangeCount: json['exchangeCount'] ?? 0,
+      timeElapsedMinutes: json['timeElapsedMinutes'] ?? 0,
+      specificScenesCollected: json['specificScenesCollected'] ?? 0,
+      emotionalMarkersDetected: json['emotionalMarkersDetected'] ?? 0,
+      vagueResponseRatio: (json['vagueResponseRatio'] ?? 0.0) is int 
+          ? (json['vagueResponseRatio'] as int).toDouble() 
+          : (json['vagueResponseRatio'] as double),
+      minimumExchangesMet: json['minimumExchangesMet'] ?? false,
+      minimumTimeMet: json['minimumTimeMet'] ?? false,
+      qualityChecksPassed: json['qualityChecksPassed'] ?? false,
     );
   }
 }
