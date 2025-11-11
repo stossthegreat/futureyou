@@ -6,6 +6,7 @@ import '../widgets/simple_header.dart';
 import 'what_if_redesign.dart';
 import 'habit_library_screen.dart';
 import 'viral_systems_screen.dart';
+import 'habit_vault_screen.dart';
 
 /// 🎯 HABIT MASTER TAB
 /// Central hub for all habit-related features:
@@ -141,7 +142,24 @@ class HabitMasterScreen extends StatelessWidget {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // 🎯 CARD 5: Habit Lessons (NEW)
+                // 🎯 CARD 5: Habit Vault
+                _MasterCard(
+                  title: 'Habit Vault',
+                  subtitle: 'Your saved plans & simulations',
+                  icon: LucideIcons.archive,
+                  gradientColors: const [Color(0xFFFFD700), Color(0xFFFFA500), Color(0xFFFF6347)],
+                  accentColor: const Color(0xFFFFD700),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HabitVaultScreen()),
+                    );
+                  },
+                ).animate().fadeIn(duration: 400.ms, delay: 600.ms).slideX(begin: -0.1, end: 0),
+
+                const SizedBox(height: AppSpacing.lg),
+
+                // 🎯 CARD 6: Habit Lessons (NEW)
                 _MasterCard(
                   title: 'Mastery Lessons',
                   subtitle: 'Learn the science of habits',
@@ -158,7 +176,7 @@ class HabitMasterScreen extends StatelessWidget {
                       ),
                     );
                   },
-                ).animate().fadeIn(duration: 400.ms, delay: 600.ms).slideX(begin: -0.1, end: 0),
+                ).animate().fadeIn(duration: 400.ms, delay: 700.ms).slideX(begin: 0.1, end: 0),
 
                 const SizedBox(height: 100),
               ]),

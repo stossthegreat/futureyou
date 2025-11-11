@@ -5,6 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../services/api_client.dart';
+import '../services/habit_vault_service.dart';
+import '../models/vault_item.dart';
 import '../providers/habit_provider.dart';
 import '../widgets/simple_header.dart';
 
@@ -963,27 +965,27 @@ class _WhatIfScreenState extends ConsumerState<WhatIfScreen> {
     }
   }
 
-  // NEW: Save card to Vault
+  // ✅ Save card to Habit Vault (local-first)
   Future<void> _saveCardToVault(Map<String, dynamic> card, List<dynamic>? habits) async {
     try {
-      final response = await ApiClient.saveToVault(
-        content: card['title'] ?? 'What-If Simulation',
-        sections: card['sections'],
+      // Import at top of file
+      final vaultItem = HabitVaultItem.fromWhatIfCard(
+        card: card,
         habits: habits,
       );
       
-      if (response.success) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('💾 Saved to Vault! Check Reflections tab.'),
-              backgroundColor: AppColors.emerald,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      } else {
-        throw Exception(response.error ?? 'Failed to save');
+      final success = await HabitVaultService.saveItem(vaultItem);
+      
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('💾 Saved to Habit Vault! Check Habit Master tab.'),
+            backgroundColor: AppColors.emerald,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else if (mounted) {
+        throw Exception('Failed to save');
       }
     } catch (e) {
       if (mounted) {

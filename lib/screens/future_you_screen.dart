@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../services/api_client.dart';
+import '../services/habit_vault_service.dart';
+import '../models/vault_item.dart';
 import '../widgets/simple_header.dart';
 import '../lifetask/widgets/feature_card.dart';
 
@@ -1637,29 +1639,35 @@ class _FutureYouChatScreenState extends State<_FutureYouChatScreen> {
     );
   }
   
+  // ✅ Save to Habit Vault (local-first)
   Future<void> _saveToVault(Map<String, dynamic> card) async {
-    final cardText = '${card['title']}\n\n${card['summary']}\n\n${(card['bullets'] as List?)?.join('\n• ') ?? ''}';
-    final response = await ApiClient.saveToVault(
-      content: cardText,
-      sections: [card],
-      habits: null,
-    );
-    
-    if (response.success) {
-      if (mounted) {
+    try {
+      final cardText = '${card['title']}\n\n${card['summary']}\n\n${(card['bullets'] as List?)?.join('\n• ') ?? ''}';
+      
+      final vaultItem = HabitVaultItem.fromContent(
+        title: card['title'] ?? 'Life Task Discovery',
+        summary: card['summary'],
+        content: cardText,
+        goalType: 'life-task',
+      );
+      
+      final success = await HabitVaultService.saveItem(vaultItem);
+      
+      if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Saved to Vault! 💚'),
-            backgroundColor: AppColors.emerald,
+          const SnackBar(
+            content: Text('💾 Saved to Habit Vault! Check Habit Master tab.'),
+            backgroundColor: Color(0xFF10B981),
+            duration: Duration(seconds: 3),
           ),
         );
       }
-    } else {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save: ${response.error}'),
-            backgroundColor: AppColors.error,
+            content: Text('Failed to save: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }

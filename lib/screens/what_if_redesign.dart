@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../services/api_client.dart';
+import '../services/habit_vault_service.dart';
+import '../models/vault_item.dart';
 import '../widgets/simple_header.dart';
 
 class WhatIfRedesignScreen extends StatefulWidget {
@@ -199,6 +201,44 @@ Timeline: 90 days to build habit + small audience''',
         _errorMessage = 'Error: $e';
         _isLoading = false;
       });
+    }
+  }
+
+  // ✅ Save to Habit Vault
+  Future<void> _saveToVault() async {
+    if (_outputCard == null) return;
+    
+    try {
+      final message = _outputCard!['message'] ?? '';
+      final title = _tabController.index == 0 ? 'Future Simulation' : 'Habit System';
+      
+      final vaultItem = HabitVaultItem.fromContent(
+        title: title,
+        summary: _scenarioController.text,
+        content: message,
+        goalType: 'what-if',
+      );
+      
+      final success = await HabitVaultService.saveItem(vaultItem);
+      
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('💾 Saved to Habit Vault! Check Habit Master tab.'),
+            backgroundColor: Color(0xFF10B981),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -840,11 +880,7 @@ Timeline: 90 days to build habit + small audience''',
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('🔐 Saved to Reflections Vault!'), duration: Duration(seconds: 2)),
-                        );
-                      },
+                      onTap: _saveToVault,
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
