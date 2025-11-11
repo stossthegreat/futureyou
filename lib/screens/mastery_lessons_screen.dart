@@ -150,7 +150,7 @@ class _StatItem extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          style: AppTextStyles.h4.copyWith(color: Colors.white),
+          style: AppTextStyles.h3.copyWith(color: Colors.white),
         ),
         Text(
           subtitle,
@@ -288,7 +288,7 @@ class _RuleDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.black,
       body: CustomScrollView(
         slivers: [
           // Header
@@ -409,7 +409,7 @@ class _RuleDetailScreen extends StatelessWidget {
                 // Key Points
                 Text(
                   'KEY POINTS',
-                  style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
+                  style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 ...List.generate(rule.keyPoints.length, (index) {
@@ -446,7 +446,7 @@ class _RuleDetailScreen extends StatelessWidget {
                 // Examples
                 Text(
                   'EXAMPLES',
-                  style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
+                  style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 ...List.generate(rule.examples.length, (index) {

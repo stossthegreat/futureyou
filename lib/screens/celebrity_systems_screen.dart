@@ -236,7 +236,7 @@ class _CelebrityCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               system.title,
-              style: AppTextStyles.h4.copyWith(color: Colors.white.withOpacity(0.9)),
+              style: AppTextStyles.h3.copyWith(color: Colors.white.withOpacity(0.9)),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
@@ -260,7 +260,7 @@ class _SystemDetailSheet extends ConsumerWidget {
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Colors.black,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(AppBorderRadius.xl)),
       ),
       child: Column(
@@ -348,7 +348,7 @@ class _SystemDetailSheet extends ConsumerWidget {
 
                   Text(
                     'THE SYSTEM',
-                    style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
+                    style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: AppSpacing.md),
 
@@ -438,10 +438,9 @@ class _SystemDetailSheet extends ConsumerWidget {
     for (var habitText in system.habits) {
       final habit = Habit(
         title: habitText,
-        category: system.name,
         isActive: true,
       );
-      ref.read(habitProvider.notifier).addHabit(habit);
+      ref.read(habitEngineProvider.notifier).addHabit(habit);
     }
 
     if (context.mounted) {

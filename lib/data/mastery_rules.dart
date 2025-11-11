@@ -239,7 +239,7 @@ final List<MasteryRule> masteryRules = [
     ],
     examples: [
       'After workout → Mark calendar with X',
-      'After saving money → Transfer $1 to "Fun Fund"',
+      'After saving money → Transfer \$1 to "Fun Fund"',
       'After healthy meal → Text accountability partner',
       'After meditation → Light favorite candle',
     ],
@@ -373,7 +373,7 @@ final List<MasteryRule> masteryRules = [
       'Victor Hugo gave clothes to assistant until he finished writing',
       'Apps like Forest: trees die if you use phone',
       'Gym membership paid upfront',
-      'Give friend $100 until you complete 30 days',
+      'Give friend \$100 until you complete 30 days',
     ],
     whyItWorks: 'Future you can\'t opt out - decision already made',
     gradientColors: [239, 68, 68, 220, 38, 38], // Red gradient
