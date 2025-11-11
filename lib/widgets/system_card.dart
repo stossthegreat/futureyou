@@ -5,20 +5,24 @@ import '../models/habit_system.dart';
 import '../design/tokens.dart';
 
 /// Beautiful glass morphism card for displaying habit systems
-/// Shows system name, habits, progress ring, and allows individual habit ticking
+/// Shows system name and habits (READ-ONLY - no ticking allowed for system habits)
 class SystemCard extends StatelessWidget {
   final HabitSystem system;
   final List<Habit> habits;
-  final Function(Habit) onToggleHabit;
+  final Function(Habit)? onToggleHabit; // Made optional, not used for systems
   final VoidCallback? onTap;
+  final VoidCallback? onEdit; // NEW: Edit system
+  final VoidCallback? onDelete; // NEW: Delete system
   final bool showProgress;
 
   const SystemCard({
     super.key,
     required this.system,
     required this.habits,
-    required this.onToggleHabit,
+    this.onToggleHabit, // Optional now
     this.onTap,
+    this.onEdit,
+    this.onDelete,
     this.showProgress = true,
   });
 
@@ -122,16 +126,50 @@ class SystemCard extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '$completedCount/$totalCount habits today',
+                                '${habits.length} habits • Read-only',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 13,
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        if (showProgress) _buildProgressRing(completion, system.gradientColors.first),
+                        // Edit and Delete buttons
+                        if (onEdit != null)
+                          GestureDetector(
+                            onTap: onEdit,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.edit,
+                                size: 18,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ),
+                        if (onEdit != null) const SizedBox(width: 8),
+                        if (onDelete != null)
+                          GestureDetector(
+                            onTap: onDelete,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.delete_outline,
+                                size: 18,
+                                color: Colors.red.withOpacity(0.9),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
 
@@ -195,58 +233,73 @@ class SystemCard extends StatelessWidget {
   Widget _buildHabitTile(Habit habit) {
     final accentColor = system.gradientColors.first;
     
-    return GestureDetector(
-      // ✅ FIX 2: Only allow tapping if not already done
-      onTap: habit.done ? null : () => onToggleHabit(habit),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(AppBorderRadius.md),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.08),
+    // ✅ SYSTEM HABITS ARE READ-ONLY - No ticking allowed
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.05),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Icon (no checkbox - just a bullet)
+          Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: accentColor.withOpacity(0.5),
+                width: 1.5,
+              ),
+            ),
+            child: Center(
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            // Checkbox
+          const SizedBox(width: 10),
+          // Title
+          Expanded(
+            child: Text(
+              habit.title,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.85),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // Time if available
+          if (habit.time != null && habit.time!.isNotEmpty)
             Container(
-              width: 18,
-              height: 18,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: habit.done ? accentColor : Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: habit.done ? accentColor : Colors.white.withOpacity(0.3),
-                  width: 2,
-                ),
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
               ),
-              child: habit.done
-                  ? const Icon(
-                      Icons.check,
-                      size: 12,
-                      color: Colors.white,
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 8),
-            // Title
-            Expanded(
               child: Text(
-                habit.title,
+                habit.time!,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.95),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  decoration: habit.done ? TextDecoration.lineThrough : null,
-                  decorationColor: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withOpacity(0.6),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
