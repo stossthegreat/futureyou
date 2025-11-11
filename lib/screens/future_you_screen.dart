@@ -282,23 +282,27 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header
+        // Section header - bigger and 2-tone green gradient
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          child: Text(
-            'Purpose Discovery',
-            style: AppTextStyles.h3.copyWith(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-              letterSpacing: 1.2,
+          child: ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [Color(0xFF10b981), Color(0xFF059669)], // 2-tone emerald green
+            ).createShader(bounds),
+            child: const Text(
+              'Purpose Discovery',
+              style: TextStyle(
+                fontSize: 32, // ✅ Matching Habit Master size
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
 
         // Card 1: The Book of Purpose (Main Journey)
         FeatureCard(
-          title: 'The Book Of\nPurpose', // ✅ FIX 2: Split text on two lines
+          title: 'The Book of Purpose', // ✅ More compact, single line
           subtitle: 'Begin your 7-chapter cinematic journey of purpose discovery',
           badge: '7 Chapter Journey',
           icon: LucideIcons.bookOpen,

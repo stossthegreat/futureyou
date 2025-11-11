@@ -765,125 +765,68 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                   ),
                 );
               },
+              // ✅ Delete entire system (red button with trash sweep icon)
               onDelete: () async {
-                // ✅ FIX 3: Show dialog with option to delete individual habits or entire system
-                final deleteChoice = await showDialog<String>(
+                final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
                     backgroundColor: const Color(0xFF1a1a2e),
-                    title: const Text(
-                      'Delete Options',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Choose what to delete from "${system.name}"',
-                          style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(height: 16),
-                        // Delete entire system button
-                        ElevatedButton.icon(
-                          onPressed: () => Navigator.pop(context, 'system'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.withOpacity(0.2),
-                            foregroundColor: Colors.red,
-                            padding: const EdgeInsets.all(16),
-                          ),
-                          icon: const Icon(Icons.delete_sweep),
-                          label: Text('Delete Entire System (${systemHabits.length} habits)'),
-                        ),
-                        const SizedBox(height: 8),
-                        // Delete individual habits button
-                        ElevatedButton.icon(
-                          onPressed: () => Navigator.pop(context, 'habits'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange.withOpacity(0.2),
-                            foregroundColor: Colors.orange,
-                            padding: const EdgeInsets.all(16),
-                          ),
-                          icon: const Icon(Icons.remove_circle_outline),
-                          label: const Text('Delete Individual Habits'),
-                        ),
-                      ],
+                    title: const Text('Delete Entire System', style: TextStyle(color: Colors.white)),
+                    content: Text(
+                      'Are you sure? This will permanently delete "${system.name}" and all ${systemHabits.length} habits.',
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
                     actions: [
                       TextButton(
-                        onPressed: () => Navigator.pop(context, null),
-                        child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Delete All', style: TextStyle(color: Colors.red)),
                       ),
                     ],
                   ),
                 );
                 
-                if (deleteChoice == 'system') {
-                  // Delete entire system
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      backgroundColor: const Color(0xFF1a1a2e),
-                      title: const Text('Confirm Delete', style: TextStyle(color: Colors.white)),
-                      content: Text(
-                        'Are you sure? This will permanently delete "${system.name}" and all ${systemHabits.length} habits.',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                        ),
-                      ],
-                    ),
-                  );
-                  
-                  if (confirmed == true) {
-                    for (final habit in systemHabits) {
-                      await ref.read(habitEngineProvider.notifier).deleteHabit(habit.id);
-                    }
-                    await LocalStorageService.deleteSystem(system.id);
-                    
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${system.name} deleted'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
+                if (confirmed == true) {
+                  for (final habit in systemHabits) {
+                    await ref.read(habitEngineProvider.notifier).deleteHabit(habit.id);
                   }
-                } else if (deleteChoice == 'habits') {
-                  // Show habit selection dialog
-                  final selectedHabits = await showDialog<List<String>>(
-                    context: context,
-                    builder: (context) => _HabitSelectionDialog(
-                      systemName: system.name,
-                      habits: systemHabits,
-                    ),
-                  );
+                  await LocalStorageService.deleteSystem(system.id);
                   
-                  if (selectedHabits != null && selectedHabits.isNotEmpty) {
-                    for (final habitId in selectedHabits) {
-                      await ref.read(habitEngineProvider.notifier).deleteHabit(habitId);
-                    }
-                    
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Deleted ${selectedHabits.length} habit(s)'),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                    }
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${system.name} deleted (${systemHabits.length} habits)'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              // ✅ Delete individual habits (orange button with remove icon)
+              onDeleteHabits: () async {
+                final selectedHabits = await showDialog<List<String>>(
+                  context: context,
+                  builder: (context) => _HabitSelectionDialog(
+                    systemName: system.name,
+                    habits: systemHabits,
+                  ),
+                );
+                
+                if (selectedHabits != null && selectedHabits.isNotEmpty) {
+                  for (final habitId in selectedHabits) {
+                    await ref.read(habitEngineProvider.notifier).deleteHabit(habitId);
+                  }
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Deleted ${selectedHabits.length} habit(s) from ${system.name}'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
                   }
                 }
               },

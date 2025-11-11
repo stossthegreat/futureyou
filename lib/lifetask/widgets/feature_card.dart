@@ -83,15 +83,15 @@ class FeatureCard extends StatelessWidget {
                 child: _buildParticles(),
               ),
 
-              // Content
+              // Content - smaller padding for compact cards
               Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
+                padding: const EdgeInsets.all(AppSpacing.lg), // ✅ Reduced from xl to lg
                 child: Row(
                   children: [
-                    // Icon container
+                    // Icon container - smaller
                     Container(
-                      width: 64,
-                      height: 64,
+                      width: 48, // ✅ Reduced from 64 to 48
+                      height: 48, // ✅ Reduced from 64 to 48
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(AppBorderRadius.lg),
@@ -102,7 +102,7 @@ class FeatureCard extends StatelessWidget {
                       ),
                       child: Icon(
                         icon,
-                        size: 32,
+                        size: 24, // ✅ Reduced from 32 to 24
                         color: Colors.white,
                       ),
                     )
@@ -154,28 +154,31 @@ class FeatureCard extends StatelessWidget {
                             ),
                           ),
 
-                          const SizedBox(height: AppSpacing.sm),
+                          const SizedBox(height: AppSpacing.xs), // ✅ Reduced spacing
 
-                          // Title
+                          // Title - smaller and more compact
                           Text(
                             title,
                             style: const TextStyle(
-                              fontSize: 22,
+                              fontSize: 18, // ✅ Reduced from 22 to 18
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: -0.5,
+                              height: 1.2, // ✅ Tighter line height
                             ),
+                            maxLines: 2, // ✅ Allow max 2 lines for "The Book Of\nPurpose"
+                            overflow: TextOverflow.ellipsis,
                           ),
 
                           const SizedBox(height: 4),
 
-                          // Subtitle
+                          // Subtitle - smaller
                           Text(
                             subtitle,
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.85),
-                              fontSize: 14,
-                              height: 1.4,
+                              fontSize: 12, // ✅ Reduced from 14 to 12
+                              height: 1.3,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,

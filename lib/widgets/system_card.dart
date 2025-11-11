@@ -12,7 +12,8 @@ class SystemCard extends StatelessWidget {
   final Function(Habit)? onToggleHabit; // For Home page - ticking enabled
   final VoidCallback? onTap;
   final VoidCallback? onEdit; // For Planner page - shows edit button
-  final VoidCallback? onDelete; // For Planner page - shows delete button
+  final VoidCallback? onDelete; // For Planner page - delete entire system
+  final VoidCallback? onDeleteHabits; // For Planner page - delete individual habits
   final bool showProgress;
 
   const SystemCard({
@@ -23,6 +24,7 @@ class SystemCard extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.onDeleteHabits,
     this.showProgress = true,
   });
 
@@ -140,7 +142,7 @@ class SystemCard extends StatelessWidget {
                         ),
                         // ✅ FIX 4: Stunning progress circle (only on Home page - when onToggleHabit is provided)
                         if (onToggleHabit != null) _buildProgressRing(completion, system.gradientColors.first),
-                        // Edit and Delete buttons
+                        // Edit, Delete Habits, and Delete System buttons
                         if (onEdit != null)
                           GestureDetector(
                             onTap: onEdit,
@@ -158,6 +160,25 @@ class SystemCard extends StatelessWidget {
                             ),
                           ),
                         if (onEdit != null) const SizedBox(width: 8),
+                        // Delete individual habits button (orange)
+                        if (onDeleteHabits != null)
+                          GestureDetector(
+                            onTap: onDeleteHabits,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.remove_circle_outline,
+                                size: 18,
+                                color: Colors.orange.withOpacity(0.9),
+                              ),
+                            ),
+                          ),
+                        if (onDeleteHabits != null) const SizedBox(width: 8),
+                        // Delete entire system button (red)
                         if (onDelete != null)
                           GestureDetector(
                             onTap: onDelete,
@@ -168,7 +189,7 @@ class SystemCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
-                                Icons.delete_outline,
+                                Icons.delete_sweep,
                                 size: 18,
                                 color: Colors.red.withOpacity(0.9),
                               ),

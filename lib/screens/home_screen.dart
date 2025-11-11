@@ -8,6 +8,7 @@ import '../widgets/glass_card.dart';
 import '../widgets/date_strip.dart';
 import '../widgets/scrollable_header.dart';
 import '../screens/settings_screen.dart';
+import '../screens/reflections_screen.dart';
 import '../widgets/nudge_banner.dart';
 import '../widgets/morning_brief_modal.dart';
 import '../widgets/system_card.dart';
@@ -29,11 +30,22 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   DateTime _selectedDate = DateTime.now();
   bool _hasShownBrief = false;
+  int _unreadCount = 0;
   
   @override
   void initState() {
     super.initState();
     _checkForMorningBrief();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    final count = messagesService.getUnreadCount();
+    if (mounted) {
+      setState(() {
+        _unreadCount = count;
+      });
+    }
   }
 
   void _checkForMorningBrief() {
@@ -551,32 +563,101 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
           
-          // Settings icon
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SettingsScreen(),
-                ),
-              );
-            },
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.glassBackground,
-                borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                border: Border.all(
-                  color: AppColors.emerald.withOpacity(0.2),
+          // Reflections + Settings icons
+          Row(
+            children: [
+              // Reflections icon
+              GestureDetector(
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ReflectionsScreen(),
+                    ),
+                  );
+                  _loadUnreadCount();
+                },
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.glassBackground,
+                        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                        border: Border.all(
+                          color: AppColors.emerald.withOpacity(0.2),
+                        ),
+                      ),
+                      child: const Icon(
+                        LucideIcons.bookOpen,
+                        color: AppColors.emerald,
+                        size: 22,
+                      ),
+                    ),
+                    if (_unreadCount > 0)
+                      Positioned(
+                        top: -6,
+                        right: -6,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.black,
+                              width: 2,
+                            ),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 20,
+                            minHeight: 20,
+                          ),
+                          child: Center(
+                            child: Text(
+                              _unreadCount > 99 ? '99+' : '$_unreadCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              child: const Icon(
-                LucideIcons.settings,
-                color: AppColors.emerald,
-                size: 22,
+              const SizedBox(width: AppSpacing.sm),
+              // Settings icon
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.glassBackground,
+                    borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                    border: Border.all(
+                      color: AppColors.emerald.withOpacity(0.2),
+                    ),
+                  ),
+                  child: const Icon(
+                    LucideIcons.settings,
+                    color: AppColors.emerald,
+                    size: 22,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
