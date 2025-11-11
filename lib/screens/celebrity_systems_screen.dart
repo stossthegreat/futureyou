@@ -446,7 +446,7 @@ class _SystemDetailSheet extends ConsumerWidget {
         endDate: now.add(const Duration(days: 365)),
         repeatDays: [1, 2, 3, 4, 5, 6, 0], // All days
         createdAt: now,
-        systemId: system.id,
+        systemId: system.name,
       );
       ref.read(habitEngineProvider.notifier).addHabit(habit);
     }
