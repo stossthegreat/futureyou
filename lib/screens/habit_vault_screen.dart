@@ -220,6 +220,22 @@ class _VaultCard extends StatelessWidget {
     }
   }
 
+  String _getPreviewText(HabitVaultItem item) {
+    // Try to get meaningful preview content
+    if (item.summary != null && item.summary!.trim().isNotEmpty) {
+      return item.summary!;
+    }
+    
+    // Fall back to first section content if available
+    if (item.sections.isNotEmpty && item.sections.first.content.trim().isNotEmpty) {
+      final content = item.sections.first.content;
+      // Clean up any markdown-style formatting for preview
+      return content.replaceAll(RegExp(r'\*\*'), '').replaceAll(RegExp(r'###? '), '');
+    }
+    
+    return 'Tap to view details';
+  }
+
   @override
   Widget build(BuildContext context) {
     final gradientColor = _getGradientColor();
@@ -301,18 +317,18 @@ class _VaultCard extends StatelessWidget {
                       ],
                     ),
 
-                    if (item.summary != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        item.summary!,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 14,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                    // Show preview of content (first section or summary)
+                    const SizedBox(height: 8),
+                    Text(
+                      _getPreviewText(item),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 14,
+                        height: 1.4,
                       ),
-                    ],
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
 
                     const SizedBox(height: 12),
 
@@ -425,13 +441,33 @@ class _VaultItemDetailSheet extends StatelessWidget {
     required this.onCopy,
   });
 
+  Color _getGradientColor() {
+    switch (item.goalType) {
+      case 'what-if':
+        return const Color(0xFF667EEA);
+      case 'life-task':
+        return const Color(0xFF10B981);
+      default:
+        return const Color(0xFFFFD700);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final gradientColor = _getGradientColor();
+    
     return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Color(0xFF1a1a2e),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      height: MediaQuery.of(context).size.height * 0.9,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF0a0a15),
+            const Color(0xFF1a1a2e),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -446,24 +482,88 @@ class _VaultItemDetailSheet extends StatelessWidget {
             ),
           ),
 
-          // Header
-          Padding(
+          // Beautiful gradient header
+          Container(
+            margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  gradientColor.withOpacity(0.3),
+                  gradientColor.withOpacity(0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: gradientColor.withOpacity(0.4), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: gradientColor.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
             child: Row(
               children: [
+                // Icon based on type
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: gradientColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    item.goalType == 'what-if' ? LucideIcons.brain : LucideIcons.target,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: Text(
-                    item.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: gradientColor.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          item.goalType?.toUpperCase() ?? 'SAVED',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(LucideIcons.x, color: Colors.white),
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(LucideIcons.x, color: Colors.white, size: 20),
+                  ),
                 ),
               ],
             ),
@@ -474,84 +574,194 @@ class _VaultItemDetailSheet extends StatelessWidget {
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (item.summary != null) ...[
-                    Text(
-                      item.summary!,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 16,
-                        height: 1.5,
+                  // Summary section (if exists)
+                  if (item.summary != null && item.summary!.trim().isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: gradientColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: gradientColor.withOpacity(0.2)),
+                      ),
+                      child: Text(
+                        item.summary!,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.95),
+                          fontSize: 16,
+                          height: 1.6,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
                   ],
 
-                  // Sections
-                  ...item.sections.map((section) => Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (section.title.isNotEmpty) ...[
-                          Text(
-                            section.title,
-                            style: const TextStyle(
-                              color: Color(0xFFFFD700),
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                        Text(
-                          section.content,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 15,
-                            height: 1.6,
-                          ),
+                  // All sections with beautiful cards
+                  ...item.sections.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final section = entry.value;
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
                         ),
-                      ],
-                    ),
-                  )).toList(),
-
-                  // Habits (if any)
-                  if (item.habits != null && item.habits!.isNotEmpty) ...[
-                    const Text(
-                      'Habits',
-                      style: TextStyle(
-                        color: Color(0xFFFFD700),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ...item.habits!.map((habit) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '• ',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 15,
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              habit,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Section title (if exists)
+                            if (section.title.isNotEmpty) ...[
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          gradientColor.withOpacity(0.3),
+                                          gradientColor.withOpacity(0.1),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      '${index + 1}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      section.title.toUpperCase(),
+                                      style: TextStyle(
+                                        color: gradientColor,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                            
+                            // Section content
+                            SelectableText(
+                              section.content,
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.9),
                                 fontSize: 15,
+                                height: 1.7,
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+
+                  // Habits section (if any)
+                  if (item.habits != null && item.habits!.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFF10B981).withOpacity(0.2),
+                            const Color(0xFF10B981).withOpacity(0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  LucideIcons.checkCircle2,
+                                  color: Color(0xFF10B981),
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'SUGGESTED HABITS',
+                                style: TextStyle(
+                                  color: const Color(0xFF10B981),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
                           ),
+                          const SizedBox(height: 16),
+                          ...item.habits!.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final habit = entry.value;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 4),
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981).withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: const TextStyle(
+                                          color: Color(0xFF10B981),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      habit,
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.95),
+                                        fontSize: 15,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
                         ],
                       ),
-                    )).toList(),
+                    ),
                   ],
 
                   const SizedBox(height: 40),
@@ -560,24 +770,42 @@ class _VaultItemDetailSheet extends StatelessWidget {
             ),
           ),
 
-          // Copy button
-          Padding(
+          // Action buttons
+          Container(
             padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.black.withOpacity(0.8),
+                  Colors.black,
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
             child: ElevatedButton.icon(
               onPressed: () {
                 onCopy();
                 Navigator.pop(context);
               },
-              icon: const Icon(LucideIcons.copy),
-              label: const Text('Copy to Clipboard'),
+              icon: const Icon(LucideIcons.copy, size: 20),
+              label: const Text(
+                'Copy All',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
+                backgroundColor: gradientColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 18),
                 minimumSize: const Size(double.infinity, 0),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                elevation: 8,
+                shadowColor: gradientColor.withOpacity(0.5),
               ),
             ),
           ),
