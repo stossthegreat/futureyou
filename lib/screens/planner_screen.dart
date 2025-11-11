@@ -782,8 +782,15 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    backgroundColor: AppColors.surface,
-                    title: Text('Delete System?', style: AppTextStyles.h4),
+                    backgroundColor: const Color(0xFF1a1a2e),
+                    title: const Text(
+                      'Delete System?',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
                     content: Text(
                       'This will delete "${system.name}" and all ${systemHabits.length} habits in it.',
                       style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),

@@ -298,7 +298,7 @@ class SystemCard extends StatelessWidget {
                       )
                     : null,
               ),
-            const SizedBox(width: isReadOnly ? 10 : 8),
+            SizedBox(width: isReadOnly ? 10 : 8),
             // Title
             Expanded(
               child: Text(
