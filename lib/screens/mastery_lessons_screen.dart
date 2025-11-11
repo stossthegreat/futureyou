@@ -246,7 +246,7 @@ class _MasteryCard extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 rule.title,
-                                style: AppTextStyles.h4.copyWith(
+                                style: AppTextStyles.h3.copyWith(
                                   color: Colors.white,
                                   fontSize: 16,
                                 ),
@@ -395,7 +395,7 @@ class _RuleDetailScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         rule.rule,
-                        style: AppTextStyles.h4.copyWith(
+                        style: AppTextStyles.h3.copyWith(
                           color: Colors.white,
                           fontSize: 18,
                         ),

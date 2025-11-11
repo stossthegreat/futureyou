@@ -435,10 +435,18 @@ class _SystemDetailSheet extends ConsumerWidget {
 
   Future<void> _commitSystem(BuildContext context, WidgetRef ref, CelebritySystem system) async {
     // Create habits from the system
+    final now = DateTime.now();
     for (var habitText in system.habits) {
       final habit = Habit(
+        id: '${now.millisecondsSinceEpoch}_${system.habits.indexOf(habitText)}',
         title: habitText,
-        isActive: true,
+        type: 'habit',
+        time: '09:00',
+        startDate: now,
+        endDate: now.add(const Duration(days: 365)),
+        repeatDays: [1, 2, 3, 4, 5, 6, 0], // All days
+        createdAt: now,
+        systemId: system.id,
       );
       ref.read(habitEngineProvider.notifier).addHabit(habit);
     }
