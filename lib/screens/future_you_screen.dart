@@ -296,13 +296,13 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
 
         // Card 1: The Book of Purpose (Main Journey)
         FeatureCard(
-          title: 'The Book of Purpose',
+          title: 'The Book Of\nPurpose', // ✅ FIX 2: Split text on two lines
           subtitle: 'Begin your 7-chapter cinematic journey of purpose discovery',
           badge: '7 Chapter Journey',
           icon: LucideIcons.bookOpen,
           gradientColors: [
-            const Color(0xFFD4AF37), // Gold
-            const Color(0xFFA855F7), // Purple
+            const Color(0xFF10b981), // ✅ FIX 3: Beautiful emerald green
+            const Color(0xFF059669), // Darker emerald
           ],
           progressText: chaptersComplete > 0 ? '$chaptersComplete of 7 Chapters' : 'Start Journey',
           progressValue: chaptersComplete > 0 ? progressPercent : null,

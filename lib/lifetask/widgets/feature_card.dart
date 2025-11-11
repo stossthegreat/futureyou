@@ -124,11 +124,11 @@ class FeatureCard extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.md,
-                              vertical: 4,
+                              vertical: 6, // ✅ FIX 1: Slightly more padding for better pill shape
                             ),
                             decoration: BoxDecoration(
                               color: gradientColors.first.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(AppBorderRadius.full),
+                              borderRadius: BorderRadius.circular(100), // ✅ FIX 1: Force full pill shape
                               border: Border.all(
                                 color: gradientColors.first.withOpacity(0.5),
                               ),
