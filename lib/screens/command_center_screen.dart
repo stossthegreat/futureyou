@@ -33,53 +33,38 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.topCenter,
-            radius: 1.8,
-            colors: [
-              AppColors.emerald.withOpacity(0.15),
-              AppColors.cyan.withOpacity(0.08),
-              Colors.black,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              // Future-You OS Header with Settings
-              SliverToBoxAdapter(
-                child: _buildFutureYouHeader(),
-              ),
+      backgroundColor: Colors.black, // ✅ CHANGE 3: Pure black background
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            // Future-You OS Header with Settings
+            SliverToBoxAdapter(
+              child: _buildFutureYouHeader(),
+            ),
 
-              // HERO SECTION - THE MANIFESTO
-              SliverToBoxAdapter(
-                child: _buildManifesto(),
-              ),
+            // ✅ CHANGE 1: Removed _buildManifesto() - the big box at top
 
-              // THE CORE: AI-POWERED PURPOSE ENGINE
-              SliverToBoxAdapter(
-                child: _buildCoreEngine(),
-              ),
+            // THE CORE: AI-POWERED PURPOSE ENGINE
+            SliverToBoxAdapter(
+              child: _buildCoreEngine(),
+            ),
 
-              // AI-Powered Tools Section
-              SliverToBoxAdapter(
-                child: _buildSectionTitle('YOUR WEAPONS'),
-              ),
+            // AI-Powered Tools Section
+            SliverToBoxAdapter(
+              child: _buildSectionTitle('YOUR WEAPONS'),
+            ),
 
-              // Feature Cards Grid
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.75,
-                    crossAxisSpacing: AppSpacing.md,
-                    mainAxisSpacing: AppSpacing.md,
-                  ),
-                  delegate: SliverChildListDelegate([
+            // Feature Cards Grid - ✅ CHANGE 2: Increased height to show full text
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.65, // Changed from 0.75 to 0.65 for taller cards
+                  crossAxisSpacing: AppSpacing.md,
+                  mainAxisSpacing: AppSpacing.md,
+                ),
+                delegate: SliverChildListDelegate([
                     _buildFeatureCard(
                       title: 'Book of Purpose',
                       subtitle: '7-phase deep interrogation to find your life\'s task. No bullshit. No fluff.',
@@ -286,61 +271,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
     ).animate().fadeIn(duration: 600.ms);
   }
 
-  Widget _buildManifesto() {
-    return Container(
-      margin: const EdgeInsets.all(AppSpacing.lg),
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppBorderRadius.xl),
-        gradient: LinearGradient(
-          colors: [
-            AppColors.emerald.withOpacity(0.15),
-            AppColors.cyan.withOpacity(0.15),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(
-          color: AppColors.emerald.withOpacity(0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.emerald.withOpacity(0.2),
-            blurRadius: 30,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'THE WORLD\'S FIRST\nPURPOSE OPERATING SYSTEM',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              height: 1.2,
-              foreground: Paint()
-                ..shader = LinearGradient(
-                  colors: [Colors.white, AppColors.emerald],
-                ).createShader(const Rect.fromLTWH(0, 0, 400, 60)),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            'Most people never discover who they truly are. They drift. They settle. They die with their purpose locked inside.\n\nNot you.\n\nFuture-You OS uses the world\'s most powerful AI (GPT-5) to hunt down your life\'s task with ruthless precision. It watches over you. Holds you accountable. Refuses to let you quit.\n\nThis isn\'t a habit tracker. This is an operating system for your life. The first of its kind. And it will not let you stay ordinary.',
-            style: TextStyle(
-              fontSize: 15,
-              height: 1.6,
-              color: Colors.white.withOpacity(0.9),
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 200.ms, duration: 800.ms).slideY(begin: 0.2);
-  }
+  // ✅ _buildManifesto() removed - no longer needed
 
   Widget _buildCoreEngine() {
     return Container(
@@ -564,17 +495,17 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
 
                     const SizedBox(height: 4),
 
-                    // Subtitle (longer description)
+                    // Subtitle (longer description) - ✅ CHANGE 2: Show full text
                     Text(
                       subtitle,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
-                        fontSize: 12,
-                        height: 1.4,
+                        fontSize: 11,
+                        height: 1.3,
                         fontWeight: FontWeight.w400,
                       ),
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
+                      maxLines: 5, // Increased from 4 to 5
+                      overflow: TextOverflow.visible, // Changed from ellipsis to visible
                     ),
 
                     if (stats != null) ...[
