@@ -26,7 +26,7 @@ class LifeTaskAPI {
     if (response.success) {
       return ConversationResponse.fromJson(response.data!);
     } else {
-      throw Exception(response.message);
+      throw Exception(response.error);
     }
   }
 
@@ -45,7 +45,7 @@ class LifeTaskAPI {
     if (response.success) {
       return ChapterProseResponse.fromJson(response.data!);
     } else {
-      throw Exception(response.message);
+      throw Exception(response.error);
     }
   }
 
@@ -66,7 +66,7 @@ class LifeTaskAPI {
     );
 
     if (!response.success) {
-      throw Exception(response.message);
+      throw Exception(response.error);
     }
   }
 
@@ -77,7 +77,7 @@ class LifeTaskAPI {
     if (response.success) {
       return response.data!.map((json) => Chapter.fromJson(json as Map<String, dynamic>)).toList();
     } else {
-      throw Exception(response.message);
+      throw Exception(response.error);
     }
   }
 
@@ -88,7 +88,7 @@ class LifeTaskAPI {
     if (response.success) {
       return CompiledBook.fromJson(response.data!);
     } else {
-      throw Exception(response.message);
+      throw Exception(response.error);
     }
   }
 }
