@@ -41,16 +41,7 @@ class HabitMasterScreen extends StatelessWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // Title Section
-                Row(
-                  children: [
-                    Icon(LucideIcons.trophy, color: Colors.amber[400], size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Future-You OS · Habit Master',
-                      style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
-                    ),
-                  ],
-                ).animate().fadeIn(duration: 400.ms),
+                // ✅ Removed "Future-You OS" prefix per user request
                 
                 const SizedBox(height: 8),
                 

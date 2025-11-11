@@ -2,9 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../screens/settings_screen.dart';
+import '../screens/reflections_screen.dart';
+import '../services/messages_service.dart';
 
-class SimpleHeader extends StatelessWidget {
+class SimpleHeader extends StatefulWidget {
   const SimpleHeader({super.key});
+
+  @override
+  State<SimpleHeader> createState() => _SimpleHeaderState();
+}
+
+class _SimpleHeaderState extends State<SimpleHeader> {
+  int _unreadCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    final count = messagesService.getUnreadCount();
+    if (mounted) {
+      setState(() {
+        _unreadCount = count;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,49 +40,107 @@ class SimpleHeader extends StatelessWidget {
         AppSpacing.md,
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.end, // ✅ Changed to end - only icons now
         children: [
-          // Future-You OS title in green
-          ShaderMask(
-            shaderCallback: (bounds) => AppColors.emeraldGradient
-                .createShader(bounds),
-            child: const Text(
-              'Future-You OS',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
+          // ✅ Removed "Future-You OS" title per user request
           
-          // Settings icon
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SettingsScreen(),
-                ),
-              );
-            },
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.glassBackground,
-                borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                border: Border.all(
-                  color: AppColors.emerald.withOpacity(0.2),
+          // Reflections + Settings icons
+          Row(
+            children: [
+              // Reflections icon (left of Settings) with notification badge
+              GestureDetector(
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ReflectionsScreen(),
+                    ),
+                  );
+                  // Reload count when returning from Reflections screen
+                  _loadUnreadCount();
+                },
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.glassBackground,
+                        borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                        border: Border.all(
+                          color: AppColors.emerald.withOpacity(0.2),
+                        ),
+                      ),
+                      child: const Icon(
+                        LucideIcons.bookOpen,
+                        color: AppColors.emerald,
+                        size: 22,
+                      ),
+                    ),
+                    // Notification badge
+                    if (_unreadCount > 0)
+                      Positioned(
+                        top: -6,
+                        right: -6,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.black,
+                              width: 2,
+                            ),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 20,
+                            minHeight: 20,
+                          ),
+                          child: Center(
+                            child: Text(
+                              _unreadCount > 99 ? '99+' : '$_unreadCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              child: const Icon(
-                LucideIcons.settings,
-                color: AppColors.emerald,
-                size: 22,
+              const SizedBox(width: AppSpacing.sm),
+              // Settings icon
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.glassBackground,
+                    borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                    border: Border.all(
+                      color: AppColors.emerald.withOpacity(0.2),
+                    ),
+                  ),
+                  child: const Icon(
+                    LucideIcons.settings,
+                    color: AppColors.emerald,
+                    size: 22,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

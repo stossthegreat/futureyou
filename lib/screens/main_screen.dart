@@ -52,11 +52,7 @@ class _MainScreenState extends State<MainScreen>
       label: 'Habit\nMaster',
       screen: const HabitMasterScreen(),
     ),
-    TabItem(
-      icon: LucideIcons.bookOpen,
-      label: 'Reflect',
-      screen: const ReflectionsScreen(),
-    ),
+    // ✅ Removed Reflections tab - now accessible via icon in SimpleHeader
   ];
   
   @override

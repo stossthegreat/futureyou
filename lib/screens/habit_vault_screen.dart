@@ -95,16 +95,7 @@ class _HabitVaultScreenState extends State<HabitVaultScreen> {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // Title
-                Row(
-                  children: [
-                    Icon(LucideIcons.archive, color: Colors.amber[400], size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Future-You OS · Habit Vault',
-                      style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
-                    ),
-                  ],
-                ).animate().fadeIn(duration: 400.ms),
+                // ✅ Removed "Future-You OS" prefix per user request
                 
                 const SizedBox(height: 8),
                 

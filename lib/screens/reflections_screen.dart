@@ -122,13 +122,7 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                             isSelected: _filter == MessageKind.letter,
                             onTap: () => _setFilter(MessageKind.letter),
                           ),
-                          const SizedBox(width: AppSpacing.sm),
-                          _FilterChip(
-                            label: 'Vault',
-                            emoji: '💎',
-                            isSelected: _filter == MessageKind.vault,
-                            onTap: () => _setFilter(MessageKind.vault),
-                          ),
+                          // ✅ Removed Vault filter - moved to Habit Vault in Habit Master tab
                         ],
                       ),
                     ),
@@ -429,14 +423,7 @@ class _LetterCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'Future-You OS',
-                  style: AppTextStyles.captionSmall.copyWith(
-                    color: AppColors.textQuaternary,
-                    fontSize: 10,
-                  ),
-                ),
+                // ✅ Removed "Future-You OS" label per user request
               ],
             ),
 

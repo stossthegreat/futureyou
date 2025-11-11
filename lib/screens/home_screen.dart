@@ -493,7 +493,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildHomeHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
+        AppSpacing.md, // ✅ Reduced from lg to md - moves logo left
         AppSpacing.xl,
         AppSpacing.lg,
         AppSpacing.md,
@@ -505,6 +505,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Row(
             children: [
               // Brain icon in emerald square
+              // ✅ Logo moved more to the left (reduced left padding handled by parent)
               Container(
                 width: 44,
                 height: 44,
@@ -532,8 +533,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   size: 24,
                 ),
               ),
-              const SizedBox(width: 12),
-              // Future-You OS text in emerald gradient
+              const SizedBox(width: 8), // ✅ Reduced from 12 to 8
+              // Future-You OS text in emerald gradient - closer to logo
               ShaderMask(
                 shaderCallback: (bounds) => AppColors.emeraldGradient
                     .createShader(bounds),

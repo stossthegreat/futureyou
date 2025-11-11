@@ -169,16 +169,7 @@ class _ViralSystemsScreenState extends ConsumerState<ViralSystemsScreen> {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // Title
-                Row(
-                  children: [
-                    Icon(LucideIcons.sparkles, color: Colors.purple[300], size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Future-You OS · Viral Systems',
-                      style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
-                    ),
-                  ],
-                ).animate().fadeIn(duration: 400.ms),
+                // ✅ Removed "Future-You OS" prefix per user request
                 
                 const SizedBox(height: 8),
                 

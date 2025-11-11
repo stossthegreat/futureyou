@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:hive/hive.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_app_badger/flutter_app_badger.dart';
 import '../models/coach_message.dart' as model;
 import 'api_client.dart';
 
@@ -60,6 +61,22 @@ class MessagesService {
       message.isRead = true;
       await message.save();
       debugPrint('✓ Message marked as read: $messageId');
+      // Update app badge
+      await _updateAppBadge();
+    }
+  }
+
+  /// Update app icon badge with unread count
+  Future<void> _updateAppBadge() async {
+    try {
+      final count = getUnreadCount();
+      if (count > 0) {
+        await FlutterAppBadger.updateBadgeCount(count);
+      } else {
+        await FlutterAppBadger.removeBadge();
+      }
+    } catch (e) {
+      debugPrint('⚠️ Failed to update app badge: $e');
     }
   }
 
@@ -102,6 +119,8 @@ class MessagesService {
         _lastSyncTime = DateTime.now();
         _isSyncing = false;
         debugPrint('✅ Synced ${result.data!.length} messages');
+        // Update app badge after syncing
+        await _updateAppBadge();
         return true;
       } else {
         // Handle backend errors gracefully
