@@ -364,27 +364,32 @@ class _ViralSystemCard extends StatelessWidget {
   Widget _buildProgress(int completion, int completedCount, int streak) {
     return Row(
       children: [
-        // Progress ring
+        // Progress ring - ✅ FIX 5: Better centered percentage
         SizedBox(
           width: 50,
           height: 50,
           child: Stack(
+            alignment: Alignment.center, // Center the stack content
             children: [
-              CircularProgressIndicator(
-                value: completion / 100,
-                strokeWidth: 6,
-                backgroundColor: Colors.white.withOpacity(0.12),
-                valueColor: AlwaysStoppedAnimation<Color>(system.accentColor),
-              ),
-              Center(
-                child: Text(
-                  '$completion%',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+              SizedBox(
+                width: 50,
+                height: 50,
+                child: CircularProgressIndicator(
+                  value: completion / 100,
+                  strokeWidth: 6,
+                  backgroundColor: Colors.white.withOpacity(0.12),
+                  valueColor: AlwaysStoppedAnimation<Color>(system.accentColor),
                 ),
+              ),
+              Text(
+                '$completion%',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  height: 1.0, // Tight line height for perfect centering
+                ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
@@ -552,8 +557,9 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now(); // Same as start date, user can change
   bool _alarmEnabled = false;
-  TimeOfDay _alarmTime = const TimeOfDay(hour: 9, minute: 0); // ✅ FIX 3: Add time state
+  TimeOfDay _alarmTime = const TimeOfDay(hour: 9, minute: 0);
   late List<bool> _selectedHabits;
+  String _scheduleType = 'everyday'; // 'everyday', 'weekdays', 'weekends'
   
   @override
   void initState() {
@@ -592,9 +598,10 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
           ),
           borderRadius: BorderRadius.circular(AppBorderRadius.xl),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SingleChildScrollView( // ✅ FIX 2: Wrap in scroll view
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             Text(
               'Commit to ${widget.system.name}',
               style: TextStyle(
@@ -639,6 +646,46 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                   setState(() => _endDate = picked);
                 }
               },
+            ),
+            
+            const SizedBox(height: AppSpacing.md),
+            
+            // ✅ FIX 1: Schedule Type Selection
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(AppBorderRadius.md),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Schedule',
+                    style: TextStyle(
+                      color: _getTextColor().withOpacity(0.8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildScheduleOption('everyday', 'Every Day', '7 days/week'),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildScheduleOption('weekdays', 'Weekdays', 'Mon-Fri'),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildScheduleOption('weekends', 'Weekends', 'Sat-Sun'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             
             const SizedBox(height: AppSpacing.md),
@@ -832,13 +879,23 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                             final habitId = DateTime.now().millisecondsSinceEpoch.toString() + '_$i';
                             habitIds.add(habitId);
                             
+                            // ✅ FIX 1: Calculate repeat days based on schedule type
+                            List<int> repeatDays;
+                            if (_scheduleType == 'weekdays') {
+                              repeatDays = [1, 2, 3, 4, 5]; // Mon-Fri
+                            } else if (_scheduleType == 'weekends') {
+                              repeatDays = [0, 6]; // Sat-Sun
+                            } else {
+                              repeatDays = [0, 1, 2, 3, 4, 5, 6]; // Every day
+                            }
+                            
                             await ref.read(habitEngineProvider.notifier).createHabit(
                               title: widget.system.habits[i],
                               type: 'habit',
-                              time: _alarmEnabled ? '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}' : '', // ✅ FIX 3: Pass alarm time
+                              time: _alarmEnabled ? '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}' : '',
                               startDate: _startDate,
                               endDate: _endDate,
-                              repeatDays: [0, 1, 2, 3, 4, 5, 6], // All days
+                              repeatDays: repeatDays, // Use calculated repeat days
                               color: widget.system.accentColor,
                               emoji: widget.system.habits[i].split(' ').first, // Extract emoji
                               reminderOn: _alarmEnabled,
@@ -895,6 +952,54 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                   ),
                 ),
               ],
+            ),
+            
+            // ✅ FIX 2: Add bottom padding for scroll space
+            const SizedBox(height: 40),
+          ],
+        ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleOption(String value, String label, String subtitle) {
+    final isSelected = _scheduleType == value;
+    return GestureDetector(
+      onTap: () => setState(() => _scheduleType = value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? Colors.white.withOpacity(0.3) 
+              : Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+          border: Border.all(
+            color: isSelected 
+                ? _getTextColor().withOpacity(0.5) 
+                : _getTextColor().withOpacity(0.2),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: _getTextColor(),
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: _getTextColor().withOpacity(0.7),
+                fontSize: 9,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

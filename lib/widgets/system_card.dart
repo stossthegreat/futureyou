@@ -138,6 +138,8 @@ class SystemCard extends StatelessWidget {
                             ],
                           ),
                         ),
+                        // ✅ FIX 4: Stunning progress circle (only on Home page - when onToggleHabit is provided)
+                        if (onToggleHabit != null) _buildProgressRing(completion, system.gradientColors.first),
                         // Edit and Delete buttons
                         if (onEdit != null)
                           GestureDetector(
