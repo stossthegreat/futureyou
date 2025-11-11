@@ -245,8 +245,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildHeroSection(),
-                      const SizedBox(height: AppSpacing.xl),
+                      // ✅ Removed _buildHeroSection() - "Life Purpose Discovery" card
                       _buildLifeTaskFeatureCards(),
                       const SizedBox(height: AppSpacing.xl),
                       _buildVisualizationVideos(),
@@ -271,85 +270,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
     );
   }
 
-  Widget _buildHeroSection() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
-        gradient: LinearGradient(
-          colors: [
-            AppColors.emerald.withOpacity(0.1),
-            AppColors.emerald.withOpacity(0.05),
-            Colors.transparent,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(
-          color: AppColors.emerald.withOpacity(0.2),
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.emerald.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(AppBorderRadius.full),
-              border: Border.all(
-                color: AppColors.emerald.withOpacity(0.3),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  LucideIcons.brain,
-                  size: 16,
-                  color: AppColors.emerald,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  'Life Purpose Discovery',
-                  style: AppTextStyles.captionSmall.copyWith(
-                    color: AppColors.emerald,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [
-                AppColors.textPrimary,
-                AppColors.textSecondary,
-              ],
-            ).createShader(bounds),
-            child: Text(
-              'Who do you want to become?',
-              style: AppTextStyles.h1.copyWith(
-                fontSize: 28,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            'Through guided reflection and powerful visualization exercises, we\'ll uncover what truly matters to you and design your life\'s direction.',
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.textTertiary,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0);
-  }
+  // ✅ _buildHeroSection() removed - no longer needed
 
   Widget _buildLifeTaskFeatureCards() {
     // TODO: Track actual progress from backend
