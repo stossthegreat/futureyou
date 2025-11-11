@@ -790,16 +790,23 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                 );
                 
                 if (confirmed == true) {
+                  // Delete ALL habits in the system
+                  final habitCount = systemHabits.length;
                   for (final habit in systemHabits) {
                     await ref.read(habitEngineProvider.notifier).deleteHabit(habit.id);
                   }
+                  // Delete the system itself
                   await LocalStorageService.deleteSystem(system.id);
+                  
+                  // Force UI refresh by invalidating the provider
+                  ref.invalidate(habitEngineProvider);
                   
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${system.name} deleted (${systemHabits.length} habits)'),
+                        content: Text('✅ Deleted entire "${system.name}" system ($habitCount habits removed)'),
                         backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 3),
                       ),
                     );
                   }
