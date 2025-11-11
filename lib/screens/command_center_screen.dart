@@ -96,7 +96,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                       gradient: LinearGradient(
                         colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 1), // Future-You tab
+                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 3), // ✅ FIX: Future-You tab (index 3)
                       badge: 'RUTHLESS',
                     ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.3),
 
@@ -107,7 +107,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                       gradient: LinearGradient(
                         colors: [Color(0xFF10B981), Color(0xFF06B6D4)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 3),
+                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 5), // ✅ FIX: Reflect tab (index 5)
                       badge: 'ALWAYS ON',
                     ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.3),
                   ]),
