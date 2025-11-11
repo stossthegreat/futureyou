@@ -183,20 +183,12 @@ class SystemCard extends StatelessWidget {
   }
 
   Widget _buildHabitsGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 3.5,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-      ),
-      itemCount: habits.length,
-      itemBuilder: (context, index) {
-        final habit = habits[index];
-        return _buildHabitTile(habit);
-      },
+    // ✅ FIX 1: One habit per line for better readability
+    return Column(
+      children: habits.map((habit) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: _buildHabitTile(habit),
+      )).toList(),
     );
   }
 
@@ -204,7 +196,8 @@ class SystemCard extends StatelessWidget {
     final accentColor = system.gradientColors.first;
     
     return GestureDetector(
-      onTap: () => onToggleHabit(habit),
+      // ✅ FIX 2: Only allow tapping if not already done
+      onTap: habit.done ? null : () => onToggleHabit(habit),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(

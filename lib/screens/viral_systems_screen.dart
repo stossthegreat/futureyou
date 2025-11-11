@@ -552,6 +552,7 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now(); // Same as start date, user can change
   bool _alarmEnabled = false;
+  TimeOfDay _alarmTime = const TimeOfDay(hour: 9, minute: 0); // ✅ FIX 3: Add time state
   late List<bool> _selectedHabits;
   
   @override
@@ -734,6 +735,64 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
               ),
             ),
             
+            // ✅ FIX 3: Show time picker when alarm is enabled
+            if (_alarmEnabled) ...[
+              const SizedBox(height: AppSpacing.md),
+              GestureDetector(
+                onTap: () async {
+                  final TimeOfDay? picked = await showTimePicker(
+                    context: context,
+                    initialTime: _alarmTime,
+                  );
+                  if (picked != null) {
+                    setState(() => _alarmTime = picked);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                    border: Border.all(
+                      color: _getTextColor().withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        LucideIcons.clock,
+                        color: _getTextColor(),
+                        size: 20,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        'Reminder Time',
+                        style: TextStyle(
+                          color: _getTextColor().withOpacity(0.8),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _alarmTime.format(context),
+                        style: TextStyle(
+                          color: _getTextColor(),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Icon(
+                        LucideIcons.chevronRight,
+                        color: _getTextColor().withOpacity(0.5),
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            
             const SizedBox(height: AppSpacing.xl),
             
             // Action buttons
@@ -776,7 +835,7 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                             await ref.read(habitEngineProvider.notifier).createHabit(
                               title: widget.system.habits[i],
                               type: 'habit',
-                              time: '', // No specific time for system habits
+                              time: _alarmEnabled ? '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}' : '', // ✅ FIX 3: Pass alarm time
                               startDate: _startDate,
                               endDate: _endDate,
                               repeatDays: [0, 1, 2, 3, 4, 5, 6], // All days
