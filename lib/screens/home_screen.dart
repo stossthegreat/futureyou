@@ -7,6 +7,7 @@ import '../design/tokens.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/date_strip.dart';
 import '../widgets/scrollable_header.dart';
+import '../screens/settings_screen.dart';
 import '../widgets/nudge_banner.dart';
 import '../widgets/morning_brief_modal.dart';
 import '../widgets/system_card.dart';
@@ -107,8 +108,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Scrollable header
-            const ScrollableHeader(),
+            // ✅ New header matching planner style with brain logo
+            _buildHomeHeader(),
             
             // Date strip
             DateStrip(
@@ -484,6 +485,99 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // ✅ NEW: Header matching planner style with brain logo in emerald
+  Widget _buildHomeHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xl,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Brain logo with "Future-You OS" text
+          Row(
+            children: [
+              // Brain icon in emerald square
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.emerald,
+                      AppColors.emerald.withOpacity(0.8),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.emerald.withOpacity(0.3),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  LucideIcons.brain,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Future-You OS text in emerald gradient
+              ShaderMask(
+                shaderCallback: (bounds) => AppColors.emeraldGradient
+                    .createShader(bounds),
+                child: const Text(
+                  'Future-You OS',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          // Settings icon
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+            },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.glassBackground,
+                borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                border: Border.all(
+                  color: AppColors.emerald.withOpacity(0.2),
+                ),
+              ),
+              child: const Icon(
+                LucideIcons.settings,
+                color: AppColors.emerald,
+                size: 22,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
