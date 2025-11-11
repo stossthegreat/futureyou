@@ -114,12 +114,12 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                 ),
               ),
 
-              // Habit Systems Section
-              SliverToBoxAdapter(
-                child: _buildSectionTitle('HABIT WARFARE'),
-              ),
+            // Habit Systems Section
+            SliverToBoxAdapter(
+              child: _buildSectionTitle('HABIT WARFARE'),
+            ),
 
-              SliverPadding(
+            SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -172,16 +172,16 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                 ),
               ),
 
-              // Mirror & Streaks Section (from Mirror page)
-              SliverToBoxAdapter(
-                child: _buildSectionTitle('🪞 PROGRESS & REFLECTION'),
-              ),
+            // Mirror & Streaks Section (from Mirror page)
+            SliverToBoxAdapter(
+              child: _buildSectionTitle('🪞 PROGRESS & REFLECTION'),
+            ),
 
-              SliverToBoxAdapter(
-                child: _buildMirrorSection(),
-              ),
+            SliverToBoxAdapter(
+              child: _buildMirrorSection(),
+            ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
         ),
