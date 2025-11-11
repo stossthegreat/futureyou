@@ -101,16 +101,16 @@ class Message {
 
   Map<String, dynamic> toJson() {
     return {
-      'role': role,
-      'content': content,
+      'role': role == 'assistant' ? 'coach' : role, // ✅ FIX: Map 'assistant' to 'coach'
+      'text': content, // ✅ FIX: Backend expects 'text' not 'content'
       'timestamp': timestamp.toIso8601String(),
     };
   }
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      role: json['role'],
-      content: json['content'],
+      role: json['role'] == 'coach' ? 'assistant' : json['role'], // ✅ FIX: Map 'coach' back to 'assistant'
+      content: json['text'] ?? json['content'] ?? '', // ✅ FIX: Handle both 'text' and 'content'
       timestamp: DateTime.parse(json['timestamp']),
     );
   }
