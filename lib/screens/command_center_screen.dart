@@ -85,7 +85,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                       gradient: LinearGradient(
                         colors: [Color(0xFF06B6D4), Color(0xFF3B82F6)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 4),
+                      onTap: () => Navigator.pushNamed(context, '/what-if'),
                       badge: 'POWERFUL',
                     ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.3),
 
@@ -96,7 +96,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                       gradient: LinearGradient(
                         colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 3), // ✅ FIX: Future-You tab (index 3)
+                      onTap: () => Navigator.pushNamed(context, '/future-you'),
                       badge: 'RUTHLESS',
                     ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.3),
 
@@ -107,7 +107,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                       gradient: LinearGradient(
                         colors: [Color(0xFF10B981), Color(0xFF06B6D4)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 5), // ✅ FIX: Reflect tab (index 5)
+                      onTap: () => Navigator.pushNamed(context, '/reflections'),
                       badge: 'ALWAYS ON',
                     ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.3),
                   ]),
@@ -124,7 +124,7 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.7,
+                    childAspectRatio: 0.65,
                     crossAxisSpacing: AppSpacing.md,
                     mainAxisSpacing: AppSpacing.md,
                   ),
@@ -140,47 +140,41 @@ class _CommandCenterScreenState extends State<CommandCenterScreen>
                     ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.3),
 
                     _buildFeatureCard(
-                      title: 'Habit Library',
-                      subtitle: '100+ science-backed habits. Pre-built. Ready to commit.',
-                      emoji: '📚',
+                      title: 'Celebrity Systems',
+                      subtitle: '25 viral celebrity routines. The Rock. Huberman. Ronaldo. Commit any system instantly.',
+                      emoji: '⭐',
                       gradient: LinearGradient(
-                        colors: [Color(0xFF0EA5E9), Color(0xFF8B5CF6)],
+                        colors: [Color(0xFFDA22FF), Color(0xFF9733EE), Color(0xFF4F46E5)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 2), // Planner tab
+                      onTap: () => Navigator.pushNamed(context, '/celebrity-systems'),
+                      badge: 'NEW',
                     ).animate().fadeIn(delay: 600.ms).slideX(begin: 0.3),
 
                     _buildFeatureCard(
-                      title: 'System Creator',
-                      subtitle: 'Build your own habit system. Custom colors. Custom schedule.',
-                      emoji: '🎨',
+                      title: 'Mastery Lessons',
+                      subtitle: '25 viral habit formation rules. 2-Minute Rule. Habit Stacking. Identity-Based Habits.',
+                      emoji: '📖',
                       gradient: LinearGradient(
-                        colors: [Color(0xFFF59E0B), Color(0xFFEC4899)],
+                        colors: [Color(0xFFFF0080), Color(0xFFFF8C00), Color(0xFF40E0D0)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 2),
+                      onTap: () => Navigator.pushNamed(context, '/mastery-lessons'),
+                      badge: 'NEW',
                     ).animate().fadeIn(delay: 700.ms).slideX(begin: 0.3),
 
                     _buildFeatureCard(
-                      title: 'Habit Master',
-                      subtitle: 'GPT-5 creates personalized 3-phase transformation plans.',
-                      emoji: '⚡',
+                      title: 'Saved Plans',
+                      subtitle: 'Your vault of What-If simulations and habit systems. All saved plans in one place.',
+                      emoji: '💎',
                       gradient: LinearGradient(
-                        colors: [Color(0xFF10B981), Color(0xFFFBBF24)],
+                        colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
                       ),
-                      onTap: () => Navigator.pushNamed(context, '/main', arguments: 4),
+                      onTap: () => Navigator.pushNamed(context, '/habit-vault'),
                     ).animate().fadeIn(delay: 800.ms).slideX(begin: 0.3),
                   ]),
                 ),
               ),
 
-            // Mirror & Streaks Section (from Mirror page)
-            SliverToBoxAdapter(
-              child: _buildSectionTitle('🪞 PROGRESS & REFLECTION'),
-            ),
-
-            SliverToBoxAdapter(
-              child: _buildMirrorSection(),
-            ),
-
+            // Bottom padding
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),

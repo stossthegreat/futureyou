@@ -28,6 +28,12 @@ import 'screens/terms_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/support_screen.dart';
 import 'screens/viral_systems_screen.dart';
+import 'screens/celebrity_systems_screen.dart';
+import 'screens/mastery_lessons_screen.dart';
+import 'screens/what_if_screen.dart';
+import 'screens/reflections_screen.dart';
+import 'screens/future_you_screen.dart';
+import 'screens/habit_vault_screen.dart';
 import 'cinematic/cinematic_entry.dart';
 import 'lifetask/screens/lifetask_journey_screen.dart';
 import 'lifetask/screens/cinematic_test_screen.dart';
@@ -128,6 +134,12 @@ class FutureYouApp extends StatelessWidget {
         '/cinematic-old': (context) => const CinematicEntry(), // OLD: Keep for reference
         '/test-cinematic': (context) => const CinematicTestScreen(), // DEBUG: Test intros
         '/viral-systems': (context) => const ViralSystemsScreen(), // Viral Systems
+        '/celebrity-systems': (context) => const CelebritySystemsScreen(), // Celebrity Routines
+        '/mastery-lessons': (context) => const MasteryLessonsScreen(), // Habit Mastery Rules
+        '/what-if': (context) => const WhatIfScreen(), // What-If Simulator
+        '/reflections': (context) => const ReflectionsScreen(), // AI Reflections
+        '/future-you': (context) => const FutureYouScreen(), // Future-You / Purpose Engine
+        '/habit-vault': (context) => const HabitVaultScreen(), // Habit Vault
       },
     );
   }
