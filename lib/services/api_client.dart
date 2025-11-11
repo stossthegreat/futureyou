@@ -621,7 +621,7 @@ class ApiClient {
     required String sessionStartTime,
   }) async {
     try {
-      final response = await _post('/api/lifetask/conversation', {
+      final response = await _post('/api/lifetask/converse', {
         'chapterNumber': chapterNumber,
         'messages': messages,
         'sessionStartTime': sessionStartTime,
