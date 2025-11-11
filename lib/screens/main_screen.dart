@@ -75,16 +75,16 @@ class _MainScreenState extends State<MainScreen>
     final isFirstTimeAfterOnboarding = prefs.getBool('first_time_after_onboarding') ?? true;
     
     if (isFirstTimeAfterOnboarding) {
-      // First time - start at Discover tab (index 4)
+      // First time - start at Discover tab (index 0)
       setState(() {
-        _currentIndex = 4;
+        _currentIndex = 0;
       });
-      _pageController = PageController(initialPage: 4);
+      _pageController = PageController(initialPage: 0);
       // Mark as no longer first time
       await prefs.setBool('first_time_after_onboarding', false);
     } else {
-      // Regular app open - start at Home tab (index 0)
-      _pageController = PageController(initialPage: 0);
+      // Regular app open - start at Home tab (index 1)
+      _pageController = PageController(initialPage: 1);
     }
   }
   
