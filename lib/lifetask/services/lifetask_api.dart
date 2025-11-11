@@ -1,6 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
-import '../../services/api_client.dart'; // Use existing working API client!
+import '../../services/api_client.dart';
 import '../models/chapter_model.dart';
 
 /// LIFE'S TASK API CLIENT
@@ -12,66 +11,22 @@ class LifeTaskAPI {
   // Use singleton pattern since ApiClient is static
   LifeTaskAPI();
 
-  /// Stream AI conversation responses (excavation mode)
-  /// Returns stream of partial responses for real-time typing effect
-  Stream<String> converseStream({
-    required int chapterNumber,
-    required List<Message> messages,
-    required DateTime sessionStartTime,
-  }) async* {
-    final uri = Uri.parse('$baseUrl/api/lifetask/conversation');
-    final token = getAuthToken();
-
-    final request = http.Request('POST', uri)
-      ..headers.addAll({
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      })
-      ..body = jsonEncode({
-        'chapterNumber': chapterNumber,
-        'messages': messages.map((m) => m.toJson()).toList(),
-        'sessionStartTime': sessionStartTime.toIso8601String(),
-      });
-
-    final streamedResponse = await request.send();
-
-    if (streamedResponse.statusCode != 200) {
-      throw Exception('API error: ${streamedResponse.statusCode}');
-    }
-
-    // Parse SSE (Server-Sent Events) or line-delimited JSON
-    await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
-      // Each chunk is a partial response
-      yield chunk;
-    }
-  }
-
   /// Get full conversation response (uses existing ApiClient)
   Future<ConversationResponse> converse({
     required int chapterNumber,
     required List<Message> messages,
     required DateTime sessionStartTime,
   }) async {
-    try {
-      // Use the existing ApiClient that already works!
-      final response = await ApiClient.post(
-        '/api/lifetask/conversation',
-        {
-          'chapterNumber': chapterNumber,
-          'messages': messages.map((m) => m.toJson()).toList(),
-          'sessionStartTime': sessionStartTime.toIso8601String(),
-        },
-      );
+    final response = await ApiClient.lifeTaskConverse(
+      chapterNumber: chapterNumber,
+      messages: messages.map((m) => m.toJson()).toList(),
+      sessionStartTime: sessionStartTime.toIso8601String(),
+    );
 
-      if (response.statusCode != 200) {
-        throw Exception('API error: ${response.statusCode} - ${response.body}');
-      }
-
-      final data = jsonDecode(response.body);
-      return ConversationResponse.fromJson(data);
-    } catch (e) {
-      print('❌ Life Task API Error: $e');
-      rethrow;
+    if (response.success) {
+      return ConversationResponse.fromJson(response.data!);
+    } else {
+      throw Exception(response.message);
     }
   }
 
@@ -81,21 +36,17 @@ class LifeTaskAPI {
     required List<Message> messages,
     required Map<String, dynamic> extractedPatterns,
   }) async {
-    final response = await ApiClient.post(
-      '/api/lifetask/chapters/generate',
-      {
-        'chapterNumber': chapterNumber,
-        'conversationTranscript': messages.map((m) => m.toJson()).toList(),
-        'extractedPatterns': extractedPatterns,
-      },
+    final response = await ApiClient.lifeTaskGenerateChapter(
+      chapterNumber: chapterNumber,
+      conversationTranscript: messages.map((m) => m.toJson()).toList(),
+      extractedPatterns: extractedPatterns,
     );
 
-    if (response.statusCode != 200) {
-      throw Exception('API error: ${response.statusCode}');
+    if (response.success) {
+      return ChapterProseResponse.fromJson(response.data!);
+    } else {
+      throw Exception(response.message);
     }
-
-    final data = jsonDecode(response.body);
-    return ChapterProseResponse.fromJson(data);
   }
 
   /// Save chapter (bulk write at completion)
@@ -106,44 +57,39 @@ class LifeTaskAPI {
     required Map<String, dynamic> extractedPatterns,
     required int timeSpentMinutes,
   }) async {
-    final response = await ApiClient.post(
-      '/api/lifetask/chapters/save',
-      {
-        'chapterNumber': chapterNumber,
-        'conversationTranscript': messages.map((m) => m.toJson()).toList(),
-        'extractedPatterns': extractedPatterns,
-        'proseText': proseText,
-        'timeSpentMinutes': timeSpentMinutes,
-      },
+    final response = await ApiClient.lifeTaskSaveChapter(
+      chapterNumber: chapterNumber,
+      conversationTranscript: messages.map((m) => m.toJson()).toList(),
+      extractedPatterns: extractedPatterns,
+      proseText: proseText,
+      timeSpentMinutes: timeSpentMinutes,
     );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to save chapter');
+    if (!response.success) {
+      throw Exception(response.message);
     }
   }
 
   /// Get all chapters
   Future<List<Chapter>> getChapters() async {
-    final response = await ApiClient.get('/api/lifetask/chapters');
+    final response = await ApiClient.lifeTaskGetChapters();
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to fetch chapters');
+    if (response.success) {
+      return response.data!.map((json) => Chapter.fromJson(json as Map<String, dynamic>)).toList();
+    } else {
+      throw Exception(response.message);
     }
-
-    final data = jsonDecode(response.body) as List;
-    return data.map((json) => Chapter.fromJson(json)).toList();
   }
 
   /// Compile book
   Future<CompiledBook> compileBook() async {
-    final response = await ApiClient.post('/api/lifetask/book/compile', {});
+    final response = await ApiClient.lifeTaskCompileBook();
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to compile book');
+    if (response.success) {
+      return CompiledBook.fromJson(response.data!);
+    } else {
+      throw Exception(response.message);
     }
-
-    final data = jsonDecode(response.body);
-    return CompiledBook.fromJson(data);
   }
 }
 
@@ -247,4 +193,3 @@ class CompiledBook {
     );
   }
 }
-

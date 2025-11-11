@@ -610,6 +610,112 @@ class ApiClient {
     }
   }
 
+  // ================================
+  // 🎯 LIFE'S TASK DISCOVERY API
+  // ================================
+
+  /// Send conversation message to Life's Task AI (excavation mode)
+  static Future<ApiResponse<Map<String, dynamic>>> lifeTaskConverse({
+    required int chapterNumber,
+    required List<Map<String, dynamic>> messages,
+    required String sessionStartTime,
+  }) async {
+    try {
+      final response = await _post('/api/lifetask/conversation', {
+        'chapterNumber': chapterNumber,
+        'messages': messages,
+        'sessionStartTime': sessionStartTime,
+      });
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      }
+      return ApiResponse.error('Conversation failed: ${response.statusCode}');
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  /// Generate prose chapter for Life's Task
+  static Future<ApiResponse<Map<String, dynamic>>> lifeTaskGenerateChapter({
+    required int chapterNumber,
+    required List<Map<String, dynamic>> conversationTranscript,
+    required Map<String, dynamic> extractedPatterns,
+  }) async {
+    try {
+      final response = await _post('/api/lifetask/chapters/generate', {
+        'chapterNumber': chapterNumber,
+        'conversationTranscript': conversationTranscript,
+        'extractedPatterns': extractedPatterns,
+      });
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      }
+      return ApiResponse.error('Chapter generation failed: ${response.statusCode}');
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  /// Save completed Life's Task chapter
+  static Future<ApiResponse<void>> lifeTaskSaveChapter({
+    required int chapterNumber,
+    required List<Map<String, dynamic>> conversationTranscript,
+    required Map<String, dynamic> extractedPatterns,
+    required String proseText,
+    required int timeSpentMinutes,
+  }) async {
+    try {
+      final response = await _post('/api/lifetask/chapters/save', {
+        'chapterNumber': chapterNumber,
+        'conversationTranscript': conversationTranscript,
+        'extractedPatterns': extractedPatterns,
+        'proseText': proseText,
+        'timeSpentMinutes': timeSpentMinutes,
+      });
+      
+      if (response.statusCode == 200) {
+        return ApiResponse.success(null);
+      }
+      return ApiResponse.error('Save failed: ${response.statusCode}');
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  /// Get all Life's Task chapters
+  static Future<ApiResponse<List<dynamic>>> lifeTaskGetChapters() async {
+    try {
+      final response = await _get('/api/lifetask/chapters');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as List;
+        return ApiResponse.success(data);
+      }
+      return ApiResponse.error('Failed to fetch chapters: ${response.statusCode}');
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
+  /// Compile Life's Task book
+  static Future<ApiResponse<Map<String, dynamic>>> lifeTaskCompileBook() async {
+    try {
+      final response = await _post('/api/lifetask/book/compile', {});
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return ApiResponse.success(data);
+      }
+      return ApiResponse.error('Book compilation failed: ${response.statusCode}');
+    } catch (e) {
+      return ApiResponse.error(e.toString());
+    }
+  }
+
   // 🔬 NEW: What-If Implementation Coach
   static Future<ApiResponse<Map<String, dynamic>>> sendWhatIfMessage(
     String message, {
