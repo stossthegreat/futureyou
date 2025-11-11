@@ -325,8 +325,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                   ],
                 ),
               ),
-              // Tab content
+              // Tab content - ✅ FIX: Allow scrolling within tabs
               SliverFillRemaining(
+                hasScrollBody: true, // Enable inner scroll bodies
                 child: TabBarView(
                   controller: _tabController,
                   children: [_buildAddNewTab(), _buildManageTab(), _buildSystemTab()],
@@ -352,6 +353,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   }
   Widget _buildAddNewTab() {
     return SingleChildScrollView(
+      primary: false, // ✅ FIX: Don't claim primary scroll position
       child: GlassCard(
         child: Form(
           key: _formKey,
@@ -755,6 +757,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     return RefreshIndicator(
       onRefresh: () async => await ref.read(habitEngineProvider).loadHabits(),
       child: ListView(
+        primary: false, // ✅ FIX: Don't claim primary scroll position
+        shrinkWrap: false, // Allow ListView to take full space
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg, 
           0, 
@@ -1265,6 +1269,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   // ---------------------------------------------------------
   Widget _buildSystemTab() {
     return SingleChildScrollView(
+      primary: false, // ✅ FIX: Don't claim primary scroll position
       child: GlassCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
