@@ -9,7 +9,7 @@ import '../widgets/date_strip.dart';
 import '../widgets/scrollable_header.dart';
 import '../screens/settings_screen.dart';
 import '../screens/reflections_screen.dart';
-import '../widgets/coach_message_bubble.dart';
+import '../widgets/ai_os_message_card.dart';
 import '../widgets/morning_brief_modal.dart';
 import '../widgets/system_card.dart';
 import '../providers/habit_provider.dart';
@@ -135,11 +135,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             
             const SizedBox(height: AppSpacing.md),
             
-            // ✅ AI OS Messages - Beautiful Speech Bubbles
+            // ✅ AI OS Messages - LEGENDARY CARDS 🔥
             // Show nudges (throughout day)
             if (activeNudge != null)
-              CoachMessageBubble(
+              AIOSMessageCard(
                 message: activeNudge,
+                phase: 'observer', // TODO: Get from user's actual phase
                 onDismiss: () => setState(() {}),
                 onNavigateToReflections: () {
                   Navigator.push(
@@ -151,8 +152,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             
             // Show debriefs (evening 9pm)
             if (activeDebrief != null && !activeDebrief.isRead)
-              CoachMessageBubble(
+              AIOSMessageCard(
                 message: activeDebrief,
+                phase: 'architect', // TODO: Get from user's actual phase
+                structuralIntegrity: 67, // TODO: Get from consciousness
+                focusPillar: 'Energy Before Distraction', // TODO: Get from consciousness
                 onDismiss: () => setState(() {}),
                 onNavigateToReflections: () {
                   Navigator.push(
@@ -163,15 +167,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             
             // Show unread letters (weekly emotional letters)
-            ...activeLetters.map((letter) => CoachMessageBubble(
+            ...activeLetters.map((letter) => AIOSMessageCard(
               message: letter,
+              phase: 'oracle', // TODO: Get from user's actual phase
               onDismiss: () => setState(() {}),
               onNavigateToReflections: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ReflectionsScreen()),
                 );
-              },
+              ),
             )).toList(),
             
             const SizedBox(height: AppSpacing.sm),
