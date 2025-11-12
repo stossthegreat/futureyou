@@ -70,28 +70,7 @@ class HabitMasterScreen extends StatelessWidget {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // 🎯 CARD 2: Habit Library
-                _MasterCard(
-                  title: 'Habit Library',
-                  subtitle: '100+ evidence-based habits',
-                  icon: LucideIcons.library,
-                  gradientColors: const [Color(0xFF11998E), Color(0xFF38EF7D)],
-                  accentColor: const Color(0xFF11998E),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const HabitLibraryScreen()),
-                    );
-                  },
-                ).animate()
-                  .fadeIn(duration: 600.ms, delay: 200.ms)
-                  .slideX(begin: -0.3, end: 0, curve: Curves.easeOutBack)
-                  .then(delay: 300.ms)
-                  .shimmer(duration: 2500.ms, color: const Color(0xFF38EF7D).withOpacity(0.4)),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // 🎯 CARD 3: Viral Systems
+                // 🎯 CARD 2: Viral Systems
                 _MasterCard(
                   title: 'Viral Systems',
                   subtitle: '15 trending habit systems',
@@ -105,9 +84,9 @@ class HabitMasterScreen extends StatelessWidget {
                     );
                   },
                 ).animate()
-                  .fadeIn(duration: 600.ms, delay: 300.ms)
+                  .fadeIn(duration: 600.ms, delay: 200.ms)
                   .slideX(begin: 0.3, end: 0, curve: Curves.elasticOut)
-                  .then(delay: 400.ms)
+                  .then(delay: 300.ms)
                   .shimmer(duration: 1800.ms, color: const Color(0xFFFFC837).withOpacity(0.5))
                   .animate(onPlay: (controller) => controller.repeat())
                   .slideY(begin: 0, end: -0.015, duration: 1500.ms, curve: Curves.easeInOut)
@@ -116,7 +95,7 @@ class HabitMasterScreen extends StatelessWidget {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // 🎯 CARD 4: Celebrity Systems
+                // 🎯 CARD 3: Celebrity Systems
                 _MasterCard(
                   title: 'Celebrity Systems',
                   subtitle: '25 viral celebrity routines',
@@ -130,10 +109,31 @@ class HabitMasterScreen extends StatelessWidget {
                     );
                   },
                 ).animate()
-                  .fadeIn(duration: 600.ms, delay: 400.ms)
+                  .fadeIn(duration: 600.ms, delay: 300.ms)
                   .slideX(begin: -0.4, end: 0, curve: Curves.easeOutCubic)
-                  .then(delay: 500.ms)
+                  .then(delay: 400.ms)
                   .shimmer(duration: 2200.ms, color: Colors.white.withOpacity(0.4)),
+
+                const SizedBox(height: AppSpacing.lg),
+
+                // 🎯 CARD 4: Habit Library (moved after Celebrity Systems)
+                _MasterCard(
+                  title: 'Habit Library',
+                  subtitle: '100+ evidence-based habits',
+                  icon: LucideIcons.library,
+                  gradientColors: const [Color(0xFF11998E), Color(0xFF38EF7D)],
+                  accentColor: const Color(0xFF11998E),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HabitLibraryScreen()),
+                    );
+                  },
+                ).animate()
+                  .fadeIn(duration: 600.ms, delay: 400.ms)
+                  .slideX(begin: -0.3, end: 0, curve: Curves.easeOutBack)
+                  .then(delay: 500.ms)
+                  .shimmer(duration: 2500.ms, color: const Color(0xFF38EF7D).withOpacity(0.4)),
 
                 const SizedBox(height: AppSpacing.lg),
 
