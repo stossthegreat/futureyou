@@ -7,6 +7,8 @@ import '../widgets/simple_header.dart';
 import '../data/celebrity_systems.dart';
 import '../providers/habit_provider.dart';
 import '../models/habit.dart';
+import '../models/habit_system.dart';
+import '../services/local_storage.dart';
 
 class CelebritySystemsScreen extends ConsumerStatefulWidget {
   const CelebritySystemsScreen({super.key});
@@ -574,13 +576,18 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                         try {
                           final now = DateTime.now();
                           final timeStr = _alarmEnabled ? '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}' : '';
+                          final habitIds = <String>[]; // Track created habit IDs
+                          final systemId = 'celebrity_system_${now.millisecondsSinceEpoch}'; // Unique system ID
                           
                           for (int i = 0; i < widget.system.habits.length; i++) {
                             if (_selectedHabits[i]) {
+                              final habitId = '${now.millisecondsSinceEpoch}_$i';
+                              habitIds.add(habitId); // Add to habitIds list
+                              
                               debugPrint('🎯 Creating celebrity habit: "${widget.system.habits[i]}" with reminderOn=$_alarmEnabled, time="$timeStr"');
                               
                               final habit = Habit(
-                                id: '${now.millisecondsSinceEpoch}_$i',
+                                id: habitId,
                                 title: widget.system.habits[i],
                                 type: 'habit',
                                 time: timeStr,
@@ -592,12 +599,32 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                                     ? [1, 2, 3, 4, 5]
                                     : [0, 6],
                                 createdAt: now,
-                                systemId: widget.system.name,
+                                systemId: systemId, // Use the generated system ID
                                 reminderOn: _alarmEnabled,
                               );
-                              ref.read(habitEngineProvider.notifier).addHabit(habit);
+                              await ref.read(habitEngineProvider.notifier).addHabit(habit);
+                              
+                              // Small delay to ensure unique IDs
+                              await Future.delayed(const Duration(milliseconds: 10));
                             }
                           }
+
+                          // CRITICAL: Save system metadata so it appears on Planner/Home
+                          final habitSystem = HabitSystem(
+                            id: systemId,
+                            name: widget.system.name,
+                            tagline: widget.system.subtitle,
+                            iconCodePoint: Icons.star.codePoint, // Default icon for celebrity systems
+                            gradientColors: [
+                              Color.fromARGB(255, widget.system.gradientColors[0], widget.system.gradientColors[1], widget.system.gradientColors[2]),
+                              Color.fromARGB(255, widget.system.gradientColors[3], widget.system.gradientColors[4], widget.system.gradientColors[5]),
+                            ],
+                            accentColor: Color.fromARGB(255, widget.system.gradientColors[0], widget.system.gradientColors[1], widget.system.gradientColors[2]),
+                            habitIds: habitIds,
+                            createdAt: now,
+                          );
+                          await LocalStorageService.saveSystem(habitSystem);
+                          debugPrint('✅ Saved celebrity system: ${widget.system.name} with ${habitIds.length} habits');
 
                           if (mounted) {
                             Navigator.pop(context);
