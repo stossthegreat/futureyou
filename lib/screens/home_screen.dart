@@ -195,8 +195,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: AppSpacing.lg),
             
             // Habit cards (System cards + Standalone habits)
-          if (dayHabits.isEmpty)
-            Padding(
+            if (dayHabits.isEmpty)
+              Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl * 2),
               child: GlassCard(
                 child: Column(
@@ -225,56 +225,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ),
               ),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Column(
-                children: [
-                  // System Cards (NEW: using SystemCard widget)
-                  ...allSystems.where((system) => systemHabitsMap.containsKey(system.id)).map((system) {
-                    final systemHabits = systemHabitsMap[system.id]!.cast<Habit>();
-                    return SystemCard(
-                      system: system,
-                      habits: systemHabits,
-                      onToggleHabit: (habit) async {
-                        // ✅ HOME PAGE: Enable habit ticking
-                        await ref.read(habitEngineProvider.notifier).toggleHabitCompletion(habit.id);
-                      },
-                    );
-                  }).toList(),
-                  
-                  // Standalone Habit Cards
-                  ...standaloneHabits.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final habit = entry.value;
-                    final isDone = habit.isDoneOn(_selectedDate);
-                    
-                    return _buildReactHabitCard(
-                      habit: habit,
-                      isDone: isDone,
-                      index: index + allSystems.length,
-                      onToggle: () async {
-                        await ref.read(habitEngineProvider).toggleHabitCompletion(habit.id);
-                      },
-                    );
-                  }).toList(),
-                ],
-              ),
             ),
-          
-          const SizedBox(height: AppSpacing.xl),
-          
-          // Week Overview Card
-          WeekOverviewCard(
-            stats: WeeklyStatsService.calculateCurrentWeekStats(),
-          ),
-          
-          // Bottom padding for nav bar (extra space for breathing room)
-          const SizedBox(height: 150),
-        ],
+            
+            if (dayHabits.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Column(
+                  children: [
+                    // System Cards (NEW: using SystemCard widget)
+                    ...allSystems.where((system) => systemHabitsMap.containsKey(system.id)).map((system) {
+                      final systemHabits = systemHabitsMap[system.id]!.cast<Habit>();
+                      return SystemCard(
+                        system: system,
+                        habits: systemHabits,
+                        onToggleHabit: (habit) async {
+                          // ✅ HOME PAGE: Enable habit ticking
+                          await ref.read(habitEngineProvider.notifier).toggleHabitCompletion(habit.id);
+                        },
+                      );
+                    }).toList(),
+                    
+                    // Standalone Habit Cards
+                    ...standaloneHabits.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final habit = entry.value;
+                      final isDone = habit.isDoneOn(_selectedDate);
+                      
+                      return _buildReactHabitCard(
+                        habit: habit,
+                        isDone: isDone,
+                        index: index + allSystems.length,
+                        onToggle: () async {
+                          await ref.read(habitEngineProvider).toggleHabitCompletion(habit.id);
+                        },
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+            
+            const SizedBox(height: AppSpacing.xl),
+            
+            // Week Overview Card
+            WeekOverviewCard(
+              stats: WeeklyStatsService.calculateCurrentWeekStats(),
+            ),
+            
+            // Bottom padding for nav bar (extra space for breathing room)
+            const SizedBox(height: 150),
+          ],
+        ),
       ),
-    ),
     );
   }
   
