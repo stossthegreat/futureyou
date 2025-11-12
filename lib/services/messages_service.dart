@@ -266,6 +266,14 @@ class MessagesService {
     return debriefs.first;
   }
 
+  /// Get unread letters (weekly emotional letters)
+  List<model.CoachMessage> getUnreadLetters() {
+    if (!_initialized) return [];
+    
+    final letters = getMessagesByKind(model.MessageKind.letter);
+    return letters.where((letter) => !letter.isRead).toList();
+  }
+
   /// Add a new message (for testing or offline mode)
   Future<void> addMessage(model.CoachMessage message) async {
     if (!_initialized) await init();

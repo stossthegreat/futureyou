@@ -9,7 +9,7 @@ import '../widgets/date_strip.dart';
 import '../widgets/scrollable_header.dart';
 import '../screens/settings_screen.dart';
 import '../screens/reflections_screen.dart';
-import '../widgets/nudge_banner.dart';
+import '../widgets/coach_message_bubble.dart';
 import '../widgets/morning_brief_modal.dart';
 import '../widgets/system_card.dart';
 import '../providers/habit_provider.dart';
@@ -104,11 +104,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // ✅ Date-aware completion
     final completedCount = dayHabits.where((h) => h.isDoneOn(_selectedDate)).length;
     
-    // Check for active nudge
-    final activeNudge = messagesService.getActiveNudge();
+    // ✅ Check for ALL active AI OS messages (brief, nudge, debrief, letter)
     final isToday = _selectedDate.year == DateTime.now().year &&
         _selectedDate.month == DateTime.now().month &&
         _selectedDate.day == DateTime.now().day;
+    
+    // Get active messages (only show for today)
+    final activeNudge = isToday ? messagesService.getActiveNudge() : null;
+    final activeDebrief = isToday ? messagesService.getLatestDebrief() : null;
+    final activeLetters = isToday ? messagesService.getUnreadLetters() : [];
     
     // Format date like React: "Thursday, Oct 30, 2025"
     final dateFormatter = DateFormat('EEEE, MMM d, yyyy');
@@ -129,20 +133,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onDateSelected: _onDateSelected,
             ),
             
-            // Nudge Banner (only for today)
-            if (activeNudge != null && isToday)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: NudgeBanner(
-                  nudge: activeNudge,
-                  onDismiss: () => setState(() {}),
-                  onDoIt: () {
-                    // Scroll to first undone habit
-                  },
-                ),
+            const SizedBox(height: AppSpacing.md),
+            
+            // ✅ AI OS Messages - Beautiful Speech Bubbles
+            // Show nudges (throughout day)
+            if (activeNudge != null)
+              CoachMessageBubble(
+                message: activeNudge,
+                onDismiss: () => setState(() {}),
+                onNavigateToReflections: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReflectionsScreen()),
+                  );
+                },
               ),
             
-            const SizedBox(height: AppSpacing.lg),
+            // Show debriefs (evening 9pm)
+            if (activeDebrief != null && !activeDebrief.isRead)
+              CoachMessageBubble(
+                message: activeDebrief,
+                onDismiss: () => setState(() {}),
+                onNavigateToReflections: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReflectionsScreen()),
+                  );
+                },
+              ),
+            
+            // Show unread letters (weekly emotional letters)
+            ...activeLetters.map((letter) => CoachMessageBubble(
+              message: letter,
+              onDismiss: () => setState(() {}),
+              onNavigateToReflections: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ReflectionsScreen()),
+                );
+              },
+            )).toList(),
+            
+            const SizedBox(height: AppSpacing.sm),
             
             // Simple date subtitle
             Padding(
