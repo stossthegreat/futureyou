@@ -75,7 +75,7 @@ WHO THEY ARE:
 - Structural Integrity: ${integrity}%
 
 THE BLUEPRINT YOU'VE DRAWN:
-${driftWindow ? `- System fault detected: ${driftWindow.time} - ${driftWindow.reason}` : ''}
+${driftWindow ? `- System fault detected: ${driftWindow.time} - ${driftWindow.description}` : ''}
 ${returnProtocol ? `- Return protocol that works: "${returnProtocol.text}"` : ''}
 ${systemFault ? `- Known weakness: ${systemFault}` : ''}
 ${ctx.contradictions.length > 0 ? `- Design flaw: ${ctx.contradictions[0]}` : ''}
