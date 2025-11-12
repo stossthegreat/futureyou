@@ -232,7 +232,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
             slivers: [
               // Header that disappears when scrolling
               SliverAppBar(
-                expandedHeight: 80, // Same as other tabs
+                expandedHeight: 88, // Slightly taller so 'p' and 'g' descenders show fully
                 floating: true,
                 snap: true,
                 pinned: false,
@@ -240,7 +240,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
                 elevation: 0,
                 flexibleSpace: const SimpleHeader(
                   tabName: 'Purpose Engine',
-                  tabColor: Color(0xFF10b981), // Beautiful emerald green
+                  tabColor: Color(0xFFEF4444), // Beautiful vibrant red (distinct from Today tab)
                 ),
               ),
               // Content
@@ -294,8 +294,8 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
           badge: '7 Chapter Journey',
           icon: LucideIcons.bookOpen,
           gradientColors: [
-            const Color(0xFF10b981), // ✅ FIX 3: Beautiful emerald green
-            const Color(0xFF059669), // Darker emerald
+            const Color(0xFFEF4444), // Beautiful vibrant red (matches header)
+            const Color(0xFFDC2626), // Darker red
           ],
           progressText: chaptersComplete > 0 ? '$chaptersComplete of 7 Chapters' : 'Start Journey',
           progressValue: chaptersComplete > 0 ? progressPercent : null,
