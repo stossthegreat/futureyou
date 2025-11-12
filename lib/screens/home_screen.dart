@@ -176,7 +176,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   context,
                   MaterialPageRoute(builder: (context) => const ReflectionsScreen()),
                 );
-              ),
+              },
             )).toList(),
             
             const SizedBox(height: AppSpacing.sm),
