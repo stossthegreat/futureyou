@@ -49,52 +49,9 @@ class MasteryLessonsScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.sm),
 
                 Text(
-                  'The Ultimate Viral Habit Formation Rules',
+                  'The Ultimate Habit Formation Rules',
                   style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
                 ).animate().fadeIn(duration: 600.ms, delay: 100.ms),
-
-                const SizedBox(height: AppSpacing.xl),
-
-                // Stats bar
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.emerald.withOpacity(0.2),
-                        AppColors.cyan.withOpacity(0.2),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                    border: Border.all(color: AppColors.emerald.withOpacity(0.3)),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _StatItem(
-                            icon: LucideIcons.trendingUp,
-                            label: '15B+',
-                            subtitle: 'TikTok views',
-                          ),
-                          Container(width: 1, height: 40, color: Colors.white.withOpacity(0.2)),
-                          _StatItem(
-                            icon: LucideIcons.bookOpen,
-                            label: '50M+',
-                            subtitle: 'Books sold',
-                          ),
-                          Container(width: 1, height: 40, color: Colors.white.withOpacity(0.2)),
-                          _StatItem(
-                            icon: LucideIcons.calendar,
-                            label: '66 Days',
-                            subtitle: 'Average',
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ).animate().fadeIn(duration: 600.ms, delay: 200.ms),
 
                 const SizedBox(height: AppSpacing.xl),
 
