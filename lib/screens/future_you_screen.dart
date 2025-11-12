@@ -232,7 +232,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
             slivers: [
               // Header that disappears when scrolling
               SliverAppBar(
-                expandedHeight: 60, // Reduced from 80 to push header up
+                expandedHeight: 80, // Same as other tabs
                 floating: true,
                 snap: true,
                 pinned: false,
