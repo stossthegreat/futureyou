@@ -551,7 +551,7 @@ TASK: Generate cinematic, evidence-based responses. Cite peer-reviewed studies n
 
     // Call OpenAI directly - use GPT-4o-mini for best results
     const completion = await openai.chat.completions.create({
-      model: "gpt-5-mini", // GPT-4 Omni Mini - fast and smart
+      model: "gpt-4o-mini", // GPT-4 Omni Mini - fast and smart
       max_completion_tokens: 16000, // Increased for full output cards
       messages: [
         { role: "system", content: fullSystemPrompt },
@@ -675,7 +675,7 @@ Return ONLY valid JSON:
     try {
       // Call OpenAI directly for plan generation
       const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-5-mini",
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
         max_completion_tokens: 12000,
         messages: [
           { role: "system", content: "Generate cinematic, evidence-based plans. Cite real peer-reviewed studies. Output valid JSON only." },
@@ -792,7 +792,7 @@ ${userMessage}
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 180000 });
 
     const stream = await client.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-4o-mini",
       messages,
       temperature: 0.7,
       max_completion_tokens: 8000, // 🔥 BACK TO 8000 - Reasoning needs space!

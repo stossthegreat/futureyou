@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { prisma } from "../utils/db";
 import { memoryService } from "./memory.service";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 function getOpenAIClient() {
   if (!process.env.OPENAI_API_KEY) return null;

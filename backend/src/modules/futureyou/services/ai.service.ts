@@ -67,7 +67,7 @@ export class FutureYouAIService {
     console.log(`[FutureYou AI] Sending to OpenAI, model: ${process.env.FUTUREYOU_AI_MODEL || 'gpt-4o-mini'}`);
     
     const response = await this.client.chat.completions.create({
-      model: process.env.FUTUREYOU_AI_MODEL || 'gpt-4o-mini', // Fix: use gpt-4o-mini, not gpt-5-mini
+      model: process.env.FUTUREYOU_AI_MODEL || 'gpt-4o-mini', // Fix: use gpt-4o-mini, not gpt-4o-mini
       max_completion_tokens: Number(process.env.FUTUREYOU_MAX_TOKENS || 900),
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },

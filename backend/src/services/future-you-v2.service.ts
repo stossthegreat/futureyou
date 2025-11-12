@@ -3,7 +3,7 @@ import { prisma } from "../utils/db";
 import { redis } from "../utils/redis";
 import { memoryService } from "./memory.service";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const TEMP_ANALYST = 0.25; // Cold logic
 const TEMP_VOICE = 0.7;    // Warm communication
 
