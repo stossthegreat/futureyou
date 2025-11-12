@@ -793,21 +793,32 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                 );
                 
                 if (confirmed == true) {
-                  // Delete ALL habits in the system
+                  // Delete ALL habits in the system - ONE AT A TIME, WAITING FOR EACH
                   final habitCount = systemHabits.length;
-                  for (final habit in systemHabits) {
+                  debugPrint('🗑️ Deleting $habitCount habits from system "${system.name}"...');
+                  
+                  for (int i = 0; i < systemHabits.length; i++) {
+                    final habit = systemHabits[i];
+                    debugPrint('   🗑️ Deleting habit ${i+1}/$habitCount: ${habit.title} (${habit.id})');
                     await ref.read(habitEngineProvider.notifier).deleteHabit(habit.id);
+                    // Small delay to ensure deletion completes
+                    await Future.delayed(const Duration(milliseconds: 50));
                   }
+                  
+                  debugPrint('🗑️ All habits deleted. Now deleting system itself...');
                   // Delete the system itself
                   await LocalStorageService.deleteSystem(system.id);
+                  debugPrint('✅ System "${system.name}" completely deleted');
                   
-                  // Force UI refresh by invalidating the provider
+                  // FORCE COMPLETE RELOAD by invalidating AND reloading
                   ref.invalidate(habitEngineProvider);
+                  await ref.read(habitEngineProvider.notifier).loadHabits();
                   
+                  // Force widget rebuild by calling setState if this was a StatefulWidget
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('✅ Deleted entire "${system.name}" system ($habitCount habits removed)'),
+                        content: Text('✅ DELETED ENTIRE "${system.name}" system ($habitCount habits removed)'),
                         backgroundColor: Colors.red,
                         duration: const Duration(seconds: 3),
                       ),

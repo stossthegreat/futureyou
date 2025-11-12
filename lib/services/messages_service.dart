@@ -66,6 +66,22 @@ class MessagesService {
     }
   }
 
+  /// Mark ALL messages as read (clears badge)
+  Future<void> markAllAsRead() async {
+    if (!_initialized) return;
+    debugPrint('🔔 Marking all messages as read...');
+    final messages = _box.values.cast<model.CoachMessage>().toList();
+    for (final message in messages) {
+      if (!message.isRead) {
+        message.isRead = true;
+        await message.save();
+      }
+    }
+    debugPrint('✅ Marked ${messages.length} messages as read');
+    // Update app badge to 0
+    await _updateAppBadge();
+  }
+
   /// Update app icon badge with unread count
   /// Uses flutter_local_notifications for cross-platform badge support
   Future<void> _updateAppBadge() async {

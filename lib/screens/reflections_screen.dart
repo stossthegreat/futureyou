@@ -24,6 +24,8 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
   void initState() {
     super.initState();
     _loadMessages();
+    // Mark all messages as read when opening screen (clears badge)
+    messagesService.markAllAsRead();
   }
 
   Future<void> _loadMessages() async {
