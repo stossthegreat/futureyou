@@ -35,7 +35,7 @@ class HabitMasterScreen extends StatelessWidget {
             backgroundColor: Colors.transparent,
             elevation: 0,
             flexibleSpace: SimpleHeader(
-              tabName: 'HABIT MASTER',
+              tabName: 'Habit Master',
               tabColor: Color(0xFF667EEA), // Beautiful purple
             ),
           ),

@@ -239,7 +239,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 flexibleSpace: const SimpleHeader(
-                  tabName: 'PURPOSE ENGINE',
+                  tabName: 'Purpose Engine',
                   tabColor: Color(0xFF10b981), // Beautiful emerald green
                 ),
               ),
