@@ -131,24 +131,7 @@ class HabitMasterScreen extends StatelessWidget {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // 🎯 CARD 5: Habit Vault
-                _MasterCard(
-                  title: 'Habit Vault',
-                  subtitle: 'Your saved plans & simulations',
-                  icon: LucideIcons.archive,
-                  gradientColors: const [Color(0xFFFFD700), Color(0xFFFFA500), Color(0xFFFF6347)],
-                  accentColor: const Color(0xFFFFD700),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const HabitVaultScreen()),
-                    );
-                  },
-                ).animate().fadeIn(duration: 400.ms, delay: 600.ms).slideX(begin: -0.1, end: 0),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // 🎯 CARD 6: Mastery Lessons
+                // 🎯 CARD 5: Mastery Lessons
                 _MasterCard(
                   title: 'Mastery Lessons',
                   subtitle: '25 viral habit formation rules',
@@ -161,7 +144,24 @@ class HabitMasterScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const MasteryLessonsScreen()),
                     );
                   },
-                ).animate().fadeIn(duration: 400.ms, delay: 700.ms).slideX(begin: 0.1, end: 0),
+                ).animate().fadeIn(duration: 400.ms, delay: 600.ms).slideX(begin: 0.1, end: 0),
+
+                const SizedBox(height: AppSpacing.lg),
+
+                // 🎯 CARD 6: Habit Vault (moved to bottom)
+                _MasterCard(
+                  title: 'Habit Vault',
+                  subtitle: 'Your saved plans & simulations',
+                  icon: LucideIcons.archive,
+                  gradientColors: const [Color(0xFFFFD700), Color(0xFFFFA500), Color(0xFFFF6347)],
+                  accentColor: const Color(0xFFFFD700),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HabitVaultScreen()),
+                    );
+                  },
+                ).animate().fadeIn(duration: 400.ms, delay: 700.ms).slideX(begin: -0.1, end: 0),
 
                 const SizedBox(height: 100),
               ]),
