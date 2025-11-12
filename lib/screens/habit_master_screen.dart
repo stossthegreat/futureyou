@@ -45,24 +45,21 @@ class HabitMasterScreen extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.lg),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Title Section
-                // ✅ Removed "Future-You OS" prefix per user request
-                
+                // Title Section with Quote
                 const SizedBox(height: 8),
                 
-                ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFFFA500), Color(0xFFFF6347)],
-                  ).createShader(bounds),
-                  child: const Text(
-                    'Master Your Habits',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
+                // Quote in beautiful thin writing
+                Text(
+                  '"We are what we repeatedly do, excellence is not an act but a habit"',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w300,
+                    fontStyle: FontStyle.italic,
+                    color: const Color(0xFF667EEA), // Same purple as header
+                    letterSpacing: 0.5,
+                    height: 1.5,
                   ),
-                ).animate().fadeIn(duration: 600.ms, delay: 100.ms).slideY(begin: 0.1, end: 0),
+                ).animate().fadeIn(duration: 700.ms, delay: 150.ms).slideY(begin: 0.15, end: 0),
 
                 const SizedBox(height: AppSpacing.xl),
 

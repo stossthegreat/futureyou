@@ -285,21 +285,25 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header - bigger and 2-tone green gradient
+        // Section header with quote
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          child: ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [Color(0xFF10b981), Color(0xFF059669)], // 2-tone emerald green
-            ).createShader(bounds),
-            child: const Text(
-              'Purpose Discovery',
-              style: TextStyle(
-                fontSize: 32, // ✅ Matching Habit Master size
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Quote in beautiful thin writing
+              Text(
+                '"He who knows why, can endure any how"',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w300,
+                  fontStyle: FontStyle.italic,
+                  color: const Color(0xFF10b981), // Same emerald green as header
+                  letterSpacing: 0.5,
+                  height: 1.4,
+                ),
               ),
-            ),
+            ],
           ),
         ),
 
