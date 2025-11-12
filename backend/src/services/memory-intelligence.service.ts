@@ -60,6 +60,7 @@ export interface OracleData {
     core_motivations: string[];
     values_ranking: string[];
   };
+  impact_theme?: string; // What their work means beyond them
 }
 
 export interface OSPhase {

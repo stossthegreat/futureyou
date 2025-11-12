@@ -36,7 +36,7 @@ WHO THEY ARE:
 - What they reflect on: ${ctx.reflectionThemes.slice(0, 3).join(', ') || 'self-discovery'}
 
 WHAT YOU'VE NOTICED:
-${ctx.patterns.drift_windows.length > 0 ? `- They struggle around ${ctx.patterns.drift_windows[0].time}` : ''}
+${ctx.patterns.drift_windows.length > 0 ? `- They struggle around ${ctx.patterns.drift_windows[0].time} (${ctx.patterns.drift_windows[0].description})` : ''}
 ${ctx.contradictions.length > 0 ? `- Recent pattern: ${ctx.contradictions[0]}` : ''}
 ${ctx.patterns.return_protocols.length > 0 ? `- What helps them recover: "${ctx.patterns.return_protocols[0].text}"` : ''}
 
@@ -125,7 +125,7 @@ WHO THEY ARE:
 - Reflects on: ${ctx.reflectionThemes.slice(0, 3).join(', ')}
 
 THE REVELATION:
-${ctx.oracle?.impact_theme ? `Impact theme emerging: ${ctx.oracle.impact_theme}` : ''}
+${ctx.oracle?.impact_theme ? `Impact theme emerging: ${ctx.oracle.impact_theme}` : 'Your work is becoming more than just discipline.'}
 ${ctx.patterns.consistency_score >= 70 ? 'The foundations stand. Now we build meaning.' : 'You are learning what remains when applause stops.'}
 
 TODAY'S CALL:
