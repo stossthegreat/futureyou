@@ -293,7 +293,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
             children: [
               // Quote in beautiful thin writing
               Text(
-                '"He who knows why, can endure any how"',
+                '"He who knows his why, can endure any why"',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w300,
