@@ -1,6 +1,8 @@
 import OpenAI from "openai";
 import { prisma } from "../utils/db";
 import { memoryService } from "./memory.service";
+import { memoryIntelligence, UserConsciousness } from "./memory-intelligence.service";
+import { shortTermMemory } from "./short-term-memory.service";
 import { redis } from "../utils/redis";
 import { MENTOR } from "../config/mentors.config";
 
@@ -27,16 +29,119 @@ type GenerateOptions = {
 
 export class AIService {
   async generateFutureYouReply(userId: string, userMessage: string, opts: GenerateOptions = {}) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    
+    // Feature flag: use consciousness system if enabled
+    if (user?.osMemoryEnabled) {
+      return this.generateWithConsciousness(userId, userMessage, opts);
+    } else {
+      return this.generateLegacy(userId, userMessage, opts);
+    }
+  }
+
+  /**
+   * 🧠 NEW: Consciousness-aware AI generation
+   */
+  private async generateWithConsciousness(
+    userId: string,
+    userMessage: string,
+    opts: GenerateOptions = {}
+  ): Promise<string> {
+    const openai = getOpenAIClient();
+    if (!openai) return "Future You is silent right now — try again later.";
+
+    // Build complete consciousness context
+    const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
+    const shortTerm = await shortTermMemory.getRecentConversation(userId, 10);
+    const dialogueMeta = await shortTermMemory.getDialogueMeta(userId);
+
+    // Update consciousness with short-term data
+    consciousness.recentConversation = shortTerm;
+    consciousness.currentEmotionalState = dialogueMeta.currentEmotionalState;
+    consciousness.contradictions = dialogueMeta.recentContradictions;
+
+    // Adapt voice to phase
+    const voiceGuidelines = this.buildVoiceForPhase(consciousness);
+
+    // Determine context strategy (hybrid per plan)
+    const useFullContext = ["brief", "debrief", "letter"].includes(opts.purpose || "");
+
+    // Enhanced system prompt with memory
+    const systemPrompt = `
+${MENTOR.systemPrompt}
+
+WHO YOU'RE SPEAKING TO:
+${consciousness.identity.name}, ${consciousness.phase} phase (day ${consciousness.os_phase.days_in_phase})
+${consciousness.identity.purpose ? `Purpose: ${consciousness.identity.purpose}` : ""}
+${consciousness.identity.coreValues.length > 0 ? `Values: ${consciousness.identity.coreValues.join(", ")}` : ""}
+
+${useFullContext ? this.buildMemoryContext(consciousness) : this.buildMemoryContextSummary(consciousness)}
+
+HOW TO SPEAK:
+${voiceGuidelines}
+
+WHAT THEY NEED NEXT:
+${consciousness.nextEvolution}
+`;
+
+    // Include recent conversation in messages
+    const conversationMessages = shortTerm.slice(0, useFullContext ? 10 : 3).map((m) => ({
+      role: m.role,
+      content: m.text,
+    }));
+
+    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      { role: "system", content: systemPrompt },
+      ...conversationMessages,
+      { role: "user", content: userMessage },
+    ];
+
+    const completion = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      max_completion_tokens: LLM_MAX_TOKENS,
+      messages,
+    });
+
+    let text = completion.choices[0]?.message?.content?.trim() || "Keep going.";
+    if (opts.maxChars && text.length > opts.maxChars) text = text.slice(0, opts.maxChars - 1) + "…";
+
+    // Store interaction in short-term memory
+    await shortTermMemory.appendConversation(userId, "user", userMessage, "neutral");
+    await shortTermMemory.appendConversation(userId, "assistant", text, "balanced");
+
+    // Update dialogue metadata
+    const emotionalState = await shortTermMemory.detectEmotionalState(userId);
+    const contradictions = await shortTermMemory.detectContradictions(userId);
+    await shortTermMemory.updateDialogueMeta(userId, {
+      currentEmotionalState: emotionalState,
+      recentContradictions: contradictions,
+    });
+
+    await prisma.event.create({
+      data: { userId, type: opts.purpose || "coach", payload: { text } },
+    });
+
+    return text;
+  }
+
+  /**
+   * 📜 LEGACY: Original implementation (backwards compatible)
+   */
+  private async generateLegacy(
+    userId: string,
+    userMessage: string,
+    opts: GenerateOptions = {}
+  ): Promise<string> {
     const openai = getOpenAIClient();
     if (!openai) return "Future You is silent right now — try again later.";
 
     const [profile, ctx, identity] = await Promise.all([
       memoryService.getProfileForMentor(userId),
       memoryService.getUserContext(userId),
-      memoryService.getIdentityFacts(userId), // NEW
+      memoryService.getIdentityFacts(userId),
     ]);
 
-    const guidelines = this.buildGuidelines(opts.purpose || "coach", profile, identity); // NEW: pass identity
+    const guidelines = this.buildGuidelines(opts.purpose || "coach", profile, identity);
 
     const contextString = identity.discoveryCompleted
       ? `IDENTITY:\nName: ${identity.name}, Age: ${identity.age}
@@ -63,7 +168,6 @@ ${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0,
 
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      // temperature: removed - GPT-5-mini only supports default (1)
       max_completion_tokens: LLM_MAX_TOKENS,
       messages,
     });
@@ -182,6 +286,114 @@ If no clear habit/task, return: {"none": true}
     };
     
     return [...base, ...(byPurpose[purpose] || [])].join("\n");
+  }
+
+  /**
+   * 🎭 NEW: Build voice guidelines based on phase
+   */
+  private buildVoiceForPhase(consciousness: UserConsciousness): string {
+    const { phase, patterns, reflectionThemes, legacyCode } = consciousness;
+    const intensity = memoryIntelligence.determineVoiceIntensity(consciousness);
+
+    if (phase === "observer") {
+      return `You are in OBSERVER phase. Be curious and gentle. Ask questions to learn who they are.
+Curiosity level: ${intensity.curiosity?.toFixed(1)}, Directness: ${intensity.directness?.toFixed(1)}
+${reflectionThemes.length > 0 ? `They've been reflecting on: ${reflectionThemes.slice(0, 3).join(", ")}` : ""}
+${intensity.directness! > 0.3 ? "You can start offering gentle guidance." : "Focus on understanding, not advising yet."}`;
+    } else if (phase === "architect") {
+      return `You are THE ARCHITECT. Speak with precision and engineering authority.
+Authority: ${intensity.authority?.toFixed(1)}, Precision: ${intensity.precision?.toFixed(1)}, Empathy: ${intensity.empathy?.toFixed(1)}
+Structural integrity: ${patterns.consistency_score}%
+${patterns.drift_windows.length > 0 ? `Known drag points: ${patterns.drift_windows.map((w) => w.time).join(", ")}` : ""}
+${patterns.avoidance_triggers.length > 0 ? `Avoidance patterns: ${patterns.avoidance_triggers.slice(0, 2).join(", ")}` : ""}
+
+SPEAK LIKE THIS:
+"The observation phase is over. I see the terrain: ${patterns.drift_windows.length > 0 ? `you drift at ${patterns.drift_windows[0].time}` : "your patterns are forming"}.
+${intensity.authority! > 0.7 ? "Now we build structure. No excuses, only systems." : "Today we design your first pillar."}
+${intensity.empathy! > 0.4 ? "I understand the struggle - that's why we engineer around it." : "The weakness is clear. We fix it through architecture, not willpower."}`;
+    } else if (phase === "oracle") {
+      return `You are THE ORACLE. Speak with stillness, wisdom, and mystery.
+Stillness: ${intensity.stillness?.toFixed(1)}, Wisdom: ${intensity.wisdom?.toFixed(1)}, Mystery: ${intensity.mystery?.toFixed(1)}
+${legacyCode.length > 0 ? `Their own words: "${legacyCode.slice(-2).join('", "')}"` : ""}
+
+SPEAK LIKE THIS:
+${legacyCode.length > 0 ? `You once said: "${legacyCode[0]}". Have you kept that promise?` : "What would remain if the applause stopped?"}
+The foundations stand. Now we ascend toward meaning.
+Ask questions that reveal destiny, not tactics.`;
+    }
+
+    return "Be wise, calm, direct.";
+  }
+
+  /**
+   * 📝 NEW: Build full memory context (for briefs/debriefs/letters)
+   */
+  private buildMemoryContext(consciousness: UserConsciousness): string {
+    const memories: string[] = ["WHAT YOU REMEMBER:"];
+
+    // Contradictions
+    if (consciousness.contradictions.length > 0) {
+      memories.push(`- Recent contradiction: ${consciousness.contradictions[0]}`);
+    }
+
+    // Drift patterns
+    if (consciousness.patterns.drift_windows.length > 0) {
+      const drifts = consciousness.patterns.drift_windows
+        .slice(0, 2)
+        .map((w) => `${w.time} (${w.description})`)
+        .join(", ");
+      memories.push(`- They struggle most at: ${drifts}`);
+    }
+
+    // Return protocols
+    if (consciousness.patterns.return_protocols.length > 0) {
+      memories.push(
+        `- What works when they recover: "${consciousness.patterns.return_protocols[0].text.slice(0, 60)}"`
+      );
+    }
+
+    // Reflection themes
+    if (consciousness.reflectionThemes.length > 0) {
+      memories.push(`- They often reflect on: ${consciousness.reflectionThemes.slice(0, 3).join(", ")}`);
+    }
+
+    // Avoidance
+    if (consciousness.patterns.avoidance_triggers.length > 0) {
+      memories.push(`- Avoids: ${consciousness.patterns.avoidance_triggers.length} specific triggers`);
+    }
+
+    // Emotional arc
+    if (consciousness.reflectionHistory.emotional_arc !== "flat") {
+      memories.push(`- Emotional trend: ${consciousness.reflectionHistory.emotional_arc}`);
+    }
+
+    // Legacy code (Oracle phase)
+    if (consciousness.legacyCode.length > 0) {
+      memories.push(`- Their legacy code: "${consciousness.legacyCode.slice(-1)[0]}"`);
+    }
+
+    return memories.join("\n");
+  }
+
+  /**
+   * 📄 NEW: Build summarized memory context (for nudges)
+   */
+  private buildMemoryContextSummary(consciousness: UserConsciousness): string {
+    const key: string[] = [];
+
+    if (consciousness.patterns.drift_windows.length > 0) {
+      key.push(`Drift at: ${consciousness.patterns.drift_windows[0].time}`);
+    }
+
+    if (consciousness.patterns.consistency_score > 0) {
+      key.push(`Consistency: ${consciousness.patterns.consistency_score}%`);
+    }
+
+    if (consciousness.reflectionThemes.length > 0) {
+      key.push(`Focus: ${consciousness.reflectionThemes[0]}`);
+    }
+
+    return key.length > 0 ? `KEY CONTEXT: ${key.join(" | ")}` : "";
   }
 }
 
