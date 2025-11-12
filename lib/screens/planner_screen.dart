@@ -768,65 +768,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                   ),
                 );
               },
-              // ✅ Delete entire system (red button with trash sweep icon)
-              onDelete: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    backgroundColor: const Color(0xFF1a1a2e),
-                    title: const Text('Delete Entire System', style: TextStyle(color: Colors.white)),
-                    content: Text(
-                      'Are you sure? This will permanently delete "${system.name}" and all ${systemHabits.length} habits.',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Delete All', style: TextStyle(color: Colors.red)),
-                      ),
-                    ],
-                  ),
-                );
-                
-                if (confirmed == true) {
-                  // Delete ALL habits in the system - ONE AT A TIME, WAITING FOR EACH
-                  final habitCount = systemHabits.length;
-                  debugPrint('🗑️ Deleting $habitCount habits from system "${system.name}"...');
-                  
-                  for (int i = 0; i < systemHabits.length; i++) {
-                    final habit = systemHabits[i];
-                    debugPrint('   🗑️ Deleting habit ${i+1}/$habitCount: ${habit.title} (${habit.id})');
-                    await ref.read(habitEngineProvider.notifier).deleteHabit(habit.id);
-                    // Small delay to ensure deletion completes
-                    await Future.delayed(const Duration(milliseconds: 50));
-                  }
-                  
-                  debugPrint('🗑️ All habits deleted. Now deleting system itself...');
-                  // Delete the system itself
-                  await LocalStorageService.deleteSystem(system.id);
-                  debugPrint('✅ System "${system.name}" completely deleted');
-                  
-                  // FORCE COMPLETE RELOAD by invalidating AND reloading
-                  ref.invalidate(habitEngineProvider);
-                  await ref.read(habitEngineProvider.notifier).loadHabits();
-                  
-                  // Force widget rebuild by calling setState if this was a StatefulWidget
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('✅ DELETED ENTIRE "${system.name}" system ($habitCount habits removed)'),
-                        backgroundColor: Colors.red,
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-                  }
-                }
-              },
-              // ✅ Delete individual habits (orange button with remove icon)
+              // ✅ REMOVED onDelete - only individual habit deletion now
+              // ✅ Delete individual habits one at a time (orange button)
               onDeleteHabits: () async {
                 final selectedHabits = await showDialog<List<String>>(
                   context: context,

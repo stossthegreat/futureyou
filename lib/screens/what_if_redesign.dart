@@ -204,18 +204,42 @@ Timeline: 90 days to build habit + small audience''',
     }
   }
 
-  // ✅ Save to Habit Vault
+  // ✅ Save to Habit Vault - SAVES COMPLETE OUTPUT
   Future<void> _saveToVault() async {
     if (_outputCard == null) return;
     
     try {
-      final message = _outputCard!['message'] ?? '';
+      // Get THE FULL CONTENT - same as what's displayed in the output card
+      final fullContent = _outputCard?['outputCard']?['content'] ?? 
+                         _outputCard?['fullText'] ?? 
+                         _outputCard?['message'] ?? '';
+      
+      final habits = _outputCard?['habits'] as List<dynamic>? ?? [];
       final title = _tabController.index == 0 ? 'Future Simulation' : 'Habit System';
+      
+      // Build complete content including habits if present
+      String completeContent = fullContent;
+      
+      if (habits.isNotEmpty) {
+        completeContent += '\n\n🎯 HABITS TO COMMIT:\n\n';
+        for (final habit in habits) {
+          final emoji = habit['emoji'] ?? '✅';
+          final habitTitle = habit['title'] ?? '';
+          final frequency = habit['frequency'] ?? '';
+          completeContent += '$emoji $habitTitle${frequency.isNotEmpty ? " ($frequency)" : ""}\n';
+        }
+      }
+      
+      debugPrint('💾 Saving to vault:');
+      debugPrint('   Title: $title');
+      debugPrint('   Summary: ${_scenarioController.text}');
+      debugPrint('   Content length: ${completeContent.length} chars');
+      debugPrint('   Has habits: ${habits.length}');
       
       final vaultItem = HabitVaultItem.fromContent(
         title: title,
         summary: _scenarioController.text,
-        content: message,
+        content: completeContent, // FULL CONTENT NOW
         goalType: 'what-if',
       );
       
@@ -224,13 +248,14 @@ Timeline: 90 days to build habit + small audience''',
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('💾 Saved to Habit Vault! Check Habit Master tab.'),
+            content: Text('💾 COMPLETE OUTPUT saved to Habit Vault!'),
             backgroundColor: Color(0xFF10B981),
             duration: Duration(seconds: 3),
           ),
         );
       }
     } catch (e) {
+      debugPrint('❌ Vault save error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
