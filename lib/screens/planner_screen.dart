@@ -290,9 +290,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                     tabName: 'Planner',
                     tabColor: Color(0xFFFF6B35), // Beautiful orange-red
                   ),
-                ),
-                // Date strip
-                SliverToBoxAdapter(
+              ),
+                    // Date strip
+              SliverToBoxAdapter(
                   child: DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
                 ),
                 SliverToBoxAdapter(
@@ -303,17 +303,17 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                 // Tab bar
                 SliverToBoxAdapter(
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    decoration: BoxDecoration(
-                      color: AppColors.glassBackground,
-                      borderRadius: BorderRadius.circular(AppBorderRadius.lg),
-                      border: Border.all(color: AppColors.glassBorder),
+                      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: AppColors.glassBackground,
+                        borderRadius: BorderRadius.circular(AppBorderRadius.lg),
+                        border: Border.all(color: AppColors.glassBorder),
+                      ),
+                      child: TabBar(
+                        controller: _tabController,
+                        tabs: const [Tab(text:'Add New'),Tab(text:'Manage'),Tab(text:'System')],
+                      ),
                     ),
-                    child: TabBar(
-                      controller: _tabController,
-                      tabs: const [Tab(text:'Add New'),Tab(text:'Manage'),Tab(text:'System')],
-                    ),
-                  ),
                 ),
                 SliverToBoxAdapter(
                   child: const SizedBox(height: AppSpacing.lg),
@@ -321,9 +321,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               ];
             },
             body: TabBarView(
-              controller: _tabController,
-              children: [_buildAddNewTab(), _buildManageTab(), _buildSystemTab()],
-            ),
+                  controller: _tabController,
+                  children: [_buildAddNewTab(), _buildManageTab(), _buildSystemTab()],
+                ),
           ),
           // Floating "Create" button only visible on Manage tab
           if (_tabController.index == 1)

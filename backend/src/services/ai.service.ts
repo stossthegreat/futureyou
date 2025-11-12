@@ -3,10 +3,11 @@ import { prisma } from "../utils/db";
 import { memoryService } from "./memory.service";
 import { memoryIntelligence, UserConsciousness } from "./memory-intelligence.service";
 import { shortTermMemory } from "./short-term-memory.service";
+import { aiPromptService } from "./ai-os-prompts.service";
 import { redis } from "../utils/redis";
 import { MENTOR } from "../config/mentors.config";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
 const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 450);
 const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 10000);
 
@@ -40,7 +41,39 @@ export class AIService {
   }
 
   /**
-   * 🧠 NEW: Consciousness-aware AI generation
+   * 🧠 NEW: Generate using consciousness with gold standard prompt templates
+   */
+  private async generateWithConsciousnessPrompt(
+    userId: string,
+    promptTemplate: string,
+    opts: GenerateOptions = {}
+  ): Promise<string> {
+    const openai = getOpenAIClient();
+    if (!openai) return "Future You is silent right now — try again later.";
+
+    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      { role: "user", content: promptTemplate },
+    ];
+
+    const completion = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      max_completion_tokens: opts.maxChars ? Math.ceil(opts.maxChars / 3) : LLM_MAX_TOKENS,
+      messages,
+    });
+
+    let text = completion.choices[0]?.message?.content?.trim() || "Keep going.";
+    if (opts.maxChars && text.length > opts.maxChars) text = text.slice(0, opts.maxChars - 1) + "…";
+
+    // Store in events
+    await prisma.event.create({
+      data: { userId, type: opts.purpose || "coach", payload: { text } },
+    });
+
+    return text;
+  }
+
+  /**
+   * 🧠 Consciousness-aware AI generation (for full conversations)
    */
   private async generateWithConsciousness(
     userId: string,
@@ -183,17 +216,64 @@ ${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0,
   }
 
   async generateMorningBrief(userId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    
+    // Use consciousness system if enabled
+    if (user?.osMemoryEnabled) {
+      const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
+      const promptTemplate = aiPromptService.buildMorningBriefPrompt(consciousness);
+      return this.generateWithConsciousnessPrompt(userId, promptTemplate, { purpose: "brief", maxChars: 500 });
+    }
+    
+    // Legacy fallback
     const prompt = "Write a short, powerful morning brief. 2–3 clear actions and one imperative closing line.";
     return this.generateFutureYouReply(userId, prompt, { purpose: "brief", maxChars: 400 });
   }
 
   async generateEveningDebrief(userId: string) {
     await memoryService.summarizeDay(userId);
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    
+    // Use consciousness system if enabled
+    if (user?.osMemoryEnabled) {
+      const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
+      
+      // Get today's habit data from events
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const habitActions = await prisma.event.findMany({
+        where: { 
+          userId,
+          type: 'habit_action',
+          ts: { gte: today }
+        }
+      });
+      
+      const dayData = {
+        kept: habitActions.filter(e => (e.payload as any)?.completed === true).length,
+        missed: habitActions.filter(e => (e.payload as any)?.completed === false).length
+      };
+      
+      const promptTemplate = aiPromptService.buildDebriefPrompt(consciousness, dayData);
+      return this.generateWithConsciousnessPrompt(userId, promptTemplate, { purpose: "debrief", maxChars: 500 });
+    }
+    
+    // Legacy fallback
     const prompt = "Write a concise evening reflection. Mention progress, lessons, and one focus for tomorrow.";
     return this.generateFutureYouReply(userId, prompt, { purpose: "debrief", maxChars: 400 });
   }
 
   async generateNudge(userId: string, reason: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    
+    // Use consciousness system if enabled
+    if (user?.osMemoryEnabled) {
+      const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
+      const promptTemplate = aiPromptService.buildNudgePrompt(consciousness, reason);
+      return this.generateWithConsciousnessPrompt(userId, promptTemplate, { purpose: "nudge", maxChars: 250 });
+    }
+    
+    // Legacy fallback
     const prompt = `Generate a one-sentence motivational nudge because: ${reason}`;
     return this.generateFutureYouReply(userId, prompt, { purpose: "nudge", maxChars: 200 });
   }
