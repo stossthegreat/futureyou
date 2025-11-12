@@ -932,7 +932,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                             ),
                           ),
                           const SizedBox(height: AppSpacing.xs),
-                          // Type and intensity
+                          // Type, frequency, and alarm indicator
                           Row(
                             children: [
                               Text(
@@ -955,6 +955,28 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                                   color: AppColors.textTertiary,
                                 ),
                               ),
+                              // Show alarm indicator if reminder is on
+                              if (habit.reminderOn) ...[
+                                Text(
+                                  ' • ',
+                                  style: TextStyle(
+                                    color: AppColors.textTertiary,
+                                  ),
+                                ),
+                                Icon(
+                                  LucideIcons.bellRing,
+                                  size: 12,
+                                  color: AppColors.cyan,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  habit.time,
+                                  style: AppTextStyles.captionSmall.copyWith(
+                                    color: AppColors.cyan,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ],

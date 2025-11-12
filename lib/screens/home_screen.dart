@@ -318,7 +318,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Time + Status chip
+                        // Time + Alarm + Status chip
                         Row(
                           children: [
                             if (time != null) ...[
@@ -332,6 +332,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   letterSpacing: 1,
                                 ),
                               ),
+                              const SizedBox(width: 4),
+                              // Show alarm icon if reminder is on
+                              if (habit.reminderOn) ...[
+                                Icon(
+                                  LucideIcons.bellRing,
+                                  size: 12,
+                                  color: habitColor.withOpacity(0.8),
+                                ),
+                              ],
                               const SizedBox(width: AppSpacing.sm),
                               Text('•', style: TextStyle(color: Colors.white38)),
                               const SizedBox(width: AppSpacing.sm),

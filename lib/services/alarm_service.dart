@@ -156,6 +156,7 @@ class AlarmService {
           'habitTitle': habit.title,
           'habitId': habit.id,
           'day': day,
+          'time': habit.time, // CRITICAL: Pass time so callback can reschedule
         },
       );
 
@@ -167,43 +168,68 @@ class AlarmService {
   }
 
   /// This callback fires when the alarm time is reached
+  /// CRITICAL: This runs in a SEPARATE ISOLATE - must initialize everything!
   @pragma('vm:entry-point')
   static Future<void> _alarmCallback(int id, Map<String, dynamic>? params) async {
-    debugPrint('🔥🔥🔥 ALARM FIRING! ID: $id');
+    debugPrint('🔥🔥🔥 ALARM FIRING! ID: $id, Params: $params');
     
     try {
-      // Get habit info
+      // CRITICAL: Initialize Flutter bindings for this isolate
+      WidgetsFlutterBinding.ensureInitialized();
+      debugPrint('✅ Flutter bindings initialized in alarm callback');
+
+      // Get habit info from params
       final habitTitle = params?['habitTitle'] ?? 'Habit Reminder';
       final habitId = params?['habitId'] ?? '';
       final day = params?['day'] ?? 0;
+      final timeStr = params?['time'] ?? '';
 
-      // Play alarm sound using system alarm tone
-      // This uses the phone's default alarm sound
-      final player = AudioPlayer();
-      await player.setReleaseMode(ReleaseMode.loop); // Loop the sound
-      await player.setVolume(1.0); // Max volume
+      debugPrint('📋 Alarm details: title="$habitTitle", habitId=$habitId, day=$day, time=$timeStr');
+
+      // Initialize notification plugin in THIS isolate
+      final notifications = FlutterLocalNotificationsPlugin();
       
-      // Try to play system alarm sound (this works on most Android devices)
-      try {
-        await player.play(AssetSource('audio/alarm.mp3')); // We'll add a fallback
-      } catch (e) {
-        debugPrint('⚠️ Custom alarm sound failed, trying system notification: $e');
-        // Fallback: just vibrate and show notification
-      }
+      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosInit = DarwinInitializationSettings();
+      const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
+      
+      await notifications.initialize(initSettings);
+      debugPrint('✅ Notification plugin initialized in callback');
 
-      // Show notification with action buttons
+      // Create notification channel in THIS isolate (Android requirement)
+      const androidChannel = AndroidNotificationChannel(
+        'habit_reminders',
+        'Habit Reminders',
+        description: 'Notifications for habit reminders',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+      );
+      
+      await notifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(androidChannel);
+      debugPrint('✅ Notification channel created in callback');
+
+      // Show notification with system sound
       const androidDetails = AndroidNotificationDetails(
         'habit_reminders',
         'Habit Reminders',
         channelDescription: 'Notifications for habit reminders',
         importance: Importance.max,
         priority: Priority.high,
-        playSound: true,
+        playSound: true, // Uses system default notification sound
         enableVibration: true,
         enableLights: true,
-        ongoing: true, // Can't be dismissed by swiping
-        autoCancel: false,
+        ongoing: false, // Allow dismissal
+        autoCancel: true, // Dismiss when tapped
         fullScreenIntent: true, // Show as full screen on lock screen
+        styleInformation: BigTextStyleInformation(
+          _getQuote(),
+          contentTitle: '🔥 $habitTitle',
+          summaryText: 'Tap to complete',
+        ),
       );
 
       const iOSDetails = DarwinNotificationDetails(
@@ -212,37 +238,68 @@ class AlarmService {
         presentSound: true,
       );
 
-      await FlutterLocalNotificationsPlugin().show(
+      await notifications.show(
         id,
         '🔥 $habitTitle',
         _getQuote(),
         const NotificationDetails(android: androidDetails, iOS: iOSDetails),
         payload: habitId,
       );
-
-      // Stop sound after 30 seconds
-      Future.delayed(const Duration(seconds: 30), () {
-        player.stop();
-        debugPrint('⏰ Alarm sound stopped after 30 seconds');
-      });
+      debugPrint('✅ Notification shown successfully');
 
       // Reschedule for next week (same day, same time)
-      final now = DateTime.now();
-      final nextWeek = now.add(const Duration(days: 7));
-      await AndroidAlarmManager.oneShotAt(
-        nextWeek,
-        id,
-        _alarmCallback,
-        exact: true,
-        wakeup: true,
-        allowWhileIdle: true,
-        rescheduleOnReboot: true,
-        params: params ?? {}, // Fix: provide empty map if params is null
-      );
-      debugPrint('🔁 Rescheduled alarm for next week: $nextWeek');
+      // IMPORTANT: We need to extract the time properly
+      final timeParts = timeStr.split(':');
+      if (timeParts.length == 2) {
+        final hour = int.tryParse(timeParts[0]) ?? 9;
+        final minute = int.tryParse(timeParts[1]) ?? 0;
+        final nextTime = _nextWeeklyInstanceForCallback(day, TimeOfDay(hour: hour, minute: minute));
+        
+        await AndroidAlarmManager.oneShotAt(
+          nextTime.toLocal(),
+          id,
+          _alarmCallback,
+          exact: true,
+          wakeup: true,
+          allowWhileIdle: true,
+          rescheduleOnReboot: true,
+          params: params,
+        );
+        debugPrint('🔁 Rescheduled alarm for: $nextTime (next occurrence on weekday $day)');
+      } else {
+        debugPrint('⚠️ Could not parse time "$timeStr" for rescheduling');
+      }
 
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('❌ Alarm callback error: $e');
+      debugPrint('📚 Stack trace: $stackTrace');
+    }
+  }
+
+  /// Helper for callback isolate (needs timezone init)
+  static tz.TZDateTime _nextWeeklyInstanceForCallback(int weekday0Sun6Sat, TimeOfDay time) {
+    try {
+      // Initialize timezone data in callback isolate
+      tz.initializeTimeZones();
+      final now = tz.TZDateTime.now(tz.local);
+      var scheduled = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        time.hour,
+        time.minute,
+      );
+      final target = (weekday0Sun6Sat == 0) ? 7 : weekday0Sun6Sat;
+      while (scheduled.weekday != target || !scheduled.isAfter(now)) {
+        scheduled = scheduled.add(const Duration(days: 1));
+      }
+      return scheduled;
+    } catch (e) {
+      debugPrint('⚠️ Timezone init failed in callback, using UTC: $e');
+      // Fallback to simple DateTime
+      final now = DateTime.now();
+      return tz.TZDateTime.from(now.add(const Duration(days: 7)), tz.local);
     }
   }
 
@@ -296,5 +353,85 @@ class AlarmService {
     ];
     final i = DateTime.now().minute % q.length;
     return q[i];
+  }
+
+  // ============================================================
+  // DEBUGGING & VERIFICATION METHODS
+  // ============================================================
+
+  /// Schedule a test alarm that fires in 1 minute
+  static Future<void> scheduleTestAlarm() async {
+    try {
+      final now = DateTime.now();
+      final testTime = now.add(const Duration(minutes: 1));
+      const testId = 999999; // Unique ID for test alarm
+      
+      await AndroidAlarmManager.oneShotAt(
+        testTime,
+        testId,
+        _testAlarmCallback,
+        exact: true,
+        wakeup: true,
+        allowWhileIdle: true,
+        params: {
+          'habitTitle': 'TEST ALARM',
+          'habitId': 'test',
+          'day': 0,
+          'time': '${testTime.hour}:${testTime.minute}',
+        },
+      );
+      
+      debugPrint('🧪 TEST ALARM scheduled for: $testTime (in 1 minute)');
+      debugPrint('🧪 Current time: $now');
+    } catch (e) {
+      debugPrint('❌ Test alarm scheduling failed: $e');
+    }
+  }
+
+  /// Test alarm callback (same as main callback but with test markers)
+  @pragma('vm:entry-point')
+  static Future<void> _testAlarmCallback(int id, Map<String, dynamic>? params) async {
+    debugPrint('🧪🧪🧪 TEST ALARM FIRING! This proves the alarm system works!');
+    // Call the main alarm callback
+    await _alarmCallback(id, params);
+  }
+
+  /// Get list of all currently scheduled alarms
+  static List<Map<String, dynamic>> getScheduledAlarms() {
+    return _scheduledAlarms.entries.map((entry) {
+      return {
+        'id': entry.key,
+        'habitTitle': entry.value['habitTitle'] ?? 'Unknown',
+        'habitId': entry.value['habitId'] ?? 'Unknown',
+        'day': entry.value['day'] ?? 0,
+      };
+    }).toList();
+  }
+
+  /// Verify if a specific habit has alarms scheduled
+  static Map<String, dynamic> verifyAlarmScheduled(String habitId) {
+    final alarms = <Map<String, dynamic>>[];
+    
+    for (int d = 0; d < 7; d++) {
+      final id = _notifId(habitId, d);
+      if (_scheduledAlarms.containsKey(id)) {
+        alarms.add({
+          'day': d,
+          'alarmId': id,
+          'data': _scheduledAlarms[id],
+        });
+      }
+    }
+    
+    return {
+      'habitId': habitId,
+      'alarmsScheduled': alarms.length,
+      'alarms': alarms,
+    };
+  }
+
+  /// Get count of all scheduled alarms
+  static int getScheduledAlarmCount() {
+    return _scheduledAlarms.length;
   }
 }

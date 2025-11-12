@@ -417,6 +417,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: GlassButton(
+                        onPressed: () => Navigator.pushNamed(context, '/alarm-test'),
+                        backgroundColor: AppColors.cyan.withOpacity(0.1),
+                        borderColor: AppColors.cyan.withOpacity(0.3),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              LucideIcons.bellRing,
+                              size: 16,
+                              color: AppColors.cyan,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Alarm Debugger',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.cyan,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(
+                      width: double.infinity,
+                      child: GlassButton(
                         onPressed: _resetLocalData,
                         backgroundColor: AppColors.error.withOpacity(0.1),
                         borderColor: AppColors.error.withOpacity(0.3),

@@ -34,6 +34,7 @@ import 'screens/what_if_screen.dart';
 import 'screens/reflections_screen.dart';
 import 'screens/future_you_screen.dart';
 import 'screens/habit_vault_screen.dart';
+import 'screens/alarm_test_screen.dart';
 import 'cinematic/cinematic_entry.dart';
 import 'lifetask/screens/lifetask_journey_screen.dart';
 import 'lifetask/screens/cinematic_test_screen.dart';
@@ -140,6 +141,7 @@ class FutureYouApp extends StatelessWidget {
         '/reflections': (context) => const ReflectionsScreen(), // AI Reflections
         '/future-you': (context) => const FutureYouScreen(), // Future-You / Purpose Engine
         '/habit-vault': (context) => const HabitVaultScreen(), // Habit Vault
+        '/alarm-test': (context) => const AlarmTestScreen(), // Alarm Debugger
       },
     );
   }

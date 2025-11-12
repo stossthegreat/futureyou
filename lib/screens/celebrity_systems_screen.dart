@@ -393,7 +393,12 @@ class _SystemDetailSheet extends ConsumerWidget {
 
                   // Commit button
                   GestureDetector(
-                    onTap: () => _showCommitDialog(system),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => _CommitDialog(system: system),
+                      );
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
@@ -430,13 +435,6 @@ class _SystemDetailSheet extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showCommitDialog(CelebritySystem system) {
-    showDialog(
-      context: context,
-      builder: (context) => _CommitDialog(system: system),
     );
   }
 }

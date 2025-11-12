@@ -29,7 +29,13 @@ class HabitEngine extends ChangeNotifier {
 
     // Only schedule alarm if explicitly turned on
     if (h.reminderOn) {
-      await _scheduleNext(h);
+      try {
+        await _scheduleNext(h);
+        debugPrint('✅ Alarm scheduled successfully for habit: ${h.title}');
+      } catch (e) {
+        debugPrint('⚠️ Failed to schedule alarm for habit "${h.title}": $e');
+        // Don't break habit creation - alarm can be set later
+      }
     }
   }
 
