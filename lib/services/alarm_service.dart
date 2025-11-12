@@ -161,6 +161,9 @@ class AlarmService {
     debugPrint('✅ Time validation passed: ${habit.time} for "${habit.title}"');
     await cancelAlarm(habit.id);
 
+    // Use BOTH methods for maximum reliability
+    int successCount = 0;
+
     for (final day in habit.repeatDays) {
       final nextTime = _nextWeeklyInstance(day, habit.timeOfDay);
       final id = _notifId(habit.id, day);
@@ -172,27 +175,72 @@ class AlarmService {
         'day': day,
       };
 
-      // Schedule using AndroidAlarmManager for reliable wake-up
-      await AndroidAlarmManager.oneShotAt(
-        nextTime.toLocal(),
-        id,
-        _alarmCallback,
-        exact: true,
-        wakeup: true,
-        allowWhileIdle: true,
-        rescheduleOnReboot: true,
-        params: {
-          'habitTitle': habit.title,
-          'habitId': habit.id,
-          'day': day,
-          'time': habit.time, // CRITICAL: Pass time so callback can reschedule
-        },
-      );
+      try {
+        // METHOD 1: flutter_local_notifications (simpler, more reliable)
+        final scheduledDate = tz.TZDateTime.from(nextTime.toLocal(), tz.local);
+        await _notifications.zonedSchedule(
+          id,
+          '🔥 ${habit.title}',
+          _getQuote(),
+          scheduledDate,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channelId,
+              _channelName,
+              channelDescription: _channelDescription,
+              importance: Importance.max,
+              priority: Priority.high,
+              playSound: true,
+              enableVibration: true,
+              enableLights: true,
+            ),
+            iOS: const DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
+          ),
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime, // Repeat weekly
+        );
+        successCount++;
+        debugPrint('✅ flutter_local_notifications scheduled for ${habit.title} at $scheduledDate');
+      } catch (e) {
+        debugPrint('⚠️ flutter_local_notifications failed: $e');
+      }
 
-      // Manual HH:mm formatting (no BuildContext needed)
+      try {
+        // METHOD 2: AndroidAlarmManager (backup)
+        await AndroidAlarmManager.oneShotAt(
+          nextTime.toLocal(),
+          id,
+          _alarmCallback,
+          exact: true,
+          wakeup: true,
+          allowWhileIdle: true,
+          rescheduleOnReboot: true,
+          params: {
+            'habitTitle': habit.title,
+            'habitId': habit.id,
+            'day': day,
+            'time': habit.time,
+          },
+        );
+        debugPrint('✅ AndroidAlarmManager scheduled as backup');
+      } catch (e) {
+        debugPrint('⚠️ AndroidAlarmManager failed: $e');
+      }
+
       final hh = habit.timeOfDay.hour.toString().padLeft(2, '0');
       final mm = habit.timeOfDay.minute.toString().padLeft(2, '0');
-      debugPrint('⏰ REAL ALARM Scheduled "${habit.title}" on weekday=$day at $hh:$mm (id=$id)');
+      debugPrint('⏰ ALARM Scheduled "${habit.title}" on weekday=$day at $hh:$mm (id=$id)');
+    }
+
+    if (successCount > 0) {
+      debugPrint('🎉 SUCCESS! Scheduled $successCount alarms for "${habit.title}"');
+    } else {
+      debugPrint('❌ FAILED to schedule any alarms for "${habit.title}"');
     }
   }
 
