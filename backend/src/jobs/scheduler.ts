@@ -11,11 +11,12 @@ export const schedulerQueue = new Queue('scheduler', { connection: redis });
 export async function bootstrapSchedulers() {
   console.log('⏰ Schedulers active (OS brain only)');
 
-  // Re-upsert daily brief/debrief per user each hour to respect timezone changes
+  // Re-upsert daily brief/debrief/nudge per user each hour to respect timezone changes
   await schedulerQueue.add('ensure-daily-briefs', {}, repeatHourly());
   await schedulerQueue.add('ensure-evening-debriefs', {}, repeatHourly());
+  await schedulerQueue.add('ensure-nudges', {}, repeatHourly()); // ✅ NEW: 3x daily nudges
 
-  // Evaluate nudges hourly (decide to send or skip); strictly observer-driven
+  // Evaluate nudges hourly (decide to send or skip); strictly observer-driven (LEGACY)
   await schedulerQueue.add('auto-nudges-hourly', {}, repeatHourly());
 
   // 📅 Weekly memory consolidation (Sundays at midnight)
