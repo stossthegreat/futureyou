@@ -232,7 +232,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
             slivers: [
               // Header that disappears when scrolling
               SliverAppBar(
-                expandedHeight: 80,
+                expandedHeight: 60, // Reduced from 80 to push header up
                 floating: true,
                 snap: true,
                 pinned: false,
@@ -285,27 +285,7 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header with quote
-        Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Quote in beautiful thin writing
-              Text(
-                '"He who knows his why, can endure any why"',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w300,
-                  fontStyle: FontStyle.italic,
-                  color: const Color(0xFF10b981), // Same emerald green as header
-                  letterSpacing: 0.5,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
+        const SizedBox(height: AppSpacing.md),
 
         // Card 1: The Book of Purpose (Main Journey)
         FeatureCard(

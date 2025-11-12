@@ -45,22 +45,6 @@ class HabitMasterScreen extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.lg),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Title Section with Quote
-                const SizedBox(height: 8),
-                
-                // Quote in beautiful thin writing
-                Text(
-                  '"We are what we repeatedly do, excellence is not an act but a habit"',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w300,
-                    fontStyle: FontStyle.italic,
-                    color: const Color(0xFF667EEA), // Same purple as header
-                    letterSpacing: 0.5,
-                    height: 1.5,
-                  ),
-                ).animate().fadeIn(duration: 700.ms, delay: 150.ms).slideY(begin: 0.15, end: 0),
-
                 const SizedBox(height: AppSpacing.xl),
 
                 // 🎯 CARD 1: What-If AI (routes to old what-if content)
@@ -103,9 +87,7 @@ class HabitMasterScreen extends StatelessWidget {
                   .fadeIn(duration: 600.ms, delay: 200.ms)
                   .slideX(begin: -0.3, end: 0, curve: Curves.easeOutBack)
                   .then(delay: 300.ms)
-                  .shimmer(duration: 2500.ms, color: const Color(0xFF38EF7D).withOpacity(0.4))
-                  .animate(onPlay: (controller) => controller.repeat())
-                  .rotate(begin: -0.01, end: 0.01, duration: 3000.ms, curve: Curves.easeInOut),
+                  .shimmer(duration: 2500.ms, color: const Color(0xFF38EF7D).withOpacity(0.4)),
 
                 const SizedBox(height: AppSpacing.lg),
 
@@ -151,13 +133,7 @@ class HabitMasterScreen extends StatelessWidget {
                   .fadeIn(duration: 600.ms, delay: 400.ms)
                   .slideX(begin: -0.4, end: 0, curve: Curves.easeOutCubic)
                   .then(delay: 500.ms)
-                  .shimmer(duration: 2200.ms, color: Colors.white.withOpacity(0.4))
-                  .animate(onPlay: (controller) => controller.repeat())
-                  .rotate(begin: 0, end: 0.02, duration: 2500.ms, curve: Curves.easeInOut)
-                  .then()
-                  .rotate(begin: 0.02, end: -0.02, duration: 2500.ms, curve: Curves.easeInOut)
-                  .then()
-                  .rotate(begin: -0.02, end: 0, duration: 2500.ms, curve: Curves.easeInOut),
+                  .shimmer(duration: 2200.ms, color: Colors.white.withOpacity(0.4)),
 
                 const SizedBox(height: AppSpacing.lg),
 

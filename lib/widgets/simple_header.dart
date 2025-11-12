@@ -41,7 +41,7 @@ class _SimpleHeaderState extends State<SimpleHeader> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        widget.tabName != null ? AppSpacing.sm : AppSpacing.lg, // Less padding on left if tab name present
+        widget.tabName != null ? AppSpacing.lg : AppSpacing.lg, // Same padding for consistency
         AppSpacing.xl,
         AppSpacing.lg,
         AppSpacing.md,
