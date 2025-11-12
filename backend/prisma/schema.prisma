@@ -34,7 +34,6 @@ model User {
   nudgesEnabled   Boolean @default(true)
   briefsEnabled   Boolean @default(true)
   debriefsEnabled Boolean @default(true)
-  osMemoryEnabled Boolean @default(false) // Gradual rollout flag for consciousness system
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -30,14 +30,8 @@ type GenerateOptions = {
 
 export class AIService {
   async generateFutureYouReply(userId: string, userMessage: string, opts: GenerateOptions = {}) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    
-    // Feature flag: use consciousness system if enabled
-    if (user?.osMemoryEnabled) {
-      return this.generateWithConsciousness(userId, userMessage, opts);
-    } else {
-      return this.generateLegacy(userId, userMessage, opts);
-    }
+    // ALWAYS use legacy for now (osMemoryEnabled removed from schema)
+    return this.generateLegacy(userId, userMessage, opts);
   }
 
   /**
@@ -216,26 +210,23 @@ ${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0,
   }
 
   async generateMorningBrief(userId: string) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    
-    // Use consciousness system if enabled
-    if (user?.osMemoryEnabled) {
+    // Use consciousness system for briefs
+    try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
       const promptTemplate = aiPromptService.buildMorningBriefPrompt(consciousness);
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, { purpose: "brief", maxChars: 500 });
+    } catch (err) {
+      console.log('⚠️ Consciousness system failed, using legacy brief:', err);
+      const prompt = "Write a short, powerful morning brief. 2–3 clear actions and one imperative closing line.";
+      return this.generateFutureYouReply(userId, prompt, { purpose: "brief", maxChars: 400 });
     }
-    
-    // Legacy fallback
-    const prompt = "Write a short, powerful morning brief. 2–3 clear actions and one imperative closing line.";
-    return this.generateFutureYouReply(userId, prompt, { purpose: "brief", maxChars: 400 });
   }
 
   async generateEveningDebrief(userId: string) {
     await memoryService.summarizeDay(userId);
-    const user = await prisma.user.findUnique({ where: { id: userId } });
     
-    // Use consciousness system if enabled
-    if (user?.osMemoryEnabled) {
+    // Use consciousness system for debriefs
+    try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
       
       // Get today's habit data from events
@@ -256,26 +247,24 @@ ${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0,
       
       const promptTemplate = aiPromptService.buildDebriefPrompt(consciousness, dayData);
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, { purpose: "debrief", maxChars: 500 });
+    } catch (err) {
+      console.log('⚠️ Consciousness system failed, using legacy debrief:', err);
+      const prompt = "Write a concise evening reflection. Mention progress, lessons, and one focus for tomorrow.";
+      return this.generateFutureYouReply(userId, prompt, { purpose: "debrief", maxChars: 400 });
     }
-    
-    // Legacy fallback
-    const prompt = "Write a concise evening reflection. Mention progress, lessons, and one focus for tomorrow.";
-    return this.generateFutureYouReply(userId, prompt, { purpose: "debrief", maxChars: 400 });
   }
 
   async generateNudge(userId: string, reason: string) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    
-    // Use consciousness system if enabled
-    if (user?.osMemoryEnabled) {
+    // Use consciousness system for nudges
+    try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
       const promptTemplate = aiPromptService.buildNudgePrompt(consciousness, reason);
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, { purpose: "nudge", maxChars: 250 });
+    } catch (err) {
+      console.log('⚠️ Consciousness system failed, using legacy nudge:', err);
+      const prompt = `Generate a one-sentence motivational nudge because: ${reason}`;
+      return this.generateFutureYouReply(userId, prompt, { purpose: "nudge", maxChars: 200 });
     }
-    
-    // Legacy fallback
-    const prompt = `Generate a one-sentence motivational nudge because: ${reason}`;
-    return this.generateFutureYouReply(userId, prompt, { purpose: "nudge", maxChars: 200 });
   }
 
   /**
