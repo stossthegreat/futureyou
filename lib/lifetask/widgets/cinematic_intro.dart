@@ -113,26 +113,28 @@ class _CinematicIntroState extends State<CinematicIntro>
     // Start master timeline
     _masterController.forward();
 
-    // Sequence timeline:
-    await Future.delayed(const Duration(seconds: 2)); // Pure black
+    // ✅ FIX: Reduced delays from 25s to 3s total to sync with audio!
+    // Old timing: 2s + 3s + 15s + 5s = 25s lag before typing
+    // New timing: 0.5s + 0.5s + 1s + 1s = 3s - syncs with ElevenLabs audio!
+    
+    await Future.delayed(const Duration(milliseconds: 500)); // Quick fade
     _particleController.forward(); // Particles fade in
-
-    await Future.delayed(const Duration(seconds: 3));
+    
     // Start TTS narration (if audio file exists)
     await _playTTSNarration();
 
-    await Future.delayed(const Duration(seconds: 15));
+    await Future.delayed(const Duration(milliseconds: 500));
     _titleController.forward(); // Title appears
 
-    await Future.delayed(const Duration(seconds: 5));
+    await Future.delayed(const Duration(seconds: 1));
     _subtitleController.forward(); // Subtitle appears
 
-    await Future.delayed(const Duration(seconds: 5));
+    await Future.delayed(const Duration(seconds: 1));
     _proseController.forward(); // Prose container fades in
-    _startTyping(); // Begin typing animation
+    _startTyping(); // ✅ Begin typing after only ~3s instead of 25s!
 
-    // Enable skip after 10 seconds
-    await Future.delayed(const Duration(seconds: 10));
+    // Enable skip after 5 seconds (reduced from 10)
+    await Future.delayed(const Duration(seconds: 5));
     if (mounted) {
       setState(() {
         _canSkip = true;

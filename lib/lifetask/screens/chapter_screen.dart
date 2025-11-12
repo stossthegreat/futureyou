@@ -52,6 +52,10 @@ class _ChapterScreenState extends State<ChapterScreen> {
       print('🎬 Skipping intro - going to ${currentPhase}');
     } else {
       print('🎬 Starting with INTRO phase');
+      // ✅ FIX: Mark as in-progress IMMEDIATELY so intro only plays once
+      currentChapter = currentChapter.copyWith(
+        status: ChapterStatus.inProgress,
+      );
     }
     
     sessionStartTime = DateTime.now();
