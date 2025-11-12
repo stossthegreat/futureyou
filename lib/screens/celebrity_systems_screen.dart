@@ -573,13 +573,17 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
 
                         try {
                           final now = DateTime.now();
+                          final timeStr = _alarmEnabled ? '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}' : '';
+                          
                           for (int i = 0; i < widget.system.habits.length; i++) {
                             if (_selectedHabits[i]) {
+                              debugPrint('🎯 Creating celebrity habit: "${widget.system.habits[i]}" with reminderOn=$_alarmEnabled, time="$timeStr"');
+                              
                               final habit = Habit(
                                 id: '${now.millisecondsSinceEpoch}_$i',
                                 title: widget.system.habits[i],
                                 type: 'habit',
-                                time: '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}',
+                                time: timeStr,
                                 startDate: _startDate,
                                 endDate: _endDate,
                                 repeatDays: _scheduleType == 'everyday' 

@@ -127,10 +127,38 @@ class AlarmService {
   // ---------------- HABIT ALARMS ----------------
   /// Schedule weekly alarms for a habit. **Only** if habit.reminderOn == true.
   static Future<void> scheduleAlarm(Habit habit) async {
+    debugPrint('🔍 scheduleAlarm called for "${habit.title}" - reminderOn: ${habit.reminderOn}, time: "${habit.time}"');
+    
     if (!habit.reminderOn) {
       debugPrint('⏰ scheduleAlarm skipped: reminder OFF for "${habit.title}"');
       return;
     }
+    
+    // CRITICAL: Validate time is not empty
+    if (habit.time.isEmpty) {
+      debugPrint('❌ scheduleAlarm FAILED: time is EMPTY for "${habit.title}"');
+      debugPrint('💡 TIP: Make sure alarm time is set when enabling reminders');
+      return;
+    }
+    
+    // CRITICAL: Validate time format
+    final timeParts = habit.time.split(':');
+    if (timeParts.length != 2) {
+      debugPrint('❌ scheduleAlarm FAILED: invalid time format "${habit.time}" for "${habit.title}"');
+      debugPrint('💡 TIP: Time must be in HH:mm format (e.g., "09:00")');
+      return;
+    }
+    
+    final hour = int.tryParse(timeParts[0]);
+    final minute = int.tryParse(timeParts[1]);
+    
+    if (hour == null || minute == null || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      debugPrint('❌ scheduleAlarm FAILED: invalid time values "${habit.time}" for "${habit.title}"');
+      debugPrint('💡 TIP: Hour must be 0-23, minute must be 0-59');
+      return;
+    }
+    
+    debugPrint('✅ Time validation passed: ${habit.time} for "${habit.title}"');
     await cancelAlarm(habit.id);
 
     for (final day in habit.repeatDays) {

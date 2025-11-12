@@ -876,10 +876,13 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                               repeatDays = [0, 1, 2, 3, 4, 5, 6]; // Every day
                             }
                             
+                            final timeStr = _alarmEnabled ? '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}' : '';
+                            debugPrint('🎯 Creating habit: "${widget.system.habits[i]}" with reminderOn=$_alarmEnabled, time="$timeStr"');
+                            
                             await ref.read(habitEngineProvider.notifier).createHabit(
                               title: widget.system.habits[i],
                               type: 'habit',
-                              time: _alarmEnabled ? '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}' : '',
+                              time: timeStr,
                               startDate: _startDate,
                               endDate: _endDate,
                               repeatDays: repeatDays, // Use calculated repeat days
