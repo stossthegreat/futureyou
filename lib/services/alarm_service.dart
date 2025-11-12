@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:audioplayers/audioplayers.dart';
 
 import '../models/habit.dart';
@@ -213,7 +214,7 @@ class AlarmService {
       debugPrint('✅ Notification channel created in callback');
 
       // Show notification with system sound
-      const androidDetails = AndroidNotificationDetails(
+      final androidDetails = AndroidNotificationDetails(
         'habit_reminders',
         'Habit Reminders',
         channelDescription: 'Notifications for habit reminders',
@@ -242,7 +243,7 @@ class AlarmService {
         id,
         '🔥 $habitTitle',
         _getQuote(),
-        const NotificationDetails(android: androidDetails, iOS: iOSDetails),
+        NotificationDetails(android: androidDetails, iOS: iOSDetails),
         payload: habitId,
       );
       debugPrint('✅ Notification shown successfully');
@@ -263,7 +264,7 @@ class AlarmService {
           wakeup: true,
           allowWhileIdle: true,
           rescheduleOnReboot: true,
-          params: params,
+          params: params ?? {},
         );
         debugPrint('🔁 Rescheduled alarm for: $nextTime (next occurrence on weekday $day)');
       } else {
@@ -280,10 +281,20 @@ class AlarmService {
   static tz.TZDateTime _nextWeeklyInstanceForCallback(int weekday0Sun6Sat, TimeOfDay time) {
     try {
       // Initialize timezone data in callback isolate
-      tz.initializeTimeZones();
-      final now = tz.TZDateTime.now(tz.local);
+      tz_data.initializeTimeZones();
+      
+      // Try to get local timezone, fallback to UTC
+      tz.Location location;
+      try {
+        location = tz.local;
+      } catch (e) {
+        debugPrint('⚠️ Local timezone not available, using UTC: $e');
+        location = tz.UTC;
+      }
+      
+      final now = tz.TZDateTime.now(location);
       var scheduled = tz.TZDateTime(
-        tz.local,
+        location,
         now.year,
         now.month,
         now.day,
@@ -296,10 +307,11 @@ class AlarmService {
       }
       return scheduled;
     } catch (e) {
-      debugPrint('⚠️ Timezone init failed in callback, using UTC: $e');
-      // Fallback to simple DateTime
+      debugPrint('⚠️ Timezone calculation failed in callback: $e');
+      // Fallback to simple calculation from now
       final now = DateTime.now();
-      return tz.TZDateTime.from(now.add(const Duration(days: 7)), tz.local);
+      final nextWeek = now.add(const Duration(days: 7));
+      return tz.TZDateTime(tz.UTC, nextWeek.year, nextWeek.month, nextWeek.day, time.hour, time.minute);
     }
   }
 
