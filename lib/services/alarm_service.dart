@@ -161,14 +161,13 @@ class AlarmService {
     debugPrint('✅ Time validation passed: ${habit.time} for "${habit.title}"');
     await cancelAlarm(habit.id);
 
-    // Use BOTH methods for maximum reliability
     int successCount = 0;
 
     for (final day in habit.repeatDays) {
       final nextTime = _nextWeeklyInstance(day, habit.timeOfDay);
       final id = _notifId(habit.id, day);
 
-      // Store alarm info for the callback
+      // Store alarm info
       _scheduledAlarms[id] = {
         'habitTitle': habit.title,
         'habitId': habit.id,
@@ -176,8 +175,9 @@ class AlarmService {
       };
 
       try {
-        // METHOD 1: flutter_local_notifications (simpler, more reliable)
+        // SIMPLE METHOD: Just schedule the damn notification
         final scheduledDate = tz.TZDateTime.from(nextTime.toLocal(), tz.local);
+        
         await _notifications.zonedSchedule(
           id,
           '🔥 ${habit.title}',
@@ -193,6 +193,7 @@ class AlarmService {
               playSound: true,
               enableVibration: true,
               enableLights: true,
+              ticker: 'Habit Reminder',
             ),
             iOS: const DarwinNotificationDetails(
               presentAlert: true,
@@ -202,45 +203,23 @@ class AlarmService {
           ),
           uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime, // Repeat weekly
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
         );
+        
         successCount++;
-        debugPrint('✅ flutter_local_notifications scheduled for ${habit.title} at $scheduledDate');
-      } catch (e) {
-        debugPrint('⚠️ flutter_local_notifications failed: $e');
+        final hh = habit.timeOfDay.hour.toString().padLeft(2, '0');
+        final mm = habit.timeOfDay.minute.toString().padLeft(2, '0');
+        debugPrint('✅ ALARM SCHEDULED: "${habit.title}" on weekday=$day at $hh:$mm → fires at $scheduledDate');
+      } catch (e, stack) {
+        debugPrint('❌ ALARM FAILED for "${habit.title}": $e');
+        debugPrint('Stack: $stack');
       }
-
-      try {
-        // METHOD 2: AndroidAlarmManager (backup)
-        await AndroidAlarmManager.oneShotAt(
-          nextTime.toLocal(),
-          id,
-          _alarmCallback,
-          exact: true,
-          wakeup: true,
-          allowWhileIdle: true,
-          rescheduleOnReboot: true,
-          params: {
-            'habitTitle': habit.title,
-            'habitId': habit.id,
-            'day': day,
-            'time': habit.time,
-          },
-        );
-        debugPrint('✅ AndroidAlarmManager scheduled as backup');
-      } catch (e) {
-        debugPrint('⚠️ AndroidAlarmManager failed: $e');
-      }
-
-      final hh = habit.timeOfDay.hour.toString().padLeft(2, '0');
-      final mm = habit.timeOfDay.minute.toString().padLeft(2, '0');
-      debugPrint('⏰ ALARM Scheduled "${habit.title}" on weekday=$day at $hh:$mm (id=$id)');
     }
 
     if (successCount > 0) {
-      debugPrint('🎉 SUCCESS! Scheduled $successCount alarms for "${habit.title}"');
+      debugPrint('🎉 SUCCESS! ${habit.title} has $successCount alarms scheduled');
     } else {
-      debugPrint('❌ FAILED to schedule any alarms for "${habit.title}"');
+      debugPrint('💀 TOTAL FAILURE! No alarms scheduled for "${habit.title}"');
     }
   }
 
