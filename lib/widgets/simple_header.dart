@@ -6,7 +6,14 @@ import '../screens/reflections_screen.dart';
 import '../services/messages_service.dart';
 
 class SimpleHeader extends StatefulWidget {
-  const SimpleHeader({super.key});
+  final String? tabName; // Optional tab name to display
+  final Color? tabColor; // Optional color for the tab name
+  
+  const SimpleHeader({
+    super.key,
+    this.tabName,
+    this.tabColor,
+  });
 
   @override
   State<SimpleHeader> createState() => _SimpleHeaderState();
@@ -40,9 +47,19 @@ class _SimpleHeaderState extends State<SimpleHeader> {
         AppSpacing.md,
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end, // ✅ Changed to end - only icons now
+        mainAxisAlignment: widget.tabName != null ? MainAxisAlignment.spaceBetween : MainAxisAlignment.end,
         children: [
-          // ✅ Removed "Future-You OS" title per user request
+          // Tab name (if provided)
+          if (widget.tabName != null)
+            Text(
+              widget.tabName!,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: widget.tabColor ?? AppColors.emerald,
+                letterSpacing: 0.5,
+              ),
+            ),
           
           // Reflections + Settings icons
           Row(

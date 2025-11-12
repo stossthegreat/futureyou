@@ -31,6 +31,7 @@ import 'screens/viral_systems_screen.dart';
 import 'screens/celebrity_systems_screen.dart';
 import 'screens/mastery_lessons_screen.dart';
 import 'screens/what_if_screen.dart';
+import 'screens/what_if_redesign.dart'; // NEW What-If AI Simulator
 import 'screens/reflections_screen.dart';
 import 'screens/future_you_screen.dart';
 import 'screens/habit_vault_screen.dart';
@@ -137,7 +138,8 @@ class FutureYouApp extends StatelessWidget {
         '/viral-systems': (context) => const ViralSystemsScreen(), // Viral Systems
         '/celebrity-systems': (context) => const CelebritySystemsScreen(), // Celebrity Routines
         '/mastery-lessons': (context) => const MasteryLessonsScreen(), // Habit Mastery Rules
-        '/what-if': (context) => const WhatIfScreen(), // What-If Simulator
+        '/what-if': (context) => const WhatIfRedesignScreen(), // NEW What-If AI Simulator
+        '/habit-library': (context) => const WhatIfScreen(), // OLD Habit Library (keep for backward compat)
         '/reflections': (context) => const ReflectionsScreen(), // AI Reflections
         '/future-you': (context) => const FutureYouScreen(), // Future-You / Purpose Engine
         '/habit-vault': (context) => const HabitVaultScreen(), // Habit Vault

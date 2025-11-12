@@ -463,6 +463,7 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
   void initState() {
     super.initState();
     _selectedHabits = List.filled(widget.system.habits.length, true);
+    _endDate = _startDate.add(const Duration(days: 66)); // Default 66 days
   }
   
   Color _getTextColor() {
@@ -509,125 +510,321 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
               ),
               const SizedBox(height: AppSpacing.lg),
               
-              // Habits Selection
+              // Start Date
+              _buildDateField(
+                label: 'Start Date',
+                date: _startDate,
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _startDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) {
+                    setState(() => _startDate = picked);
+                  }
+                },
+              ),
+              
+              const SizedBox(height: AppSpacing.md),
+              
+              // End Date
+              _buildDateField(
+                label: 'End Date',
+                date: _endDate,
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _endDate,
+                    firstDate: _startDate,
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) {
+                    setState(() => _endDate = picked);
+                  }
+                },
+              ),
+              
+              const SizedBox(height: AppSpacing.md),
+              
+              // Schedule Type Selection
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(AppBorderRadius.md),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Select Habits (${_selectedHabits.where((s) => s).length}/${widget.system.habits.length})',
+                      'Schedule',
                       style: TextStyle(
-                        color: _getTextColor(),
-                        fontWeight: FontWeight.bold,
+                        color: _getTextColor().withOpacity(0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    ...List.generate(widget.system.habits.length, (index) {
-                      return CheckboxListTile(
-                        title: Text(
-                          widget.system.habits[index],
-                          style: TextStyle(color: _getTextColor(), fontSize: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildScheduleOption('everyday', 'Every Day', '7 days/week'),
                         ),
-                        value: _selectedHabits[index],
-                        onChanged: (val) {
-                          setState(() => _selectedHabits[index] = val ?? false);
-                        },
-                        activeColor: Colors.white,
-                        checkColor: Color.fromARGB(255, widget.system.gradientColors[0], widget.system.gradientColors[1], widget.system.gradientColors[2]),
-                        dense: true,
-                      );
-                    }),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildScheduleOption('weekdays', 'Weekdays', 'Mon-Fri'),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildScheduleOption('weekends', 'Weekends', 'Sat-Sun'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
               
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
               
-              // Buttons
+              // Habit Selection
+              Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: widget.system.habits.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() => _selectedHabits[index] = !_selectedHabits[index]);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(_selectedHabits[index] ? 0.25 : 0.1),
+                          borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(_selectedHabits[index] ? 0.4 : 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 18,
+                              height: 18,
+                              decoration: BoxDecoration(
+                                color: _selectedHabits[index] ? Colors.white : Colors.transparent,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: _getTextColor(), width: 2),
+                              ),
+                              child: _selectedHabits[index]
+                                  ? Icon(
+                                      LucideIcons.check,
+                                      size: 12,
+                                      color: Color.fromARGB(255, widget.system.gradientColors[0], widget.system.gradientColors[1], widget.system.gradientColors[2]),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                widget.system.habits[index],
+                                style: TextStyle(
+                                  color: _getTextColor(),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              
+              const SizedBox(height: AppSpacing.md),
+              
+              // Alarm Toggle
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _alarmEnabled ? LucideIcons.bell : LucideIcons.bellOff,
+                      color: _getTextColor(),
+                      size: 20,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Daily Reminder',
+                        style: TextStyle(
+                          color: _getTextColor(),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Switch(
+                      value: _alarmEnabled,
+                      onChanged: (value) => setState(() => _alarmEnabled = value),
+                      activeColor: _getTextColor(),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Show time picker when alarm is enabled
+              if (_alarmEnabled) ...[
+                const SizedBox(height: AppSpacing.md),
+                GestureDetector(
+                  onTap: () async {
+                    final TimeOfDay? picked = await showTimePicker(
+                      context: context,
+                      initialTime: _alarmTime,
+                    );
+                    if (picked != null) {
+                      setState(() => _alarmTime = picked);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                      border: Border.all(
+                        color: _getTextColor().withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          LucideIcons.clock,
+                          color: _getTextColor(),
+                          size: 20,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(
+                          'Reminder Time',
+                          style: TextStyle(
+                            color: _getTextColor().withOpacity(0.8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          _alarmTime.format(context),
+                          style: TextStyle(
+                            color: _getTextColor(),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Icon(
+                          LucideIcons.chevronRight,
+                          color: _getTextColor().withOpacity(0.5),
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              
+              const SizedBox(height: AppSpacing.xl),
+              
+              // Action buttons
               Row(
                 children: [
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(context),
-                      style: TextButton.styleFrom(
-                        foregroundColor: _getTextColor(),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(color: _getTextColor()),
                       ),
-                      child: const Text('Cancel'),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
-                    flex: 2,
                     child: ElevatedButton(
                       onPressed: () async {
-                        final selectedCount = _selectedHabits.where((s) => s).length;
+                        Navigator.pop(context);
+                        
+                        // Count selected habits
+                        final selectedCount = _selectedHabits.where((selected) => selected).length;
                         if (selectedCount == 0) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please select at least one habit')),
+                            const SnackBar(content: Text('⚠️ Please select at least one habit')),
                           );
                           return;
                         }
-
+                        
+                        // Commit only selected habits
                         try {
-                          final now = DateTime.now();
-                          final timeStr = _alarmEnabled ? '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}' : '';
-                          final habitIds = <String>[]; // Track created habit IDs
-                          final systemId = 'celebrity_system_${now.millisecondsSinceEpoch}'; // Unique system ID
+                          final habitIds = <String>[];
+                          final systemId = 'celebrity_system_${DateTime.now().millisecondsSinceEpoch}'; // Generate unique system ID
                           
                           for (int i = 0; i < widget.system.habits.length; i++) {
                             if (_selectedHabits[i]) {
-                              final habitId = '${now.millisecondsSinceEpoch}_$i';
-                              habitIds.add(habitId); // Add to habitIds list
+                              final habitId = DateTime.now().millisecondsSinceEpoch.toString() + '_$i';
+                              habitIds.add(habitId);
                               
+                              // Calculate repeat days based on schedule type
+                              List<int> repeatDays;
+                              if (_scheduleType == 'weekdays') {
+                                repeatDays = [1, 2, 3, 4, 5]; // Mon-Fri
+                              } else if (_scheduleType == 'weekends') {
+                                repeatDays = [0, 6]; // Sat-Sun
+                              } else {
+                                repeatDays = [0, 1, 2, 3, 4, 5, 6]; // Every day
+                              }
+                              
+                              final timeStr = _alarmEnabled ? '${_alarmTime.hour.toString().padLeft(2, '0')}:${_alarmTime.minute.toString().padLeft(2, '0')}' : '';
                               debugPrint('🎯 Creating celebrity habit: "${widget.system.habits[i]}" with reminderOn=$_alarmEnabled, time="$timeStr"');
                               
-                              final habit = Habit(
-                                id: habitId,
+                              await ref.read(habitEngineProvider.notifier).createHabit(
                                 title: widget.system.habits[i],
                                 type: 'habit',
                                 time: timeStr,
                                 startDate: _startDate,
                                 endDate: _endDate,
-                                repeatDays: _scheduleType == 'everyday' 
-                                    ? [0, 1, 2, 3, 4, 5, 6]
-                                    : _scheduleType == 'weekdays'
-                                    ? [1, 2, 3, 4, 5]
-                                    : [0, 6],
-                                createdAt: now,
-                                systemId: systemId, // Use the generated system ID
+                                repeatDays: repeatDays, // Use calculated repeat days
+                                color: Color.fromARGB(255, widget.system.gradientColors[0], widget.system.gradientColors[1], widget.system.gradientColors[2]),
+                                emoji: widget.system.habits[i].split(' ').first, // Extract emoji
                                 reminderOn: _alarmEnabled,
+                                systemId: systemId, // NEW: Link habit to system
                               );
-                              await ref.read(habitEngineProvider.notifier).addHabit(habit);
                               
                               // Small delay to ensure unique IDs
                               await Future.delayed(const Duration(milliseconds: 10));
                             }
                           }
-
-                          // CRITICAL: Save system metadata so it appears on Planner/Home
+                          
+                          // Store system metadata
                           final habitSystem = HabitSystem(
                             id: systemId,
                             name: widget.system.name,
                             tagline: widget.system.subtitle,
-                            iconCodePoint: Icons.star.codePoint, // Default icon for celebrity systems
+                            iconCodePoint: Icons.star.codePoint,
                             gradientColors: [
                               Color.fromARGB(255, widget.system.gradientColors[0], widget.system.gradientColors[1], widget.system.gradientColors[2]),
                               Color.fromARGB(255, widget.system.gradientColors[3], widget.system.gradientColors[4], widget.system.gradientColors[5]),
                             ],
                             accentColor: Color.fromARGB(255, widget.system.gradientColors[0], widget.system.gradientColors[1], widget.system.gradientColors[2]),
                             habitIds: habitIds,
-                            createdAt: now,
+                            createdAt: DateTime.now(),
                           );
-                          await LocalStorageService.saveSystem(habitSystem);
-                          debugPrint('✅ Saved celebrity system: ${widget.system.name} with ${habitIds.length} habits');
-
-                          if (mounted) {
-                            Navigator.pop(context);
+                          LocalStorageService.saveSystem(habitSystem);
+                          
+                          if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('✅ Committed $selectedCount habits from ${widget.system.name}!'),
@@ -637,7 +834,7 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                             );
                           }
                         } catch (e) {
-                          if (mounted) {
+                          if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('❌ Failed to commit: $e'),
@@ -660,8 +857,100 @@ class _CommitDialogState extends ConsumerState<_CommitDialog> {
                   ),
                 ],
               ),
+              
+              // Add bottom padding for scroll space
+              const SizedBox(height: 40),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleOption(String value, String label, String subtitle) {
+    final isSelected = _scheduleType == value;
+    return GestureDetector(
+      onTap: () => setState(() => _scheduleType = value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? Colors.white.withOpacity(0.3) 
+              : Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+          border: Border.all(
+            color: isSelected 
+                ? _getTextColor().withOpacity(0.5) 
+                : _getTextColor().withOpacity(0.2),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: _getTextColor(),
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: _getTextColor().withOpacity(0.7),
+                fontSize: 9,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateField({
+    required String label,
+    required DateTime date,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(AppBorderRadius.md),
+        ),
+        child: Row(
+          children: [
+            Icon(LucideIcons.calendar, color: _getTextColor(), size: 20),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: _getTextColor().withOpacity(0.8),
+                      fontSize: 12,
+                    ),
+                  ),
+                  Text(
+                    '${date.day}/${date.month}/${date.year}',
+                    style: TextStyle(
+                      color: _getTextColor(),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(LucideIcons.chevronDown, color: _getTextColor(), size: 16),
+          ],
         ),
       ),
     );

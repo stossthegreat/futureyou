@@ -180,7 +180,7 @@ class FeatureCard extends StatelessWidget {
                               fontSize: 12, // ✅ Reduced from 14 to 12
                               height: 1.3,
                             ),
-                            maxLines: 2,
+                            maxLines: 3, // ✅ Increased from 2 to 3 to show full descriptions
                             overflow: TextOverflow.ellipsis,
                           ),
 

@@ -286,7 +286,10 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               return [
                 // Header
                 SliverToBoxAdapter(
-                  child: const SimpleHeader(),
+                  child: const SimpleHeader(
+                    tabName: 'PLANNER',
+                    tabColor: Color(0xFFFF6B35), // Beautiful orange-red
+                  ),
                 ),
                 // Date strip
                 SliverToBoxAdapter(

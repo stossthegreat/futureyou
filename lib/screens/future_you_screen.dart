@@ -238,7 +238,10 @@ class _FutureYouScreenState extends State<FutureYouScreen> {
                 pinned: false,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                flexibleSpace: const SimpleHeader(),
+                flexibleSpace: const SimpleHeader(
+                  tabName: 'PURPOSE ENGINE',
+                  tabColor: Color(0xFF10b981), // Beautiful emerald green
+                ),
               ),
               // Content
               SliverToBoxAdapter(
