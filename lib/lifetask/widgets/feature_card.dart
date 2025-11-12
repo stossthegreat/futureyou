@@ -220,7 +220,21 @@ class FeatureCard extends StatelessWidget {
           ),
         ),
       ),
-    ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, duration: 600.ms);
+    ).animate()
+      .fadeIn(duration: 700.ms)
+      .slideY(begin: 0.2, end: 0, duration: 700.ms, curve: Curves.easeOutCubic)
+      .then(delay: 200.ms)
+      .shimmer(
+        duration: glowEffect ? 1500.ms : 2500.ms,
+        color: gradientColors.first.withOpacity(glowEffect ? 0.5 : 0.3),
+      )
+      .animate(onPlay: (controller) => controller.repeat(reverse: true))
+      .scale(
+        begin: const Offset(1.0, 1.0),
+        end: Offset(glowEffect ? 1.03 : 1.015, glowEffect ? 1.03 : 1.015),
+        duration: glowEffect ? 1800.ms : 2500.ms,
+        curve: Curves.easeInOut,
+      );
   }
 
   Widget _buildParticles() {

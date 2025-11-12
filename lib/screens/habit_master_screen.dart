@@ -79,7 +79,13 @@ class HabitMasterScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const WhatIfRedesignScreen()),
                     );
                   },
-                ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideX(begin: -0.1, end: 0),
+                ).animate()
+                  .fadeIn(duration: 600.ms, delay: 100.ms)
+                  .slideY(begin: 0.3, end: 0, curve: Curves.easeOutCubic)
+                  .then(delay: 200.ms)
+                  .shimmer(duration: 2000.ms, color: Colors.white.withOpacity(0.3))
+                  .animate(onPlay: (controller) => controller.repeat(reverse: true))
+                  .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.02, 1.02), duration: 2000.ms),
 
                 const SizedBox(height: AppSpacing.lg),
 
@@ -96,7 +102,13 @@ class HabitMasterScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const HabitLibraryScreen()),
                     );
                   },
-                ).animate().fadeIn(duration: 400.ms, delay: 300.ms).slideX(begin: 0.1, end: 0),
+                ).animate()
+                  .fadeIn(duration: 600.ms, delay: 200.ms)
+                  .slideX(begin: -0.3, end: 0, curve: Curves.easeOutBack)
+                  .then(delay: 300.ms)
+                  .shimmer(duration: 2500.ms, color: const Color(0xFF38EF7D).withOpacity(0.4))
+                  .animate(onPlay: (controller) => controller.repeat())
+                  .rotate(begin: -0.01, end: 0.01, duration: 3000.ms, curve: Curves.easeInOut),
 
                 const SizedBox(height: AppSpacing.lg),
 
@@ -113,7 +125,15 @@ class HabitMasterScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const ViralSystemsScreen()),
                     );
                   },
-                ).animate().fadeIn(duration: 400.ms, delay: 400.ms).slideX(begin: -0.1, end: 0),
+                ).animate()
+                  .fadeIn(duration: 600.ms, delay: 300.ms)
+                  .slideX(begin: 0.3, end: 0, curve: Curves.elasticOut)
+                  .then(delay: 400.ms)
+                  .shimmer(duration: 1800.ms, color: const Color(0xFFFFC837).withOpacity(0.5))
+                  .animate(onPlay: (controller) => controller.repeat())
+                  .slideY(begin: 0, end: -0.015, duration: 1500.ms, curve: Curves.easeInOut)
+                  .then()
+                  .slideY(begin: -0.015, end: 0, duration: 1500.ms, curve: Curves.easeInOut),
 
                 const SizedBox(height: AppSpacing.lg),
 
@@ -130,7 +150,17 @@ class HabitMasterScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const CelebritySystemsScreen()),
                     );
                   },
-                ).animate().fadeIn(duration: 400.ms, delay: 500.ms).slideX(begin: 0.1, end: 0),
+                ).animate()
+                  .fadeIn(duration: 600.ms, delay: 400.ms)
+                  .slideX(begin: -0.4, end: 0, curve: Curves.easeOutCubic)
+                  .then(delay: 500.ms)
+                  .shimmer(duration: 2200.ms, color: Colors.white.withOpacity(0.4))
+                  .animate(onPlay: (controller) => controller.repeat())
+                  .rotate(begin: 0, end: 0.02, duration: 2500.ms, curve: Curves.easeInOut)
+                  .then()
+                  .rotate(begin: 0.02, end: -0.02, duration: 2500.ms, curve: Curves.easeInOut)
+                  .then()
+                  .rotate(begin: -0.02, end: 0, duration: 2500.ms, curve: Curves.easeInOut),
 
                 const SizedBox(height: AppSpacing.lg),
 
@@ -147,7 +177,13 @@ class HabitMasterScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const MasteryLessonsScreen()),
                     );
                   },
-                ).animate().fadeIn(duration: 400.ms, delay: 600.ms).slideX(begin: 0.1, end: 0),
+                ).animate()
+                  .fadeIn(duration: 600.ms, delay: 500.ms)
+                  .slideX(begin: 0.4, end: 0, curve: Curves.easeOutBack)
+                  .then(delay: 600.ms)
+                  .shimmer(duration: 2000.ms, color: const Color(0xFF40E0D0).withOpacity(0.5))
+                  .animate(onPlay: (controller) => controller.repeat(reverse: true))
+                  .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.03, 1.03), duration: 2200.ms, curve: Curves.easeInOut),
 
                 const SizedBox(height: AppSpacing.lg),
 
@@ -164,7 +200,15 @@ class HabitMasterScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const HabitVaultScreen()),
                     );
                   },
-                ).animate().fadeIn(duration: 400.ms, delay: 700.ms).slideX(begin: -0.1, end: 0),
+                ).animate()
+                  .fadeIn(duration: 600.ms, delay: 600.ms)
+                  .slideY(begin: 0.4, end: 0, curve: Curves.bounceOut)
+                  .then(delay: 700.ms)
+                  .shimmer(duration: 2400.ms, color: const Color(0xFFFFD700).withOpacity(0.6))
+                  .animate(onPlay: (controller) => controller.repeat())
+                  .slideY(begin: 0, end: -0.02, duration: 1800.ms, curve: Curves.easeInOut)
+                  .then()
+                  .slideY(begin: -0.02, end: 0, duration: 1800.ms, curve: Curves.easeInOut),
 
                 const SizedBox(height: 100),
               ]),
