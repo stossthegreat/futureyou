@@ -86,12 +86,12 @@ class _SimpleHeaderState extends State<SimpleHeader> {
                         color: AppColors.glassBackground,
                         borderRadius: BorderRadius.circular(AppBorderRadius.md),
                         border: Border.all(
-                          color: AppColors.emerald.withOpacity(0.2),
+                          color: (widget.tabColor ?? AppColors.emerald).withOpacity(0.2),
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.bookOpen,
-                        color: AppColors.emerald,
+                        color: widget.tabColor ?? AppColors.emerald,
                         size: 22,
                       ),
                     ),
@@ -147,12 +147,12 @@ class _SimpleHeaderState extends State<SimpleHeader> {
                     color: AppColors.glassBackground,
                     borderRadius: BorderRadius.circular(AppBorderRadius.md),
                     border: Border.all(
-                      color: AppColors.emerald.withOpacity(0.2),
+                      color: (widget.tabColor ?? AppColors.emerald).withOpacity(0.2),
                     ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     LucideIcons.settings,
-                    color: AppColors.emerald,
+                    color: widget.tabColor ?? AppColors.emerald,
                     size: 22,
                   ),
                 ),
