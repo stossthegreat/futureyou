@@ -20,7 +20,7 @@ export async function systemController(fastify: FastifyInstance) {
   });
 
   /**
-   * 🧠 NEW: Manual trigger for pattern analysis
+   * 🧠 Manual trigger for pattern analysis
    */
   fastify.post('/admin/analyze-patterns/:userId', async (req, reply) => {
     const { userId } = req.params as { userId: string };
@@ -34,7 +34,8 @@ export async function systemController(fastify: FastifyInstance) {
   });
 
   /**
-   * 🎭 NEW: Manual trigger for phase transition check
+   * 🎭 Manual phase evaluation (no forced transition logic)
+   * — The new OS decides phase through determinePhase()
    */
   fastify.post('/admin/check-phase-transition/:userId', async (req, reply) => {
     const { userId } = req.params as { userId: string };
@@ -43,20 +44,27 @@ export async function systemController(fastify: FastifyInstance) {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
       const currentPhase = consciousness.phase;
 
-      // Check if ready for next phase
-      const shouldTransition = memoryIntelligence.shouldTransitionPhase(consciousness);
+      // Ask OS Brain what phase they *should* be in
+      const recomputedPhase = memoryIntelligence.determinePhase(
+        { 
+          behaviorPatterns: consciousness.patterns,
+          reflectionHistory: consciousness.reflectionHistory,
+          os_phase: consciousness.os_phase
+        },
+        consciousness.identity,
+        consciousness.os_phase.started_at
+      );
 
-      if (shouldTransition) {
-        const nextPhase = currentPhase === "observer" ? "architect" : "oracle";
-        
+      if (recomputedPhase !== currentPhase) {
+        // Perform transition
         await memoryService.upsertFacts(userId, {
           os_phase: {
-            current_phase: nextPhase,
+            current_phase: recomputedPhase,
             started_at: new Date(),
             days_in_phase: 0,
             phase_transitions: [
               ...consciousness.os_phase.phase_transitions,
-              { from: currentPhase, to: nextPhase, at: new Date() },
+              { from: currentPhase, to: recomputedPhase, at: new Date() },
             ],
           },
         });
@@ -64,15 +72,15 @@ export async function systemController(fastify: FastifyInstance) {
         return {
           transitioned: true,
           from: currentPhase,
-          to: nextPhase,
-          message: `User transitioned from ${currentPhase} to ${nextPhase}`,
+          to: recomputedPhase,
+          message: `User transitioned from ${currentPhase} to ${recomputedPhase}`,
         };
       }
 
       return {
         transitioned: false,
         current: currentPhase,
-        reason: "Milestones not met",
+        reason: "OS Brain indicates no phase change",
         details: {
           discoveryCompleted: consciousness.identity.discoveryCompleted,
           reflectionCount: consciousness.reflectionHistory.themes.length,
@@ -87,7 +95,7 @@ export async function systemController(fastify: FastifyInstance) {
   });
 
   /**
-   * 🔍 NEW: View user consciousness (for debugging)
+   * 🔍 View user consciousness (debug mode)
    */
   fastify.get('/admin/consciousness/:userId', async (req, reply) => {
     const { userId } = req.params as { userId: string };
