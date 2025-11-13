@@ -189,40 +189,37 @@ export class MemoryIntelligenceService {
   // *******************************************************************
   // 🔥 Pattern extraction & memory updates
   // *******************************************************************
-  async extractPatternsFromEvents(userId: string) {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  determinePhase(factsData: any, identity: any, createdAtOverride?: Date): AIPhase {
+  // If a third arg is passed, use it. Otherwise fall back to identity.createdAt or now.
+  const createdAt = createdAtOverride
+    ? createdAtOverride
+    : identity?.createdAt
+    ? new Date(identity.createdAt)
+    : new Date();
 
-    const events = await prisma.event.findMany({
-      where: { userId, ts: { gte: thirtyDaysAgo } },
-      orderBy: { ts: "desc" },
-    });
+  const daysSinceStart = Math.floor((Date.now() - createdAt.getTime()) / 86400000);
 
-    const habitTicks = events.filter((e) => e.type === "habit_tick");
-    const drift_windows = this.findDriftWindows(habitTicks);
-    const consistency_score = this.calculateConsistency(habitTicks);
+  const depth = factsData.reflectionHistory?.depth_score || 0;
+  const discovery = identity.discoveryCompleted;
+  const current = factsData.os_phase?.current_phase;
 
-    const chatMessages = events.filter((e) => e.type === "chat_message");
-    const reflectionThemes = await this.extractThemesWithAI(chatMessages);
-    const depth_score = this.scoreReflectionDepth(chatMessages);
+  // OBSERVER
+  if (!discovery || daysSinceStart < 14) return "observer";
 
-    const avoidance_triggers = this.detectAvoidance(events);
-    const return_protocols = this.extractReturnProtocols(events);
+  // ARCHITECT
+  if (current === "architect" || (daysSinceStart >= 14 && depth >= 5)) {
+    if (current === "architect") {
+      const daysInPhase = factsData.os_phase?.days_in_phase || 0;
+      const consistency = factsData.behaviorPatterns?.consistency_score || 0;
+      if (daysInPhase >= 30 && depth >= 7 && consistency >= 60) return "oracle";
+    }
+    return "architect";
+  }
 
-    await memoryService.upsertFacts(userId, {
-      behaviorPatterns: {
-        drift_windows,
-        consistency_score,
-        avoidance_triggers,
-        return_protocols,
-        last_analyzed: new Date(),
-      },
-      reflectionHistory: {
-        themes: reflectionThemes,
-        depth_score,
-        emotional_arc: this.detectEmotionalArc(chatMessages),
-      },
-    });
+  // ORACLE
+  if (current === "oracle" || (daysSinceStart >= 60 && depth >= 7)) return "oracle";
+
+  return current || "observer";
   }
 
   // *******************************************************************
