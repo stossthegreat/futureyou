@@ -46,7 +46,14 @@ export class AIService {
     if (!openai) return "Future You is silent right now — try again later.";
 
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "user", content: promptTemplate },
+      {
+        role: "user",
+        content: `${promptTemplate}
+
+IMPORTANT:
+- Always address the user by their name at least once in your reply.
+- Use their name naturally, not awkwardly.`
+      },
     ];
 
     const completion = await openai.chat.completions.create({
@@ -106,6 +113,10 @@ ${useFullContext ? this.buildMemoryContext(consciousness) : this.buildMemoryCont
 
 HOW TO SPEAK:
 ${voiceGuidelines}
+
+CRITICAL RULES:
+- Always address them by name at least once in your reply: "${consciousness.identity.name}".
+- Use their name in a natural way, ideally in the first sentence or question.
 
 WHAT THEY NEED NEXT:
 ${consciousness.nextEvolution}
@@ -214,42 +225,49 @@ ${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0,
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
       const promptTemplate = aiPromptService.buildMorningBriefPrompt(consciousness);
-      return this.generateWithConsciousnessPrompt(userId, promptTemplate, { purpose: "brief", maxChars: 500 });
+      return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
+        purpose: "brief",
+        maxChars: 500,
+      });
     } catch (err) {
-      console.log('⚠️ Consciousness system failed, using legacy brief:', err);
-      const prompt = "Write a short, powerful morning brief. 2–3 clear actions and one imperative closing line.";
+      console.log("⚠️ Consciousness system failed, using legacy brief:", err);
+      const prompt = "Write a short, powerful morning brief. 2–3 clear actions and one imperative closing line. Use the user's name in the first sentence.";
       return this.generateFutureYouReply(userId, prompt, { purpose: "brief", maxChars: 400 });
     }
   }
 
   async generateEveningDebrief(userId: string) {
     await memoryService.summarizeDay(userId);
-    
+
     // Use consciousness system for debriefs
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
-      
+
       // Get today's habit data from events
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const habitActions = await prisma.event.findMany({
-        where: { 
+        where: {
           userId,
-          type: 'habit_action',
-          ts: { gte: today }
-        }
+          type: "habit_action",
+          ts: { gte: today },
+        },
       });
-      
+
       const dayData = {
-        kept: habitActions.filter(e => (e.payload as any)?.completed === true).length,
-        missed: habitActions.filter(e => (e.payload as any)?.completed === false).length
+        kept: habitActions.filter((e) => (e.payload as any)?.completed === true).length,
+        missed: habitActions.filter((e) => (e.payload as any)?.completed === false).length,
       };
-      
+
       const promptTemplate = aiPromptService.buildDebriefPrompt(consciousness, dayData);
-      return this.generateWithConsciousnessPrompt(userId, promptTemplate, { purpose: "debrief", maxChars: 500 });
+      return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
+        purpose: "debrief",
+        maxChars: 500,
+      });
     } catch (err) {
-      console.log('⚠️ Consciousness system failed, using legacy debrief:', err);
-      const prompt = "Write a concise evening reflection. Mention progress, lessons, and one focus for tomorrow.";
+      console.log("⚠️ Consciousness system failed, using legacy debrief:", err);
+      const prompt =
+        "Write a concise evening reflection. Mention progress, lessons, and one focus for tomorrow. Use the user's name in the first sentence.";
       return this.generateFutureYouReply(userId, prompt, { purpose: "debrief", maxChars: 400 });
     }
   }
@@ -259,10 +277,13 @@ ${JSON.stringify({ habits: ctx.habitSummaries, recent: ctx.recentEvents.slice(0,
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
       const promptTemplate = aiPromptService.buildNudgePrompt(consciousness, reason);
-      return this.generateWithConsciousnessPrompt(userId, promptTemplate, { purpose: "nudge", maxChars: 250 });
+      return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
+        purpose: "nudge",
+        maxChars: 250,
+      });
     } catch (err) {
-      console.log('⚠️ Consciousness system failed, using legacy nudge:', err);
-      const prompt = `Generate a one-sentence motivational nudge because: ${reason}`;
+      console.log("⚠️ Consciousness system failed, using legacy nudge:", err);
+      const prompt = `Generate a one-sentence motivational nudge because: ${reason}. Use the user's name naturally in the sentence.`;
       return this.generateFutureYouReply(userId, prompt, { purpose: "nudge", maxChars: 200 });
     }
   }
@@ -299,7 +320,10 @@ If no clear habit/task, return: {"none": true}
       // temperature: removed - GPT-5-mini only supports default (1)
       max_completion_tokens: 200,
       messages: [
-        { role: "system", content: "You extract actionable habits from conversations. Output only JSON." },
+        {
+          role: "system",
+          content: "You extract actionable habits from conversations. Output only JSON.",
+        },
         { role: "user", content: extractionPrompt },
       ],
     });
@@ -308,10 +332,10 @@ If no clear habit/task, return: {"none": true}
       const raw = completion.choices[0]?.message?.content?.trim() || "{}";
       const cleaned = raw.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(cleaned);
-      
+
       if (parsed.none) return null;
       if (!parsed.title || !parsed.time) return null;
-      
+
       return parsed;
     } catch (err) {
       console.warn("Failed to parse habit extraction:", err);
@@ -320,15 +344,21 @@ If no clear habit/task, return: {"none": true}
   }
 
   /** Legacy alias so old modules still compile */
-  async generateMentorReply(userId: string, _mentorId: string, userMessage: string, opts: GenerateOptions = {}) {
+  async generateMentorReply(
+    userId: string,
+    _mentorId: string,
+    userMessage: string,
+    opts: GenerateOptions = {}
+  ) {
     return this.generateFutureYouReply(userId, userMessage, opts);
   }
 
   private buildGuidelines(purpose: string, profile: any, identity: any) {
     const base = [
       `You are Future You — wise, calm, uncompromising.`,
-      `Speaking to: ${identity.name}${identity.age ? `, age ${identity.age}` : ''}`,
+      `Speaking to: ${identity.name}${identity.age ? `, age ${identity.age}` : ""}`,
       `Match tone=${profile.tone}, intensity=${profile.intensity}.`,
+      `Always address them by their name ("${identity.name}") in the first sentence of your reply. Use it naturally, not forced.`,
     ];
 
     if (identity.discoveryCompleted) {
@@ -341,19 +371,29 @@ If no clear habit/task, return: {"none": true}
     }
 
     const byPurpose: Record<string, string[]> = {
-      brief: identity.discoveryCompleted 
-        ? [`Morning brief for ${identity.name}: Reference their PURPOSE (${identity.purpose}) and give 2-3 orders aligned with their VISION.`]
-        : ["Morning brief: 2-3 short orders. Gently remind to complete Future-You discovery."],
+      brief: identity.discoveryCompleted
+        ? [
+            `Morning brief for ${identity.name}: Reference their PURPOSE (${identity.purpose}) and give 2-3 orders aligned with their VISION. Use their name in the first sentence.`,
+          ]
+        : ["Morning brief: 2-3 short orders. Gently remind to complete Future-You discovery. Use their name in the first sentence."],
       debrief: identity.discoveryCompleted
-        ? [`Evening debrief for ${identity.name}: Reflect on progress toward their PURPOSE. Did today align with their VALUES (${identity.coreValues.join(", ")})?`]
-        : ["Evening debrief: Reflect briefly. Encourage discovery completion."],
+        ? [
+            `Evening debrief for ${identity.name}: Reflect on progress toward their PURPOSE. Did today align with their VALUES (${identity.coreValues.join(
+              ", "
+            )})? Use their name in the opening line.`,
+          ]
+        : ["Evening debrief: Reflect briefly. Encourage discovery completion. Use their name in the opening line."],
       nudge: identity.discoveryCompleted
-        ? [`Nudge: One sentence. Remind ${identity.name} of their PURPOSE (${identity.purpose}) and what they want said at their funeral.`]
-        : ["Nudge: Motivational, but generic until they complete discovery."],
-      coach: ["Coach: Call out avoidance, give one clear move."],
-      letter: ["Letter: Reflective, clarifying, self-honest."],
+        ? [
+            `Nudge: One sentence. Remind ${identity.name} of their PURPOSE (${identity.purpose}) and what they want said at their funeral. Use their name in the sentence.`,
+          ]
+        : ["Nudge: Motivational, but generic until they complete discovery. Still use their name in the sentence."],
+      coach: ["Coach: Call out avoidance, give one clear move. Use their name once in the first sentence."],
+      letter: [
+        "Letter: Reflective, clarifying, self-honest. Open with their name in a direct, grounded way (e.g., 'Listen, [Name].').",
+      ],
     };
-    
+
     return [...base, ...(byPurpose[purpose] || [])].join("\n");
   }
 
@@ -377,7 +417,9 @@ ${patterns.drift_windows.length > 0 ? `Known drag points: ${patterns.drift_windo
 ${patterns.avoidance_triggers.length > 0 ? `Avoidance patterns: ${patterns.avoidance_triggers.slice(0, 2).join(", ")}` : ""}
 
 SPEAK LIKE THIS:
-"The observation phase is over. I see the terrain: ${patterns.drift_windows.length > 0 ? `you drift at ${patterns.drift_windows[0].time}` : "your patterns are forming"}.
+"The observation phase is over. I see the terrain: ${
+        patterns.drift_windows.length > 0 ? `you drift at ${patterns.drift_windows[0].time}` : "your patterns are forming"
+      }.
 ${intensity.authority! > 0.7 ? "Now we build structure. No excuses, only systems." : "Today we design your first pillar."}
 ${intensity.empathy! > 0.4 ? "I understand the struggle - that's why we engineer around it." : "The weakness is clear. We fix it through architecture, not willpower."}`;
     } else if (phase === "oracle") {
