@@ -54,21 +54,8 @@ export async function testController(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'User not found' });
       }
 
-      const habits = await prisma.habit.findMany({ where: { userId } });
-      const recent = await prisma.event.findMany({
-        where: { userId },
-        orderBy: { ts: 'desc' },
-        take: 50,
-      });
-
-      const mentor = (user as any)?.mentorId || 'marcus';
-      const prompt = `Morning brief. Facts only, no fluff. Use recent patterns (${recent
-        .map(e => e.type).slice(0, 12).join(', ')}) to set 2–3 crisp orders.`;
-
-      const text = await aiService.generateMentorReply(userId, mentor as any, prompt, { 
-        purpose: 'brief', 
-        maxChars: 500 
-      });
+      // ✅ Use the REAL consciousness system (same as scheduler)
+      const text = await aiService.generateMorningBrief(userId);
 
       const event = await prisma.event.create({
         data: { userId, type: 'morning_brief', payload: { text } },
@@ -93,29 +80,15 @@ export async function testController(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'User not found' });
       }
 
-      const recent = await prisma.event.findMany({
-        where: { userId },
-        orderBy: { ts: 'desc' },
-        take: 100,
-      });
-
-      const kept = recent.filter(e => e.type === 'habit_action' && (e.payload as any)?.completed === true).length;
-      const missed = recent.filter(e => e.type === 'habit_action' && (e.payload as any)?.completed === false).length;
-
-      const mentor = (user as any)?.mentorId || 'marcus';
-      const prompt = `Evening debrief. Kept=${kept}, Missed=${missed}. Reflect briefly and give 1 order for tomorrow.`;
-
-      const text = await aiService.generateMentorReply(userId, mentor as any, prompt, { 
-        purpose: 'debrief', 
-        maxChars: 500 
-      });
+      // ✅ Use the REAL consciousness system (same as scheduler)
+      const text = await aiService.generateEveningDebrief(userId);
 
       const event = await prisma.event.create({
         data: { userId, type: 'evening_debrief', payload: { text } },
       });
 
       console.log(`✅ Test evening debrief generated for ${userId}`);
-      return { ok: true, message: text, id: event.id, kept, missed };
+      return { ok: true, message: text, id: event.id };
     } catch (err: any) {
       const code = err.statusCode || 500;
       return reply.code(code).send({ error: err.message });
@@ -133,12 +106,10 @@ export async function testController(fastify: FastifyInstance) {
         return reply.code(404).send({ error: 'User not found' });
       }
 
-      const mentor = (user as any)?.mentorId || 'marcus';
       const reason = req.body?.reason || 'testing nudge system';
-      const text = await aiService.generateMentorReply(userId, mentor as any, `Nudge user because ${reason}.`, {
-        purpose: 'nudge',
-        maxChars: 220,
-      });
+      
+      // ✅ Use the REAL consciousness system (same as scheduler)
+      const text = await aiService.generateNudge(userId, reason);
 
       const event = await prisma.event.create({ 
         data: { userId, type: 'nudge', payload: { text, reason } } 
