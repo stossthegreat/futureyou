@@ -137,25 +137,71 @@ Keep JSON valid and concise.
     return out;
   }
 
+  /**
+   * 🔐 Unified identity facts:
+   * - Name: prefers identity.name / facts.name / (user as any).name / email prefix
+   * - Purpose & values: merges UserFacts.identity with FutureYouPurposeProfile
+   */
   async getIdentityFacts(userId: string) {
-    const factsRow = await prisma.userFacts.findUnique({ where: { userId } });
+    const [factsRow, user, purposeProfile] = await Promise.all([
+      prisma.userFacts.findUnique({ where: { userId } }),
+      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.futureYouPurposeProfile.findUnique({ where: { userId } }).catch(() => null),
+    ]);
+
     const facts = (factsRow?.json as Record<string, any>) || {};
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    
+    const identityFacts = (facts.identity as Record<string, any>) || {};
+
+    // NAME: try identity.name → facts.name → user.name (if ever added) → email prefix → "Friend"
+    const emailName = user?.email ? user.email.split("@")[0] : null;
+    const name =
+      identityFacts.displayName ||
+      identityFacts.name ||
+      facts.name ||
+      (user as any)?.name || // safe even if column doesn't exist yet
+      emailName ||
+      "Friend";
+
+    // AGE
+    const age = facts.age || identityFacts.age || null;
+
+    // PURPOSE: prefer explicit identity purpose, then LifeTask
+    const purpose =
+      identityFacts.purpose ||
+      purposeProfile?.lifeTask ||
+      null;
+
+    // CORE VALUES: prefer identity.coreValues, then ranked values from purpose profile
+    const coreValues: string[] =
+      (Array.isArray(identityFacts.coreValues) && identityFacts.coreValues.length > 0
+        ? identityFacts.coreValues
+        : Array.isArray(purposeProfile?.valuesRank)
+        ? purposeProfile!.valuesRank
+        : []) || [];
+
+    // VISION: keep from identity if present
+    const vision = identityFacts.vision || null;
+
+    // Discovery completion: either explicit flag OR having a lifeTask
+    const discoveryCompleted =
+      !!identityFacts.discoveryCompletedAt ||
+      !!purposeProfile?.lifeTask ||
+      false;
+
     return {
       // Basic profile
-      name: facts.name || user?.email?.split('@')[0] || 'Friend',
-      age: facts.age || null,
-      burningQuestion: facts.burningQuestion || null,
-      
+      name,
+      age,
+      burningQuestion: facts.burningQuestion || identityFacts.burningQuestion || null,
+
       // Discovery insights
-      discoveryCompleted: !!facts.identity?.discoveryCompletedAt,
-      purpose: facts.identity?.purpose || null,
-      coreValues: facts.identity?.coreValues || [],
-      vision: facts.identity?.vision || null,
-      funeralWish: facts.identity?.funeralWish || null,
-      biggestFear: facts.identity?.biggestFear || null,
-      whyNow: facts.identity?.whyNow || null,
+      discoveryCompleted,
+      purpose,
+      coreValues,
+      vision,
+      funeralWish: identityFacts.funeralWish || facts.funeralWish || null,
+      biggestFear: identityFacts.biggestFear || facts.biggestFear || null,
+      whyNow: identityFacts.whyNow || facts.whyNow || null,
     };
   }
 
