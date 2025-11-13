@@ -17,7 +17,6 @@ function getOpenAIClient() {
     console.warn("⚠️ OPENAI_API_KEY missing — AI disabled");
     return null;
   }
-  // Trim whitespace/newlines from API key (Railway env var issue)
   const apiKey = process.env.OPENAI_API_KEY.trim();
   return new OpenAI({ apiKey, timeout: LLM_TIMEOUT_MS });
 }
@@ -29,6 +28,9 @@ type GenerateOptions = {
 };
 
 export class AIService {
+  // ────────────────────────────────────────────────────────────
+  // PUBLIC: main chat entry
+  // ────────────────────────────────────────────────────────────
   async generateFutureYouReply(
     userId: string,
     userMessage: string,
@@ -38,39 +40,42 @@ export class AIService {
     return this.generateLegacy(userId, userMessage, opts);
   }
 
-  /**
-   * 🧠 NEW: Generate using consciousness with gold standard prompt templates
-   * Used by: morning brief, evening debrief, nudges, weekly letters, etc.
-   */
+  // ────────────────────────────────────────────────────────────
+  // INTERNAL: consciousness-based prompt processor
+  // Used by: briefs, debriefs, nudges, letters
+  // ────────────────────────────────────────────────────────────
   private async generateWithConsciousnessPrompt(
     userId: string,
     promptTemplate: string,
     opts: GenerateOptions = {}
   ): Promise<string> {
     const openai = getOpenAIClient();
-    if (!openai) return "Future You is silent right now — try again later.";
+    const purpose = opts.purpose || "coach";
 
-    // Build full consciousness + dialogue meta
-    const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
-    const dialogueMeta = await shortTermMemory.getDialogueMeta(userId);
+    let text: string;
+    let name = "Friend";
 
-    consciousness.currentEmotionalState = dialogueMeta.currentEmotionalState;
-    consciousness.contradictions = dialogueMeta.recentContradictions || [];
+    try {
+      if (!openai) throw new Error("No OpenAI client");
 
-    // Phase voice + memory context
-    const voiceGuidelines = this.buildVoiceForPhase(consciousness);
-    const useFullContext =
-      opts.purpose === "brief" ||
-      opts.purpose === "debrief" ||
-      opts.purpose === "letter";
+      // Build full consciousness + dialogue meta
+      const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
+      const dialogueMeta = await shortTermMemory.getDialogueMeta(userId);
 
-    const memoryContext = useFullContext
-      ? this.buildMemoryContext(consciousness)
-      : this.buildMemoryContextSummary(consciousness);
+      consciousness.currentEmotionalState = dialogueMeta.currentEmotionalState;
+      consciousness.contradictions = dialogueMeta.recentContradictions || [];
 
-    const name = consciousness.identity.name || "Friend";
+      const voiceGuidelines = this.buildVoiceForPhase(consciousness);
+      const useFullContext =
+        purpose === "brief" || purpose === "debrief" || purpose === "letter";
 
-    const systemPrompt = `
+      const memoryContext = useFullContext
+        ? this.buildMemoryContext(consciousness)
+        : this.buildMemoryContextSummary(consciousness);
+
+      name = consciousness.identity.name || "Friend";
+
+      const systemPrompt = `
 ${MENTOR.systemPrompt}
 
 WHO YOU ARE SPEAKING TO:
@@ -78,10 +83,10 @@ WHO YOU ARE SPEAKING TO:
 - Phase: ${consciousness.phase} (day ${consciousness.os_phase.days_in_phase})
 - Purpose: ${consciousness.identity.purpose || "discovering"}
 - Core values: ${
-      consciousness.identity.coreValues.length
-        ? consciousness.identity.coreValues.join(", ")
-        : "not yet defined"
-    }
+        consciousness.identity.coreValues.length
+          ? consciousness.identity.coreValues.join(", ")
+          : "not yet defined"
+      }
 - Current emotional state: ${consciousness.currentEmotionalState}
 - Next evolution focus: ${consciousness.nextEvolution}
 
@@ -99,70 +104,73 @@ CRITICAL RULES:
 - Respect any contradictions you see; gently call them out if relevant.
 `.trim();
 
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: systemPrompt },
-      {
-        role: "user",
-        content: `${promptTemplate}`,
-      },
-    ];
+      const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `${promptTemplate}` },
+      ];
 
-    const completion = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      max_completion_tokens: opts.maxChars ? Math.ceil(opts.maxChars / 3) : LLM_MAX_TOKENS,
-      messages,
-    });
+      const completion = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        max_tokens: opts.maxChars
+          ? Math.ceil(opts.maxChars / 3)
+          : LLM_MAX_TOKENS,
+        messages,
+      });
 
-    let text = completion.choices[0]?.message?.content?.trim() || "Keep going.";
+      const raw = completion.choices[0]?.message?.content?.trim();
+      if (!raw) throw new Error("Empty completion");
+      text = raw;
+    } catch (err) {
+      console.log("⚠️ generateWithConsciousnessPrompt fallback:", err);
+      text = this.buildFallbackText(purpose, name);
+    }
+
     if (opts.maxChars && text.length > opts.maxChars) {
       text = text.slice(0, opts.maxChars - 1) + "…";
     }
 
-    // Store in events
     await prisma.event.create({
-      data: { userId, type: opts.purpose || "coach", payload: { text } },
+      data: { userId, type: purpose || "coach", payload: { text } },
     });
 
     return text;
   }
 
-  /**
-   * 🧠 Consciousness-aware AI generation (for full conversations)
-   * NOTE: Not wired into generateFutureYouReply yet (kept for future upgrade).
-   */
+  // ────────────────────────────────────────────────────────────
+  // INTERNAL: consciousness-based chat (not wired to main yet)
+  // ────────────────────────────────────────────────────────────
   private async generateWithConsciousness(
     userId: string,
     userMessage: string,
     opts: GenerateOptions = {}
   ): Promise<string> {
     const openai = getOpenAIClient();
-    if (!openai) return "Future You is silent right now — try again later.";
+    const purpose = opts.purpose || "coach";
 
-    // Build complete consciousness context
-    const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
-    const shortTerm = await shortTermMemory.getRecentConversation(userId, 10);
-    const dialogueMeta = await shortTermMemory.getDialogueMeta(userId);
+    let text: string;
+    let name = "Friend";
 
-    // Update consciousness with short-term data
-    consciousness.recentConversation = shortTerm;
-    consciousness.currentEmotionalState = dialogueMeta.currentEmotionalState;
-    consciousness.contradictions = dialogueMeta.recentContradictions;
+    try {
+      if (!openai) throw new Error("No OpenAI client");
 
-    // Adapt voice to phase
-    const voiceGuidelines = this.buildVoiceForPhase(consciousness);
+      const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
+      const shortTerm = await shortTermMemory.getRecentConversation(userId, 10);
+      const dialogueMeta = await shortTermMemory.getDialogueMeta(userId);
 
-    // Determine context strategy (hybrid per plan)
-    const useFullContext =
-      opts.purpose === "brief" ||
-      opts.purpose === "debrief" ||
-      opts.purpose === "letter";
+      consciousness.recentConversation = shortTerm;
+      consciousness.currentEmotionalState = dialogueMeta.currentEmotionalState;
+      consciousness.contradictions = dialogueMeta.recentContradictions;
 
-    // Enhanced system prompt with memory
-    const systemPrompt = `
+      const voiceGuidelines = this.buildVoiceForPhase(consciousness);
+      const useFullContext = purpose === "brief" || purpose === "debrief" || purpose === "letter";
+
+      name = consciousness.identity.name || "Friend";
+
+      const systemPrompt = `
 ${MENTOR.systemPrompt}
 
 WHO YOU'RE SPEAKING TO:
-${consciousness.identity.name}, ${consciousness.phase} phase (day ${consciousness.os_phase.days_in_phase})
+${name}, ${consciousness.phase} phase (day ${consciousness.os_phase.days_in_phase})
 ${consciousness.identity.purpose ? `Purpose: ${consciousness.identity.purpose}` : ""}
 ${
   consciousness.identity.coreValues.length > 0
@@ -180,67 +188,86 @@ HOW TO SPEAK:
 ${voiceGuidelines}
 
 CRITICAL RULES:
-- Always address them by name at least once in your reply: "${consciousness.identity.name}".
+- Always address them by name at least once in your reply: "${name}".
 - Use their name in a natural way, ideally in the first sentence or question.
 
 WHAT THEY NEED NEXT:
 ${consciousness.nextEvolution}
 `.trim();
 
-    // Include recent conversation in messages
-    const conversationMessages = shortTerm
-      .slice(0, useFullContext ? 10 : 3)
-      .map((m) => ({
-        role: m.role,
-        content: m.text,
-      }));
+      const conversationMessages = shortTerm
+        .slice(0, useFullContext ? 10 : 3)
+        .map((m) => ({
+          role: m.role as "user" | "assistant" | "system",
+          content: m.text,
+        }));
 
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: systemPrompt },
-      ...conversationMessages,
-      { role: "user", content: userMessage },
-    ];
+      const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+        { role: "system", content: systemPrompt },
+        ...conversationMessages,
+        { role: "user", content: userMessage },
+      ];
 
-    const completion = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      max_completion_tokens: LLM_MAX_TOKENS,
-      messages,
-    });
+      const completion = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        max_tokens: LLM_MAX_TOKENS,
+        messages,
+      });
 
-    let text = completion.choices[0]?.message?.content?.trim() || "Keep going.";
+      const raw = completion.choices[0]?.message?.content?.trim();
+      if (!raw) throw new Error("Empty completion");
+      text = raw;
+    } catch (err) {
+      console.log("⚠️ generateWithConsciousness fallback:", err);
+      text = this.buildFallbackText(purpose, name);
+    }
+
     if (opts.maxChars && text.length > opts.maxChars) {
       text = text.slice(0, opts.maxChars - 1) + "…";
     }
 
-    // Store interaction in short-term memory
     await shortTermMemory.appendConversation(userId, "user", userMessage, "neutral");
     await shortTermMemory.appendConversation(userId, "assistant", text, "balanced");
 
-    // Update dialogue metadata
-    const emotionalState = await shortTermMemory.detectEmotionalState(userId);
-    const contradictions = await shortTermMemory.detectContradictions(userId);
-    await shortTermMemory.updateDialogueMeta(userId, {
-      currentEmotionalState: emotionalState,
-      recentContradictions: contradictions,
-    });
+    try {
+      const emotionalState = await shortTermMemory.detectEmotionalState(userId);
+      const contradictions = await shortTermMemory.detectContradictions(userId);
+      await shortTermMemory.updateDialogueMeta(userId, {
+        currentEmotionalState: emotionalState,
+        recentContradictions: contradictions,
+      });
+    } catch (err) {
+      console.log("⚠️ dialogue meta update failed:", err);
+    }
 
     await prisma.event.create({
-      data: { userId, type: opts.purpose || "coach", payload: { text } },
+      data: { userId, type: purpose || "coach", payload: { text } },
     });
 
     return text;
   }
 
-  /**
-   * 📜 LEGACY: Original implementation (backwards compatible)
-   */
+  // ────────────────────────────────────────────────────────────
+  // LEGACY: original implementation (kept for safety)
+  // ────────────────────────────────────────────────────────────
   private async generateLegacy(
     userId: string,
     userMessage: string,
     opts: GenerateOptions = {}
   ): Promise<string> {
     const openai = getOpenAIClient();
-    if (!openai) return "Future You is silent right now — try again later.";
+    const purpose = opts.purpose || "coach";
+
+    if (!openai) {
+      console.warn("⚠️ generateLegacy: no OpenAI client");
+      const identity = await memoryService.getIdentityFacts(userId);
+      const name = identity.name || "Friend";
+      const text = this.buildFallbackText(purpose, name);
+      await prisma.event.create({
+        data: { userId, type: purpose, payload: { text } },
+      });
+      return text;
+    }
 
     const [profile, ctx, identity] = await Promise.all([
       memoryService.getProfileForMentor(userId),
@@ -248,7 +275,7 @@ ${consciousness.nextEvolution}
       memoryService.getIdentityFacts(userId),
     ]);
 
-    const guidelines = this.buildGuidelines(opts.purpose || "coach", profile, identity);
+    const guidelines = this.buildGuidelines(purpose, profile, identity);
 
     const contextString = identity.discoveryCompleted
       ? `IDENTITY:
@@ -274,30 +301,44 @@ ${JSON.stringify({
   recent: ctx.recentEvents.slice(0, 30),
 })}`;
 
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: MENTOR.systemPrompt },
-      { role: "system", content: guidelines },
-      { role: "system", content: contextString },
-      { role: "user", content: userMessage },
-    ];
+    let text: string;
+    try {
+      const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+        { role: "system", content: MENTOR.systemPrompt },
+        { role: "system", content: guidelines },
+        { role: "system", content: contextString },
+        { role: "user", content: userMessage },
+      ];
 
-    const completion = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      max_completion_tokens: LLM_MAX_TOKENS,
-      messages,
-    });
+      const completion = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        max_tokens: LLM_MAX_TOKENS,
+        messages,
+      });
 
-    let text = completion.choices[0]?.message?.content?.trim() || "Keep going.";
+      const raw = completion.choices[0]?.message?.content?.trim();
+      if (!raw) throw new Error("Empty completion");
+      text = raw;
+    } catch (err) {
+      console.log("⚠️ generateLegacy fallback:", err);
+      const name = identity.name || "Friend";
+      text = this.buildFallbackText(purpose, name);
+    }
+
     if (opts.maxChars && text.length > opts.maxChars) {
       text = text.slice(0, opts.maxChars - 1) + "…";
     }
 
     await prisma.event.create({
-      data: { userId, type: opts.purpose || "coach", payload: { text } },
+      data: { userId, type: purpose, payload: { text } },
     });
 
     return text;
   }
+
+  // ────────────────────────────────────────────────────────────
+  // SPECIALISED PROCESSORS (Master Engine entry points)
+  // ────────────────────────────────────────────────────────────
 
   async generateMorningBrief(userId: string) {
     // Use consciousness system for briefs
@@ -310,23 +351,24 @@ ${JSON.stringify({
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy brief:", err);
+      const identity = await memoryService.getIdentityFacts(userId);
+      const name = identity.name || "Friend";
       const prompt =
         "Write a short, powerful morning brief. 2–3 clear actions and one imperative closing line. Use the user's name in the first sentence.";
-      return this.generateFutureYouReply(userId, prompt, {
+      const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "brief",
         maxChars: 400,
-      });
+      }).catch(() => this.buildFallbackText("brief", name));
+      return text;
     }
   }
 
   async generateEveningDebrief(userId: string) {
     await memoryService.summarizeDay(userId);
 
-    // Use consciousness system for debriefs
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
 
-      // Get today's habit data from events
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const habitActions = await prisma.event.findMany({
@@ -356,17 +398,19 @@ ${JSON.stringify({
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy debrief:", err);
+      const identity = await memoryService.getIdentityFacts(userId);
+      const name = identity.name || "Friend";
       const prompt =
         "Write a concise evening reflection. Mention progress, lessons, and one focus for tomorrow. Use the user's name in the first sentence.";
-      return this.generateFutureYouReply(userId, prompt, {
+      const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "debrief",
         maxChars: 400,
-      });
+      }).catch(() => this.buildFallbackText("debrief", name));
+      return text;
     }
   }
 
   async generateNudge(userId: string, reason: string) {
-    // Use consciousness system for nudges
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
       const promptTemplate = aiPromptService.buildNudgePrompt(
@@ -379,17 +423,20 @@ ${JSON.stringify({
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy nudge:", err);
+      const identity = await memoryService.getIdentityFacts(userId);
+      const name = identity.name || "Friend";
       const prompt = `Generate a one-sentence motivational nudge because: ${reason}. Use the user's name naturally in the sentence.`;
-      return this.generateFutureYouReply(userId, prompt, {
+      const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "nudge",
         maxChars: 200,
-      });
+      }).catch(() => this.buildFallbackText("nudge", name));
+      return text;
     }
   }
 
-  /**
-   * 🧠 Extract habit suggestion from conversation
-   */
+  // ────────────────────────────────────────────────────────────
+  // HABIT EXTRACTION
+  // ────────────────────────────────────────────────────────────
   async extractHabitFromConversation(
     userId: string,
     userInput: string,
@@ -418,21 +465,20 @@ Return ONLY valid JSON (no markdown):
 If no clear habit/task, return: {"none": true}
 `;
 
-    const completion = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      // temperature: removed - GPT-5-mini only supports default (1)
-      max_completion_tokens: 200,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You extract actionable habits from conversations. Output only JSON.",
-        },
-        { role: "user", content: extractionPrompt },
-      ],
-    });
-
     try {
+      const completion = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        max_tokens: 200,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You extract actionable habits from conversations. Output only JSON.",
+          },
+          { role: "user", content: extractionPrompt },
+        ],
+      });
+
       const raw = completion.choices[0]?.message?.content?.trim() || "{}";
       const cleaned = raw.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(cleaned);
@@ -457,6 +503,9 @@ If no clear habit/task, return: {"none": true}
     return this.generateFutureYouReply(userId, userMessage, opts);
   }
 
+  // ────────────────────────────────────────────────────────────
+  // GUIDELINES & VOICE
+  // ────────────────────────────────────────────────────────────
   private buildGuidelines(purpose: string, profile: any, identity: any) {
     const base = [
       `You are Future You — wise, calm, uncompromising.`,
@@ -513,9 +562,6 @@ If no clear habit/task, return: {"none": true}
     return [...base, ...(byPurpose[purpose] || [])].join("\n");
   }
 
-  /**
-   * 🎭 NEW: Build voice guidelines based on phase
-   */
   private buildVoiceForPhase(consciousness: UserConsciousness): string {
     const { phase, patterns, reflectionThemes, legacyCode } = consciousness;
     const intensity = memoryIntelligence.determineVoiceIntensity(consciousness);
@@ -602,18 +648,13 @@ Ask questions that reveal destiny, not tactics.`;
     return "Be wise, calm, direct.";
   }
 
-  /**
-   * 📝 NEW: Build full memory context (for briefs/debriefs/letters)
-   */
   private buildMemoryContext(consciousness: UserConsciousness): string {
     const memories: string[] = ["WHAT YOU REMEMBER:"];
 
-    // Contradictions
     if (consciousness.contradictions.length > 0) {
       memories.push(`- Recent contradiction: ${consciousness.contradictions[0]}`);
     }
 
-    // Drift patterns
     if (consciousness.patterns.drift_windows.length > 0) {
       const drifts = consciousness.patterns.drift_windows
         .slice(0, 2)
@@ -622,7 +663,6 @@ Ask questions that reveal destiny, not tactics.`;
       memories.push(`- They struggle most at: ${drifts}`);
     }
 
-    // Return protocols
     if (consciousness.patterns.return_protocols.length > 0) {
       memories.push(
         `- What works when they recover: "${consciousness.patterns.return_protocols[0].text.slice(
@@ -632,7 +672,6 @@ Ask questions that reveal destiny, not tactics.`;
       );
     }
 
-    // Reflection themes
     if (consciousness.reflectionThemes.length > 0) {
       memories.push(
         `- They often reflect on: ${consciousness.reflectionThemes
@@ -641,21 +680,18 @@ Ask questions that reveal destiny, not tactics.`;
       );
     }
 
-    // Avoidance
     if (consciousness.patterns.avoidance_triggers.length > 0) {
       memories.push(
         `- Avoids: ${consciousness.patterns.avoidance_triggers.length} specific triggers`
       );
     }
 
-    // Emotional arc
     if (consciousness.reflectionHistory.emotional_arc !== "flat") {
       memories.push(
         `- Emotional trend: ${consciousness.reflectionHistory.emotional_arc}`
       );
     }
 
-    // Legacy code (Oracle phase)
     if (consciousness.legacyCode.length > 0) {
       memories.push(
         `- Their legacy code: "${
@@ -667,9 +703,6 @@ Ask questions that reveal destiny, not tactics.`;
     return memories.join("\n");
   }
 
-  /**
-   * 📄 NEW: Build summarized memory context (for nudges)
-   */
   private buildMemoryContextSummary(
     consciousness: UserConsciousness
   ): string {
@@ -688,6 +721,30 @@ Ask questions that reveal destiny, not tactics.`;
     }
 
     return key.length > 0 ? `KEY CONTEXT: ${key.join(" | ")}` : "";
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // FALLBACK TEXTS (no more "Keep going.")
+  // ────────────────────────────────────────────────────────────
+  private buildFallbackText(
+    purpose: GenerateOptions["purpose"],
+    name: string
+  ): string {
+    const safeName = name || "Friend";
+
+    switch (purpose) {
+      case "brief":
+        return `Listen, ${safeName}. Today is simple: pick one promise that actually matters, keep it, and don't bargain with yourself. Build the day around that and you’ll sleep proud.`;
+      case "debrief":
+        return `${safeName}, today was data, not judgment. Notice what moved you forward, notice what dragged you back, and choose one thing you'll do differently tomorrow.`;
+      case "nudge":
+        return `${safeName}, you already know the move you’re avoiding. Do that one thing now before your brain talks you out of it.`;
+      case "letter":
+        return `${safeName}, there is a version of you on the other side of discipline who does not recognise this current level of hesitation. Start behaving like them now, before you feel ready.`;
+      case "coach":
+      default:
+        return `${safeName}, stop waiting for a perfect plan. Take one clear action in the next 10 minutes that your future self would respect.`;
+    }
   }
 }
 
