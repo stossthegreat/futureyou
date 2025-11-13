@@ -1,114 +1,95 @@
 // src/services/brief.service.ts
 import { prisma } from "../utils/db";
-import OpenAI from "openai";
 import { VoiceService } from "./voice.service";
-
-function getOpenAIClient() {
-  if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") {
-    return null;
-  }
-  if (!process.env.OPENAI_API_KEY) {
-    console.warn("⚠️ Missing OpenAI API key — AI features disabled");
-    return null;
-  }
-  const apiKey = process.env.OPENAI_API_KEY.trim();
-  return new OpenAI({ apiKey });
-}
+import { aiService } from "./ai.service";
 
 const voiceService = new VoiceService();
 
 export class BriefService {
   /**
    * ☀️ Generate or retrieve today's morning brief
+   * Uses the OS brain (aiService → GPT-5-mini + consciousness)
    */
   async getTodaysBrief(userId: string) {
-    const openai = getOpenAIClient();
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    const mentor = user?.mentorId ?? "marcus";
 
-    // fallback path if OpenAI is not available
-    if (!openai) {
-      return {
-        mentor,
-        message: "Begin your mission today.",
-        audio: null,
-        habits: [],
-        tasks: [],
-      };
+    // mentor used for TTS voice flavour (text is always Future-You brain)
+    const mentor = (user as any)?.mentorId || "marcus";
+
+    // 1️⃣ Get the brief text from the OS brain
+    let text: string;
+    try {
+      text = await aiService.generateMorningBrief(userId);
+    } catch (err) {
+      console.error("⚠️ generateMorningBrief failed, fallback:", err);
+      text = "Today is not random. Pick the one thing that actually matters and move on it.";
     }
 
-    const context = `
-User: ${userId}
-Mentor: ${mentor}
-Tone: ${user?.tone ?? "balanced"}
-Goal: Write a short, motivating morning brief.
-`;
+    text = (text || "").trim();
+    if (!text) {
+      text = "Begin your mission today.";
+    }
 
-    const ai = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-5-mini",
-      max_tokens: 180,
-      messages: [
-        { role: "system", content: context },
-        { role: "user", content: "Compose a concise, empowering morning briefing." },
-      ],
-    });
+    // 2️⃣ Optional TTS
+    let audio: string | null = null;
+    try {
+      const voice = await voiceService.speak(userId, text, mentor);
+      audio = voice?.url ?? null;
+    } catch (err) {
+      console.warn("⚠️ Morning brief TTS failed:", err);
+      audio = null;
+    }
 
-    const text = ai.choices?.[0]?.message?.content ?? "Begin your mission today.";
-    const voice = await voiceService.speak(userId, text, mentor);
-    const audio = voice?.url ?? null;
-
-    // log event
-    await prisma.event.create({
-      data: {
-        userId,
-        type: "morning_brief",
-        payload: { text, audio },
-      },
-    });
-
-    return { mentor, message: text, audio };
+    // 3️⃣ We do NOT re-log the event here because aiService
+    // already logs a 'brief' event. This method is mainly for API consumers.
+    return {
+      mentor,
+      message: text,
+      audio,
+      habits: [], // kept for backwards compatibility with existing clients
+      tasks: [],
+    };
   }
 
   /**
    * 🌙 Generate evening reflection / debrief
+   * Uses the OS brain (aiService → GPT-5-mini + consciousness)
    */
   async getEveningDebrief(userId: string) {
-    const openai = getOpenAIClient();
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    const mentor = user?.mentorId ?? "drill";
+    const mentor = (user as any)?.mentorId || "drill";
 
-    if (!openai) {
-      return {
-        mentor,
-        message: "Reflect and prepare for tomorrow.",
-        audio: null,
-      };
+    // 1️⃣ Get debrief text from OS brain
+    let text: string;
+    try {
+      text = await aiService.generateEveningDebrief(userId);
+    } catch (err) {
+      console.error("⚠️ generateEveningDebrief failed, fallback:", err);
+      text =
+        "Today told you exactly where you are strong and where you keep slipping. Note it, forgive yourself, and sharpen one thing for tomorrow.";
     }
 
-    const prompt = `
-You are ${mentor}. Write an honest but encouraging evening debrief for the user.
-Acknowledge effort, mention consistency, and inspire readiness for tomorrow.
-`;
+    text = (text || "").trim();
+    if (!text) {
+      text = "Reflect on today and set one clear move for tomorrow.";
+    }
 
-    const ai = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-5-mini",
-      max_tokens: 180,
-      messages: [{ role: "user", content: prompt }],
-    });
+    // 2️⃣ Optional TTS
+    let audio: string | null = null;
+    try {
+      const voice = await voiceService.speak(userId, text, mentor);
+      audio = voice?.url ?? null;
+    } catch (err) {
+      console.warn("⚠️ Evening debrief TTS failed:", err);
+      audio = null;
+    }
 
-    const text = ai.choices?.[0]?.message?.content ?? "Reflect and prepare for tomorrow.";
-    const voice = await voiceService.speak(userId, text, mentor);
-    const audio = voice?.url ?? null;
-
-    await prisma.event.create({
-      data: {
-        userId,
-        type: "evening_debrief",
-        payload: { text, audio },
-      },
-    });
-
-    return { mentor, message: text, audio };
+    // Again, aiService already logs a 'debrief' style event internally
+    return {
+      mentor,
+      message: text,
+      audio,
+    };
   }
 }
 
