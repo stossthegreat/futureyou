@@ -181,17 +181,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             
             const SizedBox(height: AppSpacing.sm),
             
-            // Simple date subtitle
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Text(
-                formattedDate,
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.textTertiary,
-                ),
-              ),
-            ),
-            
             const SizedBox(height: AppSpacing.lg),
             
             // Habit cards (System cards + Standalone habits)

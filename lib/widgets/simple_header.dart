@@ -92,7 +92,7 @@ class _SimpleHeaderState extends State<SimpleHeader> {
                       child: Icon(
                         LucideIcons.bookOpen,
                         color: widget.tabColor ?? AppColors.emerald,
-                        size: 22,
+                        size: 24,
                       ),
                     ),
                     // Notification badge
@@ -153,7 +153,7 @@ class _SimpleHeaderState extends State<SimpleHeader> {
                   child: Icon(
                     LucideIcons.settings,
                     color: widget.tabColor ?? AppColors.emerald,
-                    size: 22,
+                    size: 24,
                   ),
                 ),
               ),
