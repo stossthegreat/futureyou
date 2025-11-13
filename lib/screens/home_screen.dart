@@ -9,7 +9,8 @@ import '../widgets/date_strip.dart';
 import '../widgets/scrollable_header.dart';
 import '../screens/settings_screen.dart';
 import '../screens/reflections_screen.dart';
-import '../widgets/ai_os_message_card.dart';
+import '../widgets/parchment_scroll_card.dart';
+import '../widgets/nudge_card.dart';
 import '../widgets/morning_brief_modal.dart';
 import '../widgets/system_card.dart';
 import '../providers/habit_provider.dart';
@@ -18,6 +19,7 @@ import '../services/weekly_stats_service.dart';
 import '../services/local_storage.dart';
 import '../models/habit_system.dart';
 import '../models/habit.dart';
+import '../models/coach_message.dart';
 import '../widgets/week_overview_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -111,8 +113,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     
     // Get active messages (only show for today)
     final activeNudge = isToday ? messagesService.getActiveNudge() : null;
+    final todaysBrief = isToday ? messagesService.getTodaysBrief() : null;
     final activeDebrief = isToday ? messagesService.getLatestDebrief() : null;
     final activeLetters = isToday ? messagesService.getUnreadLetters() : [];
+    
+    // Collect scroll messages (briefs, debriefs, letters)
+    final scrollMessages = <CoachMessage>[
+      if (todaysBrief != null) todaysBrief,
+      if (activeDebrief != null) activeDebrief,
+      ...activeLetters,
+    ];
     
     // Format date like React: "Thursday, Oct 30, 2025"
     final dateFormatter = DateFormat('EEEE, MMM d, yyyy');
@@ -135,10 +145,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             
             const SizedBox(height: AppSpacing.md),
             
-            // ✅ AI OS Messages - LEGENDARY CARDS 🔥
-            // Show nudges (throughout day)
+            // ✅ AI OS Messages - LEGENDARY UI 🔥🔥🔥
+            
+            // 📜 PARCHMENT SCROLL - Briefs, Debriefs, Letters
+            if (scrollMessages.isNotEmpty)
+              ParchmentScrollCard(
+                messages: scrollMessages,
+                phase: 'observer', // TODO: Get from user's actual phase
+                onNavigateToReflections: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReflectionsScreen()),
+                  );
+                },
+              ),
+            
+            // ⚡ ORANGE NUDGE BOX - Real-time nudges only
             if (activeNudge != null)
-              AIOSMessageCard(
+              NudgeCard(
                 message: activeNudge,
                 phase: 'observer', // TODO: Get from user's actual phase
                 onDismiss: () => setState(() {}),
@@ -149,35 +173,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   );
                 },
               ),
-            
-            // Show debriefs (evening 9pm)
-            if (activeDebrief != null && !activeDebrief.isRead)
-              AIOSMessageCard(
-                message: activeDebrief,
-                phase: 'architect', // TODO: Get from user's actual phase
-                structuralIntegrity: 67, // TODO: Get from consciousness
-                focusPillar: 'Energy Before Distraction', // TODO: Get from consciousness
-                onDismiss: () => setState(() {}),
-                onNavigateToReflections: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ReflectionsScreen()),
-                  );
-                },
-              ),
-            
-            // Show unread letters (weekly emotional letters)
-            ...activeLetters.map((letter) => AIOSMessageCard(
-              message: letter,
-              phase: 'oracle', // TODO: Get from user's actual phase
-              onDismiss: () => setState(() {}),
-              onNavigateToReflections: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ReflectionsScreen()),
-                );
-              },
-            )).toList(),
             
             const SizedBox(height: AppSpacing.sm),
             
