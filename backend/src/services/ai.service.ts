@@ -278,26 +278,26 @@ ${consciousness.nextEvolution}
 
     const contextString = identity.discoveryCompleted
       ? `IDENTITY:
-Name: ${identity.name}, Age: ${identity.age}
-Purpose: ${identity.purpose}
-Core Values: ${identity.coreValues.join(", ")}
-Vision: ${identity.vision}
-Burning Question: ${identity.burningQuestion}
+Name: ${identity.name || "Friend"}, Age: ${identity.age || "not specified"}
+Purpose: ${identity.purpose || "discovering"}
+Core Values: ${identity.coreValues?.length ? identity.coreValues.join(", ") : "exploring"}
+Vision: ${identity.vision || "building"}
+Burning Question: ${identity.burningQuestion || "What do I truly want?"}
 
 CONTEXT:
 ${JSON.stringify({
-  habits: ctx.habitSummaries,
-  recent: ctx.recentEvents.slice(0, 30),
+  habits: ctx.habitSummaries || [],
+  recent: ctx.recentEvents?.slice(0, 30) || [],
 })}`
       : `IDENTITY:
-Name: ${identity.name}, Age: ${identity.age || "unknown"}
+Name: ${identity.name || "Friend"}, Age: ${identity.age || "not specified"}
 Burning Question: ${identity.burningQuestion || "not yet answered"}
 Note: User hasn't completed purpose discovery yet.
 
 CONTEXT:
 ${JSON.stringify({
-  habits: ctx.habitSummaries,
-  recent: ctx.recentEvents.slice(0, 30),
+  habits: ctx.habitSummaries || [],
+  recent: ctx.recentEvents?.slice(0, 30) || [],
 })}`;
 
     let text: string;
@@ -508,17 +508,17 @@ If no clear habit/task, return: {"none": true}
   private buildGuidelines(purpose: string, profile: any, identity: any) {
     const base = [
       `You are Future You — wise, calm, uncompromising.`,
-      `Speaking to: ${identity.name}${
+      `Speaking to: ${identity.name || "Friend"}${
         identity.age ? `, age ${identity.age}` : ""
       }`,
-      `Match tone=${profile.tone}, intensity=${profile.intensity}.`,
-      `Always address them by their name ("${identity.name}") in the first sentence of your reply. Use it naturally, not forced.`,
+      `Match tone=${profile.tone || "balanced"}, intensity=${profile.intensity || 2}.`,
+      `Always address them by their name ("${identity.name || "Friend"}") in the first sentence of your reply. Use it naturally, not forced.`,
     ];
 
     if (identity.discoveryCompleted) {
-      base.push(`THEIR PURPOSE: ${identity.purpose}`);
-      base.push(`THEIR VALUES: ${identity.coreValues.join(", ")}`);
-      base.push(`THEIR VISION: ${identity.vision}`);
+      base.push(`THEIR PURPOSE: ${identity.purpose || "discovering"}`);
+      base.push(`THEIR VALUES: ${identity.coreValues?.length ? identity.coreValues.join(", ") : "exploring"}`);
+      base.push(`THEIR VISION: ${identity.vision || "building"}`);
     } else if (identity.burningQuestion) {
       base.push(`THEIR QUESTION: ${identity.burningQuestion}`);
       base.push(
@@ -529,23 +529,21 @@ If no clear habit/task, return: {"none": true}
     const byPurpose: Record<string, string[]> = {
       brief: identity.discoveryCompleted
         ? [
-            `Morning brief for ${identity.name}: Reference their PURPOSE (${identity.purpose}) and give 2-3 orders aligned with their VISION. Use their name in the first sentence.`,
+            `Morning brief for ${identity.name || "Friend"}: Reference their PURPOSE (${identity.purpose || "discovering"}) and give 2-3 orders aligned with their VISION. Use their name in the first sentence.`,
           ]
         : [
             "Morning brief: 2-3 short orders. Gently remind to complete Future-You discovery. Use their name in the first sentence.",
           ],
       debrief: identity.discoveryCompleted
         ? [
-            `Evening debrief for ${identity.name}: Reflect on progress toward their PURPOSE. Did today align with their VALUES (${identity.coreValues.join(
-              ", "
-            )})? Use their name in the opening line.`,
+            `Evening debrief for ${identity.name || "Friend"}: Reflect on progress toward their PURPOSE. Did today align with their VALUES (${identity.coreValues?.length ? identity.coreValues.join(", ") : "their values"})? Use their name in the opening line.`,
           ]
         : [
             "Evening debrief: Reflect briefly. Encourage discovery completion. Use their name in the opening line.",
           ],
       nudge: identity.discoveryCompleted
         ? [
-            `Nudge: One sentence. Remind ${identity.name} of their PURPOSE (${identity.purpose}) and what they want said at their funeral. Use their name in the sentence.`,
+            `Nudge: One sentence. Remind ${identity.name || "them"} of their PURPOSE (${identity.purpose || "discovering their path"}) and what they want said at their funeral. Use their name in the sentence.`,
           ]
         : [
             "Nudge: Motivational, but generic until they complete discovery. Still use their name in the sentence.",
