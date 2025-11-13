@@ -107,8 +107,7 @@ Keep JSON valid and concise.
 
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      temperature: 0.2,
-      max_tokens: LLM_MAX_TOKENS,
+      max_completion_tokens: LLM_MAX_TOKENS,
       messages: [
         { role: "system", content: system },
         { role: "user", content: JSON.stringify(user) },
