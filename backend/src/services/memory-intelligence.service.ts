@@ -6,10 +6,7 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
 
 function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
-  if (!process.env.OPENAI_API_KEY) {
-    console.warn("⚠️ OpenAI API key not available");
-    return null;
-  }
+  if (!process.env.OPENAI_API_KEY) return null;
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY.trim() });
 }
 
@@ -74,6 +71,7 @@ export interface UserConsciousness {
     coreValues: string[];
     vision: string | null;
     discoveryCompleted: boolean;
+    createdAt?: Date;
   };
 
   patterns: BehaviorPatterns;
@@ -108,17 +106,22 @@ export interface VoiceIntensity {
 }
 
 export class MemoryIntelligenceService {
+  // *******************************************************************
+  // 🔥 Build the full user consciousness snapshot
+  // *******************************************************************
   async buildUserConsciousness(userId: string): Promise<UserConsciousness> {
     const [user, facts, identity] = await Promise.all([
       prisma.user.findUnique({ where: { id: userId } }),
       prisma.userFacts.findUnique({ where: { userId } }),
-      memoryService.getIdentityFacts(userId), // ← unified identity
+      memoryService.getIdentityFacts(userId),
     ]);
 
     const factsData = (facts?.json as Record<string, any>) || {};
 
-    const os_phase = this.getOrInitializePhase(factsData, user?.createdAt || new Date());
-    const phase = this.determinePhase(factsData, identity, user?.createdAt || new Date());
+    const createdAt = user?.createdAt || new Date();
+
+    const os_phase = this.getOrInitializePhase(factsData, createdAt);
+    const phase = this.determinePhase(factsData, identity);
 
     const patterns: BehaviorPatterns = factsData.behaviorPatterns || {
       drift_windows: [],
@@ -142,6 +145,7 @@ export class MemoryIntelligenceService {
         coreValues: identity.coreValues,
         vision: identity.vision,
         discoveryCompleted: identity.discoveryCompleted,
+        createdAt,
       },
       patterns,
       reflectionHistory,
@@ -159,10 +163,32 @@ export class MemoryIntelligenceService {
     };
   }
 
-  // ────────────────────────────────────────────────────────────
-  // PATTERN EXTRACTION
-  // ────────────────────────────────────────────────────────────
+  // *******************************************************************
+  // 🔥 Manual Phase Transition Check (used by system.controller.ts)
+  // *******************************************************************
+  shouldTransitionPhase(c: UserConsciousness): boolean {
+    if (c.phase === "observer") {
+      return (
+        c.identity.discoveryCompleted &&
+        c.reflectionHistory.themes.length >= 3 &&
+        c.reflectionHistory.depth_score >= 4
+      );
+    }
 
+    if (c.phase === "architect") {
+      return (
+        c.os_phase.days_in_phase >= 30 &&
+        c.patterns.consistency_score >= 60 &&
+        c.reflectionHistory.depth_score >= 7
+      );
+    }
+
+    return false;
+  }
+
+  // *******************************************************************
+  // 🔥 Pattern extraction & memory updates
+  // *******************************************************************
   async extractPatternsFromEvents(userId: string) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -199,12 +225,13 @@ export class MemoryIntelligenceService {
     });
   }
 
-  // ────────────────────────────────────────────────────────────
-  // PHASE LOGIC
-  // ────────────────────────────────────────────────────────────
-
-  determinePhase(factsData: any, identity: any, createdAt: Date): AIPhase {
+  // *******************************************************************
+  // 🔥 Phase Logic (now correct signature for the whole system)
+  // *******************************************************************
+  determinePhase(factsData: any, identity: any): AIPhase {
+    const createdAt = identity?.createdAt ? new Date(identity.createdAt) : new Date();
     const daysSinceStart = Math.floor((Date.now() - createdAt.getTime()) / 86400000);
+
     const depth = factsData.reflectionHistory?.depth_score || 0;
     const discovery = identity.discoveryCompleted;
     const current = factsData.os_phase?.current_phase;
@@ -228,25 +255,20 @@ export class MemoryIntelligenceService {
   predictNextGrowth(patterns: BehaviorPatterns, reflectionHistory: ReflectionHistory): string {
     if (patterns.consistency_score > 70 && reflectionHistory.themes.length < 3)
       return "deepen_meaning";
-
     if (patterns.avoidance_triggers.length > 3) return "confront_avoidance";
-
     if (reflectionHistory.depth_score < 5) return "deepen_reflection";
-
     if (patterns.drift_windows.length > 2) return "build_structure";
-
     return "maintain_momentum";
   }
 
-  // ────────────────────────────────────────────────────────────
-  // TONE INTENSITY
-  // ────────────────────────────────────────────────────────────
-
+  // *******************************************************************
+  // 🔥 Voice Intensity Engine
+  // *******************************************************************
   determineVoiceIntensity(c: UserConsciousness): VoiceIntensity {
     if (c.phase === "observer") {
-      const progress = Math.min(c.reflectionHistory.themes.length / 10, 1.0);
+      const progress = Math.min(c.reflectionHistory.themes.length / 10, 1);
       return {
-        curiosity: 1.0 - progress * 0.3,
+        curiosity: 1 - progress * 0.3,
         gentleness: 0.9,
         directness: progress * 0.4,
       };
@@ -262,7 +284,7 @@ export class MemoryIntelligenceService {
     }
 
     if (c.phase === "oracle") {
-      const maturity = Math.min(c.os_phase.days_in_phase / 60, 1.0);
+      const maturity = Math.min(c.os_phase.days_in_phase / 60, 1);
       return {
         stillness: 0.5 + maturity * 0.5,
         wisdom: 0.7 + maturity * 0.3,
@@ -273,10 +295,9 @@ export class MemoryIntelligenceService {
     return {};
   }
 
-  // ────────────────────────────────────────────────────────────
-  // HELPERS
-  // ────────────────────────────────────────────────────────────
-
+  // *******************************************************************
+  // 🔥 Helper Functions
+  // *******************************************************************
   private getOrInitializePhase(factsData: any, createdAt: Date): OSPhase {
     if (factsData.os_phase) {
       const daysInPhase = Math.floor(
@@ -303,19 +324,21 @@ export class MemoryIntelligenceService {
       if ((tick.payload as any)?.completed) hours[h].completed++;
     }
 
-    const windows: TimeWindow[] = [];
-    for (const [hour, counts] of Object.entries(hours)) {
-      const rate = counts.completed / counts.total;
-      if (rate < 0.5 && counts.total >= 3) {
-        windows.push({
-          time: `${hour}:00`,
-          description: `Low completion rate (${Math.round(rate * 100)}%)`,
-          frequency: counts.total,
-        });
-      }
-    }
-
-    return windows.sort((a, b) => b.frequency - a.frequency).slice(0, 3);
+    return Object.entries(hours)
+      .map(([hour, counts]) => {
+        const rate = counts.completed / counts.total;
+        if (rate < 0.5 && counts.total >= 3) {
+          return {
+            time: `${hour}:00`,
+            description: `Low completion rate (${Math.round(rate * 100)}%)`,
+            frequency: counts.total,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => b.frequency - a.frequency)
+      .slice(0, 3) as TimeWindow[];
   }
 
   private calculateConsistency(habitTicks: any[]) {
@@ -326,8 +349,10 @@ export class MemoryIntelligenceService {
 
   private async extractThemesWithAI(messages: any[]) {
     if (!messages.length) return [];
+    if (messages.length < 3) return [];
+
     const openai = getOpenAIClient();
-    if (!openai || messages.length < 3) return [];
+    if (!openai) return [];
 
     try {
       const text = messages
@@ -356,14 +381,11 @@ export class MemoryIntelligenceService {
 
   private scoreReflectionDepth(messages: any[]) {
     if (messages.length === 0) return 0;
-
     const avg =
       messages.reduce((sum, m) => sum + ((m.payload as any)?.text?.length || 0), 0) /
       messages.length;
-
     const lengthScore = Math.min(avg / 100, 5);
     const freqScore = Math.min(messages.length / 10, 5);
-
     return Math.round(lengthScore + freqScore);
   }
 
@@ -378,7 +400,7 @@ export class MemoryIntelligenceService {
     }
 
     return Object.entries(map)
-      .filter(([_, count]) => count >= 5)
+      .filter(([, count]) => count >= 5)
       .map(([id]) => id);
   }
 
@@ -389,10 +411,14 @@ export class MemoryIntelligenceService {
       .slice(0, 10);
 
     for (const r of refs) {
-      const t = (r.payload as any)?.text || "";
-      if (t.includes("came back") || t.includes("returned") || t.includes("got back")) {
+      const text = (r.payload as any)?.text || "";
+      if (
+        text.includes("came back") ||
+        text.includes("returned") ||
+        text.includes("got back")
+      ) {
         out.push({
-          text: t.slice(0, 100),
+          text: text.slice(0, 100),
           worked_count: 1,
           last_used: r.ts,
         });
@@ -405,12 +431,13 @@ export class MemoryIntelligenceService {
   private detectEmotionalArc(messages: any[]): "ascending" | "flat" | "descending" {
     if (messages.length < 5) return "flat";
 
-    const recent = messages.slice(0, 10);
-    const pos = ["better", "great", "progress", "improved", "good"];
-    const neg = ["worse", "struggling", "failed", "hard", "difficult"];
-
     let p = 0;
     let n = 0;
+
+    const recent = messages.slice(0, 10);
+
+    const pos = ["better", "great", "progress", "improved", "good"];
+    const neg = ["worse", "struggling", "failed", "hard", "difficult"];
 
     for (const m of recent) {
       const text = ((m.payload as any)?.text || "").toLowerCase();
