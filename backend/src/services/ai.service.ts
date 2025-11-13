@@ -23,7 +23,6 @@ function getOpenAIClient() {
 
 type GenerateOptions = {
   purpose?: "brief" | "nudge" | "debrief" | "coach" | "letter";
-  temperature?: number;
   maxChars?: number;
 };
 
@@ -111,7 +110,7 @@ CRITICAL RULES:
 
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
-        max_tokens: opts.maxChars
+        max_completion_tokens: opts.maxChars
           ? Math.ceil(opts.maxChars / 3)
           : LLM_MAX_TOKENS,
         messages,
@@ -210,7 +209,7 @@ ${consciousness.nextEvolution}
 
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
-        max_tokens: LLM_MAX_TOKENS,
+        max_completion_tokens: LLM_MAX_TOKENS,
         messages,
       });
 
@@ -312,7 +311,7 @@ ${JSON.stringify({
 
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
-        max_tokens: LLM_MAX_TOKENS,
+        max_completion_tokens: LLM_MAX_TOKENS,
         messages,
       });
 
@@ -468,7 +467,7 @@ If no clear habit/task, return: {"none": true}
     try {
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
-        max_tokens: 200,
+        max_completion_tokens: 200,
         messages: [
           {
             role: "system",

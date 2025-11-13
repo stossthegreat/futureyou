@@ -355,7 +355,7 @@ export class MemoryIntelligenceService {
 
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
-        max_tokens: 200,
+        max_completion_tokens: 200,
         messages: [
           { role: "system", content: "Extract 3–5 themes. Output ONLY JSON array." },
           { role: "user", content: text },
