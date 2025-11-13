@@ -6,7 +6,10 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
 
 function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
-  if (!process.env.OPENAI_API_KEY) return null;
+  if (!process.env.OPENAI_API_KEY) {
+    console.warn("⚠️ OpenAI API key not available");
+    return null;
+  }
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY.trim() });
 }
 
@@ -107,7 +110,7 @@ export interface VoiceIntensity {
 
 export class MemoryIntelligenceService {
   // *******************************************************************
-  // 🔥 Build the full user consciousness snapshot
+  // 🧠 Build the full user consciousness snapshot
   // *******************************************************************
   async buildUserConsciousness(userId: string): Promise<UserConsciousness> {
     const [user, facts, identity] = await Promise.all([
@@ -117,11 +120,10 @@ export class MemoryIntelligenceService {
     ]);
 
     const factsData = (facts?.json as Record<string, any>) || {};
-
     const createdAt = user?.createdAt || new Date();
 
     const os_phase = this.getOrInitializePhase(factsData, createdAt);
-    const phase = this.determinePhase(factsData, identity);
+    const phase = this.determinePhase(factsData, identity, createdAt);
 
     const patterns: BehaviorPatterns = factsData.behaviorPatterns || {
       drift_windows: [],
@@ -164,10 +166,50 @@ export class MemoryIntelligenceService {
   }
 
   // *******************************************************************
-  // 🔥 Manual Phase Transition Check (used by system.controller.ts)
+  // 🔍 Pattern extraction & memory updates (used by /admin/analyze-patterns)
+  // *******************************************************************
+  async extractPatternsFromEvents(userId: string): Promise<void> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const events = await prisma.event.findMany({
+      where: { userId, ts: { gte: thirtyDaysAgo } },
+      orderBy: { ts: "desc" },
+    });
+
+    const habitTicks = events.filter((e) => e.type === "habit_tick");
+    const drift_windows = this.findDriftWindows(habitTicks);
+    const consistency_score = this.calculateConsistency(habitTicks);
+
+    const chatMessages = events.filter((e) => e.type === "chat_message");
+    const reflectionThemes = await this.extractThemesWithAI(chatMessages);
+    const depth_score = this.scoreReflectionDepth(chatMessages);
+
+    const avoidance_triggers = this.detectAvoidance(events);
+    const return_protocols = this.extractReturnProtocols(events);
+
+    await memoryService.upsertFacts(userId, {
+      behaviorPatterns: {
+        drift_windows,
+        consistency_score,
+        avoidance_triggers,
+        return_protocols,
+        last_analyzed: new Date(),
+      },
+      reflectionHistory: {
+        themes: reflectionThemes,
+        depth_score,
+        emotional_arc: this.detectEmotionalArc(chatMessages),
+      },
+    });
+  }
+
+  // *******************************************************************
+  // 🎭 Manual phase transition check (used by system.controller.ts)
   // *******************************************************************
   shouldTransitionPhase(c: UserConsciousness): boolean {
     if (c.phase === "observer") {
+      // Ready for ARCHITECT: discovery done + some reflection
       return (
         c.identity.discoveryCompleted &&
         c.reflectionHistory.themes.length >= 3 &&
@@ -176,6 +218,7 @@ export class MemoryIntelligenceService {
     }
 
     if (c.phase === "architect") {
+      // Ready for ORACLE: time + consistency + depth
       return (
         c.os_phase.days_in_phase >= 30 &&
         c.patterns.consistency_score >= 60 &&
@@ -187,54 +230,19 @@ export class MemoryIntelligenceService {
   }
 
   // *******************************************************************
-  // 🔥 Pattern extraction & memory updates
+  // 🧱 Phase Logic (single correct implementation)
   // *******************************************************************
-  determinePhase(factsData: any, identity: any, createdAtOverride?: Date): AIPhase {
-  // If a third arg is passed, use it. Otherwise fall back to identity.createdAt or now.
-  const createdAt = createdAtOverride
-    ? createdAtOverride
-    : identity?.createdAt
-    ? new Date(identity.createdAt)
-    : new Date();
-
-  const daysSinceStart = Math.floor((Date.now() - createdAt.getTime()) / 86400000);
-
-  const depth = factsData.reflectionHistory?.depth_score || 0;
-  const discovery = identity.discoveryCompleted;
-  const current = factsData.os_phase?.current_phase;
-
-  // OBSERVER
-  if (!discovery || daysSinceStart < 14) return "observer";
-
-  // ARCHITECT
-  if (current === "architect" || (daysSinceStart >= 14 && depth >= 5)) {
-    if (current === "architect") {
-      const daysInPhase = factsData.os_phase?.days_in_phase || 0;
-      const consistency = factsData.behaviorPatterns?.consistency_score || 0;
-      if (daysInPhase >= 30 && depth >= 7 && consistency >= 60) return "oracle";
-    }
-    return "architect";
-  }
-
-  // ORACLE
-  if (current === "oracle" || (daysSinceStart >= 60 && depth >= 7)) return "oracle";
-
-  return current || "observer";
-  }
-
-  // *******************************************************************
-  // 🔥 Phase Logic (now correct signature for the whole system)
-  // *******************************************************************
-  determinePhase(factsData: any, identity: any): AIPhase {
-    const createdAt = identity?.createdAt ? new Date(identity.createdAt) : new Date();
+  private determinePhase(factsData: any, identity: any, createdAt: Date): AIPhase {
     const daysSinceStart = Math.floor((Date.now() - createdAt.getTime()) / 86400000);
 
     const depth = factsData.reflectionHistory?.depth_score || 0;
     const discovery = identity.discoveryCompleted;
     const current = factsData.os_phase?.current_phase;
 
+    // OBSERVER: before 14 days or before discovery complete
     if (!discovery || daysSinceStart < 14) return "observer";
 
+    // ARCHITECT: ≥ 14 days + decent reflection depth
     if (current === "architect" || (daysSinceStart >= 14 && depth >= 5)) {
       if (current === "architect") {
         const daysInPhase = factsData.os_phase?.days_in_phase || 0;
@@ -244,22 +252,30 @@ export class MemoryIntelligenceService {
       return "architect";
     }
 
+    // ORACLE fallback
     if (current === "oracle" || (daysSinceStart >= 60 && depth >= 7)) return "oracle";
 
     return current || "observer";
   }
 
+  // *******************************************************************
+  // 📈 Next evolution prediction
+  // *******************************************************************
   predictNextGrowth(patterns: BehaviorPatterns, reflectionHistory: ReflectionHistory): string {
     if (patterns.consistency_score > 70 && reflectionHistory.themes.length < 3)
       return "deepen_meaning";
+
     if (patterns.avoidance_triggers.length > 3) return "confront_avoidance";
+
     if (reflectionHistory.depth_score < 5) return "deepen_reflection";
+
     if (patterns.drift_windows.length > 2) return "build_structure";
+
     return "maintain_momentum";
   }
 
   // *******************************************************************
-  // 🔥 Voice Intensity Engine
+  // 🎚 Voice Intensity Engine
   // *******************************************************************
   determineVoiceIntensity(c: UserConsciousness): VoiceIntensity {
     if (c.phase === "observer") {
@@ -293,7 +309,7 @@ export class MemoryIntelligenceService {
   }
 
   // *******************************************************************
-  // 🔥 Helper Functions
+  // 🛠 Helper Functions
   // *******************************************************************
   private getOrInitializePhase(factsData: any, createdAt: Date): OSPhase {
     if (factsData.os_phase) {
@@ -321,21 +337,21 @@ export class MemoryIntelligenceService {
       if ((tick.payload as any)?.completed) hours[h].completed++;
     }
 
-    return Object.entries(hours)
-      .map(([hour, counts]) => {
-        const rate = counts.completed / counts.total;
-        if (rate < 0.5 && counts.total >= 3) {
-          return {
-            time: `${hour}:00`,
-            description: `Low completion rate (${Math.round(rate * 100)}%)`,
-            frequency: counts.total,
-          };
-        }
-        return null;
-      })
-      .filter(Boolean)
-      .sort((a: any, b: any) => b.frequency - a.frequency)
-      .slice(0, 3) as TimeWindow[];
+    const windows: TimeWindow[] = [];
+
+    for (const [hourStr, counts] of Object.entries(hours)) {
+      const rate = counts.completed / counts.total;
+      const hour = Number(hourStr);
+      if (rate < 0.5 && counts.total >= 3) {
+        windows.push({
+          time: `${hour}:00`,
+          description: `Low completion rate (${Math.round(rate * 100)}%)`,
+          frequency: counts.total,
+        });
+      }
+    }
+
+    return windows.sort((a, b) => b.frequency - a.frequency).slice(0, 3);
   }
 
   private calculateConsistency(habitTicks: any[]) {
@@ -378,11 +394,14 @@ export class MemoryIntelligenceService {
 
   private scoreReflectionDepth(messages: any[]) {
     if (messages.length === 0) return 0;
+
     const avg =
       messages.reduce((sum, m) => sum + ((m.payload as any)?.text?.length || 0), 0) /
       messages.length;
+
     const lengthScore = Math.min(avg / 100, 5);
     const freqScore = Math.min(messages.length / 10, 5);
+
     return Math.round(lengthScore + freqScore);
   }
 
