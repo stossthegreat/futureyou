@@ -86,14 +86,14 @@ WHO YOU ARE SPEAKING TO:
           ? consciousness.identity.coreValues.join(", ")
           : "not yet defined"
       }
-- Current emotional state: ${consciousness.currentEmotionalState}
-- Next evolution focus: ${consciousness.nextEvolution}
+- Current emotional state: ${consciousness.currentEmotionalState || "balanced"}
+- Next evolution focus: ${consciousness.nextEvolution || "building consistency"}
 
 MEMORY CONTEXT:
 ${memoryContext || "No strong patterns yet — treat this as early observation."}
 
 HOW TO SPEAK (PHASE VOICE):
-${voiceGuidelines}
+${voiceGuidelines || "Be wise, calm, and direct."}
 
 CRITICAL RULES:
 - Always address them by their name ("${name}") at least once in your reply.
@@ -105,7 +105,7 @@ CRITICAL RULES:
 
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         { role: "system", content: systemPrompt },
-        { role: "user", content: `${promptTemplate}` },
+        { role: "user", content: promptTemplate || "Generate a brief morning message." },
       ];
 
       const completion = await openai.chat.completions.create({
