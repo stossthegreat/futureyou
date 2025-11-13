@@ -6,10 +6,7 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
 
 function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
-  if (!process.env.OPENAI_API_KEY) {
-    console.warn("⚠️ OpenAI API key not available");
-    return null;
-  }
+  if (!process.env.OPENAI_API_KEY) return null;
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY.trim() });
 }
 
@@ -109,9 +106,9 @@ export interface VoiceIntensity {
 }
 
 export class MemoryIntelligenceService {
-  // *******************************************************************
-  // 🧠 Build the full user consciousness snapshot
-  // *******************************************************************
+  // ============================================================
+  // 🧠 Build User Consciousness
+  // ============================================================
   async buildUserConsciousness(userId: string): Promise<UserConsciousness> {
     const [user, facts, identity] = await Promise.all([
       prisma.user.findUnique({ where: { id: userId } }),
@@ -119,7 +116,7 @@ export class MemoryIntelligenceService {
       memoryService.getIdentityFacts(userId),
     ]);
 
-    const factsData = (facts?.json as Record<string, any>) || {};
+    const factsData = (facts?.json as any) || {};
     const createdAt = user?.createdAt || new Date();
 
     const os_phase = this.getOrInitializePhase(factsData, createdAt);
@@ -157,23 +154,22 @@ export class MemoryIntelligenceService {
       phase,
       os_phase,
       tone: user?.tone || "balanced",
-      nextEvolution: this.predictNextGrowth(patterns, reflectionHistory, factsData),
+      nextEvolution: this.predictNextGrowth(patterns, reflectionHistory),
       architect: factsData.architect,
       oracle: factsData.oracle,
-      reflectionThemes: reflectionHistory.themes || [],
+      reflectionThemes: reflectionHistory.themes,
       legacyCode: factsData.oracle?.legacy_code || [],
     };
   }
 
-  // *******************************************************************
-  // 🔍 Pattern extraction & memory updates (used by /admin/analyze-patterns)
-  // *******************************************************************
+  // ============================================================
+  // 🔥 Extract User Patterns
+  // ============================================================
   async extractPatternsFromEvents(userId: string): Promise<void> {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const since = new Date(Date.now() - 30 * 86400000);
 
     const events = await prisma.event.findMany({
-      where: { userId, ts: { gte: thirtyDaysAgo } },
+      where: { userId, ts: { gte: since } },
       orderBy: { ts: "desc" },
     });
 
@@ -204,12 +200,11 @@ export class MemoryIntelligenceService {
     });
   }
 
-  // *******************************************************************
-  // 🎭 Manual phase transition check (used by system.controller.ts)
-  // *******************************************************************
+  // ============================================================
+  // 🎭 Should Transition Phase?
+  // ============================================================
   shouldTransitionPhase(c: UserConsciousness): boolean {
     if (c.phase === "observer") {
-      // Ready for ARCHITECT: discovery done + some reflection
       return (
         c.identity.discoveryCompleted &&
         c.reflectionHistory.themes.length >= 3 &&
@@ -218,7 +213,6 @@ export class MemoryIntelligenceService {
     }
 
     if (c.phase === "architect") {
-      // Ready for ORACLE: time + consistency + depth
       return (
         c.os_phase.days_in_phase >= 30 &&
         c.patterns.consistency_score >= 60 &&
@@ -229,94 +223,78 @@ export class MemoryIntelligenceService {
     return false;
   }
 
-  // *******************************************************************
-  // 🧱 Phase Logic (single correct implementation)
-  // *******************************************************************
-  private determinePhase(factsData: any, identity: any, createdAt: Date): AIPhase {
-    const daysSinceStart = Math.floor((Date.now() - createdAt.getTime()) / 86400000);
+  // ============================================================
+  // 🔥 Phase Logic (PUBLIC, correct signature, 3 args)
+  // ============================================================
+  determinePhase(factsData: any, identity: any, createdAt: Date): AIPhase {
+    const days = Math.floor((Date.now() - createdAt.getTime()) / 86400000);
 
     const depth = factsData.reflectionHistory?.depth_score || 0;
     const discovery = identity.discoveryCompleted;
     const current = factsData.os_phase?.current_phase;
 
-    // OBSERVER: before 14 days or before discovery complete
-    if (!discovery || daysSinceStart < 14) return "observer";
+    // OBSERVER
+    if (!discovery || days < 14) return "observer";
 
-    // ARCHITECT: ≥ 14 days + decent reflection depth
-    if (current === "architect" || (daysSinceStart >= 14 && depth >= 5)) {
+    // ARCHITECT
+    if (current === "architect" || (days >= 14 && depth >= 5)) {
       if (current === "architect") {
         const daysInPhase = factsData.os_phase?.days_in_phase || 0;
         const consistency = factsData.behaviorPatterns?.consistency_score || 0;
+
         if (daysInPhase >= 30 && depth >= 7 && consistency >= 60) return "oracle";
       }
       return "architect";
     }
 
-    // ORACLE fallback
-    if (current === "oracle" || (daysSinceStart >= 60 && depth >= 7)) return "oracle";
+    // ORACLE
+    if (current === "oracle" || (days >= 60 && depth >= 7)) return "oracle";
 
     return current || "observer";
   }
 
-  // *******************************************************************
-  // 📈 Next evolution prediction
-  // *******************************************************************
-  predictNextGrowth(patterns: BehaviorPatterns, reflectionHistory: ReflectionHistory): string {
-    if (patterns.consistency_score > 70 && reflectionHistory.themes.length < 3)
-      return "deepen_meaning";
-
+  // ============================================================
+  // 📈 Growth Prediction
+  // ============================================================
+  predictNextGrowth(patterns: BehaviorPatterns, r: ReflectionHistory): string {
+    if (patterns.consistency_score > 70 && r.themes.length < 3) return "deepen_meaning";
     if (patterns.avoidance_triggers.length > 3) return "confront_avoidance";
-
-    if (reflectionHistory.depth_score < 5) return "deepen_reflection";
-
+    if (r.depth_score < 5) return "deepen_reflection";
     if (patterns.drift_windows.length > 2) return "build_structure";
-
     return "maintain_momentum";
   }
 
-  // *******************************************************************
-  // 🎚 Voice Intensity Engine
-  // *******************************************************************
-  determineVoiceIntensity(c: UserConsciousness): VoiceIntensity {
+  // ============================================================
+  // 🎚 Voice Intensity
+  // ============================================================
+  determineVoiceIntensity(c: UserConsciousness): any {
     if (c.phase === "observer") {
-      const progress = Math.min(c.reflectionHistory.themes.length / 10, 1);
-      return {
-        curiosity: 1 - progress * 0.3,
-        gentleness: 0.9,
-        directness: progress * 0.4,
-      };
+      const p = Math.min(c.reflectionHistory.themes.length / 10, 1);
+      return { curiosity: 1 - p * 0.3, gentleness: 0.9, directness: p * 0.4 };
     }
 
     if (c.phase === "architect") {
-      const integrity = c.patterns.consistency_score / 100;
-      return {
-        precision: 0.8 + integrity * 0.2,
-        authority: 0.6 + integrity * 0.3,
-        empathy: 0.5 - integrity * 0.2,
-      };
+      const i = c.patterns.consistency_score / 100;
+      return { precision: 0.8 + i * 0.2, authority: 0.6 + i * 0.3, empathy: 0.5 - i * 0.2 };
     }
 
     if (c.phase === "oracle") {
-      const maturity = Math.min(c.os_phase.days_in_phase / 60, 1);
-      return {
-        stillness: 0.5 + maturity * 0.5,
-        wisdom: 0.7 + maturity * 0.3,
-        mystery: maturity * 0.6,
-      };
+      const m = Math.min(c.os_phase.days_in_phase / 60, 1);
+      return { stillness: 0.5 + m * 0.5, wisdom: 0.7 + m * 0.3, mystery: m * 0.6 };
     }
 
     return {};
   }
 
-  // *******************************************************************
-  // 🛠 Helper Functions
-  // *******************************************************************
+  // ============================================================
+  // Helper Functions
+  // ============================================================
   private getOrInitializePhase(factsData: any, createdAt: Date): OSPhase {
     if (factsData.os_phase) {
-      const daysInPhase = Math.floor(
+      const days = Math.floor(
         (Date.now() - new Date(factsData.os_phase.started_at).getTime()) / 86400000
       );
-      return { ...factsData.os_phase, days_in_phase: daysInPhase };
+      return { ...factsData.os_phase, days_in_phase: days };
     }
 
     return {
@@ -330,28 +308,28 @@ export class MemoryIntelligenceService {
   private findDriftWindows(habitTicks: any[]): TimeWindow[] {
     const hours: Record<number, { total: number; completed: number }> = {};
 
-    for (const tick of habitTicks) {
-      const h = new Date(tick.ts).getHours();
+    for (const t of habitTicks) {
+      const h = new Date(t.ts).getHours();
       if (!hours[h]) hours[h] = { total: 0, completed: 0 };
       hours[h].total++;
-      if ((tick.payload as any)?.completed) hours[h].completed++;
+      if ((t.payload as any)?.completed) hours[h].completed++;
     }
 
-    const windows: TimeWindow[] = [];
-
-    for (const [hourStr, counts] of Object.entries(hours)) {
-      const rate = counts.completed / counts.total;
-      const hour = Number(hourStr);
-      if (rate < 0.5 && counts.total >= 3) {
-        windows.push({
-          time: `${hour}:00`,
-          description: `Low completion rate (${Math.round(rate * 100)}%)`,
-          frequency: counts.total,
-        });
-      }
-    }
-
-    return windows.sort((a, b) => b.frequency - a.frequency).slice(0, 3);
+    return Object.entries(hours)
+      .map(([hourStr, counts]) => {
+        const rate = counts.completed / counts.total;
+        if (rate < 0.5 && counts.total >= 3) {
+          return {
+            time: `${hourStr}:00`,
+            description: `Low completion rate (${Math.round(rate * 100)}%)`,
+            frequency: counts.total,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => b.frequency - a.frequency)
+      .slice(0, 3);
   }
 
   private calculateConsistency(habitTicks: any[]) {
@@ -361,8 +339,7 @@ export class MemoryIntelligenceService {
   }
 
   private async extractThemesWithAI(messages: any[]) {
-    if (!messages.length) return [];
-    if (messages.length < 3) return [];
+    if (!messages.length || messages.length < 3) return [];
 
     const openai = getOpenAIClient();
     if (!openai) return [];
@@ -394,27 +371,22 @@ export class MemoryIntelligenceService {
 
   private scoreReflectionDepth(messages: any[]) {
     if (messages.length === 0) return 0;
-
     const avg =
       messages.reduce((sum, m) => sum + ((m.payload as any)?.text?.length || 0), 0) /
       messages.length;
-
     const lengthScore = Math.min(avg / 100, 5);
     const freqScore = Math.min(messages.length / 10, 5);
-
     return Math.round(lengthScore + freqScore);
   }
 
   private detectAvoidance(events: any[]) {
     const map: Record<string, number> = {};
-
     for (const ev of events) {
       if (ev.type === "habit_action" && !(ev.payload as any)?.completed) {
         const id = (ev.payload as any)?.habitId;
         if (id) map[id] = (map[id] || 0) + 1;
       }
     }
-
     return Object.entries(map)
       .filter(([, count]) => count >= 5)
       .map(([id]) => id);
@@ -450,10 +422,10 @@ export class MemoryIntelligenceService {
     let p = 0;
     let n = 0;
 
-    const recent = messages.slice(0, 10);
-
     const pos = ["better", "great", "progress", "improved", "good"];
     const neg = ["worse", "struggling", "failed", "hard", "difficult"];
+
+    const recent = messages.slice(0, 10);
 
     for (const m of recent) {
       const text = ((m.payload as any)?.text || "").toLowerCase();
