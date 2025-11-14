@@ -5,13 +5,18 @@ import 'package:permission_handler/permission_handler.dart';
 import '../models/habit.dart';
 
 class AlarmService {
-  static final FlutterLocalNotificationsPlugin _notifications = 
+  static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
 
   static const String _channelId = 'habit_alarms';
   static const String _channelName = 'Habit Alarms';
-  static const String _channelDescription = 'Alarm notifications for habit reminders';
+  static const String _channelDescription =
+      'Alarm notifications for habit reminders';
+
+  // 🔥 Track scheduled alarms in memory for the AlarmTestScreen
+  // key: alarmId, value: metadata
+  static final Map<int, Map<String, dynamic>> _scheduledAlarms = {};
 
   /// Initialize alarm service - MUST be called from main()
   static Future<void> initialize() async {
@@ -85,12 +90,14 @@ class AlarmService {
   /// Schedule alarm for a habit
   static Future<void> scheduleAlarm(Habit habit) async {
     if (!habit.reminderOn) {
-      debugPrint('⏰ scheduleAlarm skipped: reminderOn=false for "${habit.title}"');
+      debugPrint(
+          '⏰ scheduleAlarm skipped: reminderOn=false for "${habit.title}"');
       return;
     }
 
     if (habit.time.isEmpty) {
-      debugPrint('❌ scheduleAlarm FAILED: time is EMPTY for "${habit.title}"');
+      debugPrint(
+          '❌ scheduleAlarm FAILED: time is EMPTY for "${habit.title}"');
       return;
     }
 
@@ -139,6 +146,13 @@ class AlarmService {
           if (success) {
             successCount++;
             debugPrint('   ✅ SUCCESS for ${_getDayName(day)}');
+
+            // 🔥 Track this alarm for the debugger screen
+            _scheduledAlarms[alarmId] = {
+              'habitTitle': habit.title,
+              'habitId': habit.id,
+              'day': day,
+            };
           } else {
             failCount++;
             debugPrint('   ❌ FAILED for ${_getDayName(day)}');
@@ -162,7 +176,8 @@ class AlarmService {
 
   /// Alarm callback - THIS FIRES WHEN THE ALARM GOES OFF
   @pragma('vm:entry-point')
-  static Future<void> _alarmCallback(int id, Map<String, dynamic>? params) async {
+  static Future<void> _alarmCallback(
+      int id, Map<String, dynamic>? params) async {
     debugPrint('🔥🔥🔥 ALARM FIRING! 🔥🔥🔥');
     debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     debugPrint('⏰ Alarm ID: $id');
@@ -183,7 +198,8 @@ class AlarmService {
       debugPrint('   - habitTitle: $habitTitle');
       debugPrint('   - habitId: $habitId');
       debugPrint('   - day: $day (${_getDayName(day)})');
-      debugPrint('   - time: ${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}');
+      debugPrint(
+          '   - time: ${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}');
 
       // Initialize notification plugin in this isolate
       final notifications = FlutterLocalNotificationsPlugin();
@@ -243,7 +259,6 @@ class AlarmService {
       debugPrint('✅ Notification shown successfully with SOUND');
 
       // Reschedule for next week
-      // Reschedule for next week
       final nextTime = _getNextAlarmTimeForCallback(day, hour, minute);
       await AndroidAlarmManager.oneShotAt(
         nextTime,
@@ -253,16 +268,20 @@ class AlarmService {
         wakeup: true,
         allowWhileIdle: true,
         rescheduleOnReboot: true,
-        params: params ?? {
-          'habitTitle': habitTitle,
-          'habitId': habitId,
-          'day': day,
-          'hour': hour,
-          'minute': minute,
-        },
+
+        // 🔧 FIX: oneShotAt expects a non-null Map<String, dynamic>
+        params: params ??
+            {
+              'habitTitle': habitTitle,
+              'habitId': habitId,
+              'day': day,
+              'hour': hour,
+              'minute': minute,
+            },
       );
 
       debugPrint('🔁 Rescheduled for next occurrence: $nextTime');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     } catch (e, stack) {
       debugPrint('❌ Alarm callback error: $e');
       debugPrint('Stack: $stack');
@@ -276,6 +295,7 @@ class AlarmService {
       final id = _getAlarmId(habitId, day);
       await AndroidAlarmManager.cancel(id);
       await _notifications.cancel(id);
+      _scheduledAlarms.remove(id); // 🔥 keep map in sync
     }
     debugPrint('✅ All alarms cancelled for: $habitId');
   }
@@ -283,6 +303,10 @@ class AlarmService {
   /// Cancel all alarms
   static Future<void> cancelAll() async {
     await _notifications.cancelAll();
+    for (final id in _scheduledAlarms.keys.toList()) {
+      await AndroidAlarmManager.cancel(id);
+    }
+    _scheduledAlarms.clear();
     debugPrint('🗑️ All alarms cancelled');
   }
 
@@ -304,7 +328,8 @@ class AlarmService {
   }
 
   /// Get next alarm time in callback (simpler, no dependencies)
-  static DateTime _getNextAlarmTimeForCallback(int weekday, int hour, int minute) {
+  static DateTime _getNextAlarmTimeForCallback(
+      int weekday, int hour, int minute) {
     final now = DateTime.now();
     var next = DateTime(now.year, now.month, now.day, hour, minute);
     final targetWeekday = weekday == 0 ? 7 : weekday;
@@ -323,7 +348,15 @@ class AlarmService {
 
   /// Get day name for logging
   static String _getDayName(int day) {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const days = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday'
+    ];
     return days[day];
   }
 
@@ -375,6 +408,13 @@ class AlarmService {
       if (success) {
         debugPrint('✅ Test alarm scheduled successfully!');
         debugPrint('⏰ Should fire at: $testTime');
+
+        // 🔥 Track test alarm as well
+        _scheduledAlarms[testId] = {
+          'habitTitle': '🧪 TEST ALARM',
+          'habitId': 'test',
+          'day': 0,
+        };
       } else {
         debugPrint('❌ Test alarm scheduling FAILED');
       }
@@ -387,5 +427,17 @@ class AlarmService {
   /// Check if service is initialized
   static bool isInitialized() {
     return _initialized;
+  }
+
+  /// 🔍 Expose scheduled alarms for AlarmTestScreen
+  static List<Map<String, dynamic>> getScheduledAlarms() {
+    return _scheduledAlarms.entries.map((entry) {
+      return {
+        'id': entry.key,
+        'habitTitle': entry.value['habitTitle'] ?? 'Unknown',
+        'habitId': entry.value['habitId'] ?? 'Unknown',
+        'day': entry.value['day'] ?? 0,
+      };
+    }).toList();
   }
 }
