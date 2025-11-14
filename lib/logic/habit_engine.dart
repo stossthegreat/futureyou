@@ -64,6 +64,7 @@ class HabitEngine extends ChangeNotifier {
     await LocalStorageService.saveHabit(updated);
     _habits[idx] = updated;
     notifyListeners();
+    debugPrint('✅ Completed habit: ${h.title}');
   }
 
   Future<void> createHabit({
@@ -78,22 +79,23 @@ class HabitEngine extends ChangeNotifier {
     bool reminderOn = false,
     String? systemId,
   }) async {
-    // CRITICAL DEBUG LOGGING
-    debugPrint('═══════════════════════════════════════');
-    debugPrint('🔍 createHabit called:');
-    debugPrint('   - title: "$title"');
-    debugPrint('   - type: "$type"');
-    debugPrint('   - time: "$time"');
-    debugPrint('   - reminderOn: $reminderOn');
-    debugPrint('   - repeatDays: $repeatDays');
-    debugPrint('   - systemId: $systemId');
-    debugPrint('═══════════════════════════════════════');
+    // Debug logging
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    debugPrint('🔍 createHabit called with:');
+    debugPrint('   📝 title: "$title"');
+    debugPrint('   🕐 time: "$time"');
+    debugPrint('   🔔 reminderOn: $reminderOn');
+    debugPrint('   📋 type: $type');
+    debugPrint('   🎨 color: ${color?.value.toRadixString(16)}');
+    debugPrint('   😀 emoji: $emoji');
+    debugPrint('   🔗 systemId: $systemId');
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     // Validate: Don't create alarm if no time set
-    bool finalReminderOn = reminderOn;
+    bool actualReminderOn = reminderOn;
     if (reminderOn && time.isEmpty) {
-      debugPrint('⚠️ WARNING: reminderOn=true but time is EMPTY! Disabling alarm.');
-      finalReminderOn = false;
+      debugPrint('⚠️ WARNING: reminderOn=true but time is EMPTY! Forcing reminderOn=false');
+      actualReminderOn = false;
     }
 
     final habit = Habit(
@@ -107,24 +109,38 @@ class HabitEngine extends ChangeNotifier {
       createdAt: DateTime.now(),
       colorValue: color?.value ?? 0xFF10B981,
       emoji: emoji,
-      reminderOn: finalReminderOn,
+      reminderOn: actualReminderOn,
       systemId: systemId,
     );
 
     debugPrint('✅ Habit object created:');
     debugPrint('   - id: ${habit.id}');
-    debugPrint('   - title: "${habit.title}"');
-    debugPrint('   - time: "${habit.time}"');
     debugPrint('   - reminderOn: ${habit.reminderOn}');
+    debugPrint('   - time: "${habit.time}"');
     debugPrint('   - repeatDays: ${habit.repeatDays}');
 
     await addHabit(habit);
 
-    // Verify alarm scheduling
     if (habit.reminderOn) {
-      debugPrint('✅✅✅ Alarm SHOULD be scheduled for "${habit.title}"');
+      debugPrint('✅ Alarm SHOULD be scheduled for "${habit.title}"');
     } else {
-      debugPrint('⏰⏰⏰ Alarm NOT scheduled (reminderOn=false)');
+      debugPrint('⏰ Alarm NOT scheduled (reminderOn=${habit.reminderOn})');
+    }
+  }
+
+  Future<void> updateHabit(Habit updated) async {
+    await LocalStorageService.saveHabit(updated);
+    final idx = _habits.indexWhere((h) => h.id == updated.id);
+    if (idx != -1) {
+      _habits[idx] = updated;
+      notifyListeners();
+
+      // Update alarms
+      await AlarmService.cancelAlarm(updated.id);
+      if (updated.reminderOn && updated.time.isNotEmpty) {
+        await AlarmService.scheduleAlarm(updated);
+        debugPrint('🔔 Rescheduled alarm for "${updated.title}"');
+      }
     }
   }
 
@@ -152,7 +168,6 @@ class HabitEngine extends ChangeNotifier {
     _syncCompletionToBackend(habitId, nowDone, today);
   }
 
-  /// Sync habit completion to backend as observer event
   void _syncCompletionToBackend(String habitId, bool done, DateTime date) {
     try {
       final completion = HabitCompletion(
