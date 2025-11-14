@@ -474,7 +474,7 @@ ${JSON.stringify({
       const promptTemplate = aiPromptService.buildMorningBriefPrompt(consciousness);
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "brief",
-        maxChars: 500,
+        maxChars: 1500, // allow complete responses without truncation
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy brief:", err);
@@ -514,7 +514,7 @@ ${JSON.stringify({
       const promptTemplate = aiPromptService.buildDebriefPrompt(consciousness, dayData);
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "debrief",
-        maxChars: 500,
+        maxChars: 1500, // allow complete responses without truncation
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy debrief:", err);
@@ -536,7 +536,7 @@ ${JSON.stringify({
       const promptTemplate = aiPromptService.buildNudgePrompt(consciousness, reason);
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "nudge",
-        maxChars: 250,
+        maxChars: 800, // allow complete nudges without truncation
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy nudge:", err);
