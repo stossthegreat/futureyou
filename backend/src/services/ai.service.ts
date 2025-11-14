@@ -10,7 +10,7 @@ import { redis } from "../utils/redis";
 import { MENTOR } from "../config/mentors.config";
 
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o";
-const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 1000); // Increased for GPT-4o longer responses
+const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 2000); // Much higher for GPT-4o complete responses
 const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 10000);
 
 function getOpenAIClient() {
@@ -120,7 +120,7 @@ ${styleRules}
       let completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
         max_completion_tokens: opts.maxChars
-          ? Math.ceil(opts.maxChars / 3)
+          ? Math.ceil(opts.maxChars / 2) // Better ratio for GPT-4o (was /3)
           : LLM_MAX_TOKENS,
         messages,
       });
@@ -144,7 +144,7 @@ ${styleRules}
         completion = await openai.chat.completions.create({
           model: OPENAI_MODEL,
           max_completion_tokens: opts.maxChars
-            ? Math.ceil(opts.maxChars / 3)
+            ? Math.ceil(opts.maxChars / 2) // Better ratio for GPT-4o (was /3)
             : LLM_MAX_TOKENS,
           messages: simpleMessages,
         });
