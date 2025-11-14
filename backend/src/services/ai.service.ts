@@ -569,7 +569,7 @@ You are writing an EVENING DEBRIEF.
 - End with a short question that makes them think.
 `.trim();
 
-      case "nudge:
+      case "nudge":
         return `
 You are writing a NUDGE.
 - One short punch of truth plus one move.
