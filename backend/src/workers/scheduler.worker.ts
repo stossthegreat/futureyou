@@ -137,6 +137,8 @@ new Worker(QUEUE, async (job) => {
     case "auto-nudges-hourly": return autoNudgesHourly();
     default: return;
   }
-}, { connection: redis });
+}, { 
+  connection: redis
+});
 
 console.log("🧠 Scheduler Worker Started (OS Brain Only)");

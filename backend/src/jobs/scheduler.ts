@@ -275,7 +275,9 @@ new Worker(
         return;
     }
   },
-  { connection: redis }
+  { 
+    connection: redis
+  }
 );
 
 console.log("🧠 Scheduler Worker Started (OS Brain Only)");

@@ -11,7 +11,7 @@ import { MENTOR } from "../config/mentors.config";
 
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 2000); // Much higher for GPT-4o complete responses
-const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 10000);
+const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 30000); // Increased for reflection generation
 
 function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
@@ -427,7 +427,12 @@ ${JSON.stringify({
   }
 
   async generateEveningDebrief(userId: string) {
-    await memoryService.summarizeDay(userId);
+    console.log("🔍 [REFLECTION DEBUG] Starting evening debrief for user:", userId);
+    const summaryResult = await memoryService.summarizeDay(userId);
+    console.log("🔍 [REFLECTION DEBUG] summarizeDay result:", { 
+      reflectionLength: summaryResult.reflection?.length || 0,
+      hasReflection: !!summaryResult.reflection
+    });
 
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);

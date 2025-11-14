@@ -5,8 +5,8 @@ import OpenAI from "openai";
 import { MENTOR } from "../config/mentors.config";
 
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
-const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 400);
-const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 10000);
+const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 2000); // Increased for complete reflection generation
+const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 30000); // Increased for reflection generation
 
 function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
@@ -115,10 +115,15 @@ Keep JSON valid and concise.
       response_format: { type: "json_object" as any },
     });
 
+    const rawResponse = completion.choices[0]?.message?.content || "{}";
+    console.log("🔍 [REFLECTION DEBUG] Raw AI response length:", rawResponse.length);
+    console.log("🔍 [REFLECTION DEBUG] Raw AI response preview:", rawResponse.slice(0, 200) + "...");
+
     let parsed: any = {};
     try {
-      parsed = JSON.parse(completion.choices[0]?.message?.content || "{}");
-    } catch {
+      parsed = JSON.parse(rawResponse);
+    } catch (err) {
+      console.log("❌ [REFLECTION DEBUG] JSON parse failed:", err);
       parsed = {};
     }
 
@@ -128,7 +133,12 @@ Keep JSON valid and concise.
       await this.appendEvent(userId, "memory_updated", { patch });
     }
     if (parsed.reflection) {
+      console.log("🔍 [REFLECTION DEBUG] Reflection text length:", parsed.reflection.length);
+      console.log("🔍 [REFLECTION DEBUG] Reflection text:", parsed.reflection);
       await this.appendEvent(userId, "day_reflection", { text: parsed.reflection });
+      console.log("✅ [REFLECTION DEBUG] Reflection saved to database successfully");
+    } else {
+      console.log("❌ [REFLECTION DEBUG] No reflection text in parsed response");
     }
 
     const out = { patch, reflection: parsed.reflection || "" };
