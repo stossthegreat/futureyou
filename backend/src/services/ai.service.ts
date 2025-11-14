@@ -152,10 +152,12 @@ ${lengthRule}- Never sound generic, fluffy, or like a motivational quote page.
           : LLM_MAX_TOKENS;
 
       const completion = await openai.chat.completions.create({
-        model: OPENAI_MODEL,
-        max_completion_tokens: maxTokens,
-        messages,
-      });
+  model: process.env.CONSCIOUSNESS_MODEL || "gpt-5-turbo",
+  max_completion_tokens: opts.maxChars
+    ? Math.ceil(opts.maxChars / 3)
+    : LLM_MAX_TOKENS,
+  messages,
+});
 
       const raw = completion.choices[0]?.message?.content?.trim();
       if (!raw) throw new Error("Empty completion");
