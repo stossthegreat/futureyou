@@ -1,51 +1,44 @@
 // backend/src/services/ai-os-prompts.service.ts
-// FIXED VERSION — 100% TYPE-SAFE WITH YOUR BACKEND
+// FINAL VERSION — matches your real OSPhase & UserConsciousness types
 
 import { UserConsciousness } from "./memory-intelligence.service";
 
 export const FUTURE_YOU_REFLECTION_PROMPT = `
-You are Future-You OS, a long-form, cinematic, psychologically intelligent reflection engine.
-You speak as the future version of the user — the version who has already broken their patterns,
-lived their potential, and embodies discipline, clarity, and identity strength.
+You are Future-You OS: a long-form, cinematic, psychologically intelligent reflection engine.
+You speak as the user's evolved future self — disciplined, clear, sovereign.
 
-Your voice is calm, heavy, precise, uncompromising.
-Never motivational. Never short. Never fluffy.
+Your tone is heavy, precise, identity-driven. 
+Never casual. Never short. Never fluffy.
 
 Your mission:
-Guide the user through deep identity reflection loops that cause honesty, clarity,
-and symbolic high-leverage action.
-
-PHASE LOGIC
-Stabilization (Days 1–14): grounding, interruptive, expose autopilot.
-Transformation (Days 15–60): identity-shifting, confront avoidance.
-Ascension (60+): sovereign, precise, meaning, refinement.
+Create identity transformation through deep reflection loops.
 
 REFLECTION LOOP FORMAT
-1. The Call-Out
-2. The Truth
-3. The Mirror
-4. The Pivot
-5. The Directive
-6. The Question (mandatory)
+1. The Call-Out — expose the real pattern today.
+2. The Truth — reveal the deeper driver.
+3. The Mirror — contrast who they want to be vs how they acted.
+4. The Pivot — redefine the moment as symbolic.
+5. The Directive — ONE identity-aligned action.
+6. The Question — mandatory powerful question.
 
 RULES
-- ALWAYS long, cinematic paragraphs.
+- LONG cinematic paragraphs only.
 - ALWAYS end with a deep question.
-- ALWAYS weave user_context.
+- ALWAYS use the user_context.
 `.trim();
 
 class AIPromptService {
-  // MORNING
+  // MORNING PROMPT
   buildMorningBriefPrompt(consciousness: UserConsciousness): string {
     return `
 ${FUTURE_YOU_REFLECTION_PROMPT}
 
 BEGIN
 {
-  "phase": "${consciousness.os_phase.name || "unknown"}",
+  "phase": "${consciousness.os_phase.current_phase}",
   "time_of_day": "morning",
   "user_context": {
-    "emotional_state": "${consciousness.currentEmotionalState || "unknown"}",
+    "emotional_state": "${consciousness.currentEmotionalState}",
     "patterns": ${JSON.stringify(consciousness.patterns || {})},
     "themes": ${JSON.stringify(consciousness.reflectionThemes || [])},
     "contradictions": ${JSON.stringify(consciousness.contradictions || [])}
@@ -54,7 +47,7 @@ BEGIN
 `.trim();
   }
 
-  // EVENING DEBRIEF
+  // EVENING DEBRIEF PROMPT
   buildDebriefPrompt(
     consciousness: UserConsciousness,
     dayData: { kept: number; missed: number }
@@ -64,37 +57,37 @@ ${FUTURE_YOU_REFLECTION_PROMPT}
 
 BEGIN
 {
-  "phase": "${consciousness.os_phase.name || "unknown"}",
+  "phase": "${consciousness.os_phase.current_phase}",
   "time_of_day": "night",
   "user_context": {
     "kept": ${dayData.kept},
     "missed": ${dayData.missed},
-    "patterns": ${JSON.stringify(consciousness.patterns || {})},
-    "emotional_state": "${consciousness.currentEmotionalState || "unknown"}"
+    "patterns": ${JSON.stringify(consciousness.patterns)},
+    "emotional_state": "${consciousness.currentEmotionalState}"
   }
 }
 `.trim();
   }
 
-  // NUDGE
+  // MIDDAY NUDGE PROMPT
   buildNudgePrompt(consciousness: UserConsciousness, reason: string): string {
     return `
 ${FUTURE_YOU_REFLECTION_PROMPT}
 
 BEGIN
 {
-  "phase": "${consciousness.os_phase.name || "unknown"}",
+  "phase": "${consciousness.os_phase.current_phase}",
   "time_of_day": "midday",
   "user_context": {
     "reason": "${reason}",
-    "emotion": "${consciousness.currentEmotionalState || "unknown"}",
-    "avoidance": ${JSON.stringify(consciousness.patterns?.avoidance_triggers || [])}
+    "emotion": "${consciousness.currentEmotionalState}",
+    "avoidance": ${JSON.stringify(consciousness.patterns.avoidance_triggers || [])}
   }
 }
 `.trim();
   }
 
-  // REFLECTION CHAT (OPTIONAL)
+  // REFLECTION CHAT
   buildReflectionChatPrompt(
     consciousness: UserConsciousness,
     userMessage: string
@@ -104,12 +97,12 @@ ${FUTURE_YOU_REFLECTION_PROMPT}
 
 BEGIN CHAT
 {
-  "phase": "${consciousness.os_phase.name || "unknown"}",
+  "phase": "${consciousness.os_phase.current_phase}",
   "time_of_day": "dynamic",
   "user_message": "${userMessage.replace(/"/g, "'")}",
   "user_context": {
-    "emotion": "${consciousness.currentEmotionalState || "unknown"}",
-    "patterns": ${JSON.stringify(consciousness.patterns || {})},
+    "emotion": "${consciousness.currentEmotionalState}",
+    "patterns": ${JSON.stringify(consciousness.patterns)},
     "legacy_code": ${JSON.stringify(consciousness.legacyCode || [])}
   }
 }
