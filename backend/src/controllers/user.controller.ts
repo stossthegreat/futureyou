@@ -112,14 +112,19 @@ export async function userController(fastify: FastifyInstance) {
       const userId = getUserIdOr401(req);
       const { name, age, burningQuestion } = req.body;
       
+      // Save to UserFacts.json.identity for consciousness system
       await memoryService.upsertFacts(userId, {
-        name,
-        age,
-        burningQuestion,
+        identity: {
+          name,
+          age,
+          burningQuestion,
+        },
       });
       
+      console.log(`✅ Identity saved for ${userId}: name="${name}", age=${age}`);
       return { success: true };
     } catch (err: any) {
+      console.error(`❌ Failed to save identity:`, err);
       return reply.code(err.statusCode || 500).send({ error: err.message });
     }
   });

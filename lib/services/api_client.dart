@@ -373,6 +373,26 @@ class ApiClient {
     }
   }
 
+  // 🔥 NEW: Save user identity directly (for onboarding)
+  static Future<void> saveUserIdentity({
+    required String? name,
+    required int? age,
+    required String? burningQuestion,
+  }) async {
+    try {
+      await _post('/api/v1/user/identity', {
+        'name': name,
+        'age': age,
+        'burningQuestion': burningQuestion,
+      });
+      await LocalStorageService.saveSetting('identitySynced', true);
+      debugPrint('✅ Identity saved to backend: $name');
+    } catch (e) {
+      debugPrint('⚠️ Failed to save identity: $e');
+      rethrow;
+    }
+  }
+
   // Get purpose-aligned What-If goals
   static Future<ApiResponse<Map<String, dynamic>>> getPurposeAlignedGoals() async {
     try {

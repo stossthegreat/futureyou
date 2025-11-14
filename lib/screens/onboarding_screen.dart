@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../services/local_storage.dart';
+import '../services/api_client.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -52,9 +53,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   double get _progress => ((_step + 1) / _total) * 100;
 
   Future<void> _saveIdentityToLocal() async {
-    await LocalStorageService.saveSetting('userName', _nameController.text.trim());
-    await LocalStorageService.saveSetting('userAge', int.tryParse(_ageController.text) ?? 0);
-    await LocalStorageService.saveSetting('burningQuestion', _burningQuestionController.text.trim());
+    final name = _nameController.text.trim();
+    final age = int.tryParse(_ageController.text) ?? 0;
+    final burningQuestion = _burningQuestionController.text.trim();
+    
+    // Save locally
+    await LocalStorageService.saveSetting('userName', name);
+    await LocalStorageService.saveSetting('userAge', age);
+    await LocalStorageService.saveSetting('burningQuestion', burningQuestion);
+    
+    // 🔥 NEW: Save to backend so AI OS can use it!
+    try {
+      await ApiClient.saveUserIdentity(
+        name: name.isNotEmpty ? name : null,
+        age: age > 0 ? age : null,
+        burningQuestion: burningQuestion.isNotEmpty ? burningQuestion : null,
+      );
+      debugPrint('✅ Identity saved to backend: $name');
+    } catch (e) {
+      debugPrint('⚠️ Failed to save identity to backend: $e');
+      // Don't block onboarding if backend fails
+    }
   }
 
   @override
