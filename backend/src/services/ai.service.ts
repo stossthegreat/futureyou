@@ -152,7 +152,7 @@ ${lengthRule}- Never sound generic, fluffy, or like a motivational quote page.
           : LLM_MAX_TOKENS;
 
       const completion = await openai.chat.completions.create({
-  model: process.env.CONSCIOUSNESS_MODEL || "gpt-5-turbo",
+  model: process.env.CONSCIOUSNESS_MODEL || "gpt-5-mini",
   max_completion_tokens: opts.maxChars
     ? Math.ceil(opts.maxChars / 3)
     : LLM_MAX_TOKENS,
