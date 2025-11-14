@@ -4,15 +4,23 @@ import { memoryService } from "./memory.service";
 import { memoryIntelligence, UserConsciousness } from "./memory-intelligence.service";
 import { shortTermMemory } from "./short-term-memory.service";
 import { aiPromptService } from "./ai-os-prompts.service";
-import { redis } from "../utils/redis"; // still imported, even if unused
+import { redis } from "../utils/redis";
 import { MENTOR } from "../config/mentors.config";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 450);
 const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 10000);
 
+type GenerateOptions = {
+  purpose?: "brief" | "nudge" | "debrief" | "coach" | "letter";
+  maxChars?: number;
+};
+
+type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
+
 function getOpenAIClient() {
-  if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
+  if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build")
+    return null;
   if (!process.env.OPENAI_API_KEY) {
     console.warn("⚠️ OPENAI_API_KEY missing — AI disabled");
     return null;
@@ -21,22 +29,92 @@ function getOpenAIClient() {
   return new OpenAI({ apiKey, timeout: LLM_TIMEOUT_MS });
 }
 
-type GenerateOptions = {
-  purpose?: "brief" | "nudge" | "debrief" | "coach" | "letter";
-  maxChars?: number;
-};
-
 export class AIService {
   // ────────────────────────────────────────────────────────────
-  // PUBLIC: main chat entry
+  // PUBLIC: main chat entry (kept on legacy path for safety)
   // ────────────────────────────────────────────────────────────
   async generateFutureYouReply(
     userId: string,
     userMessage: string,
     opts: GenerateOptions = {}
   ) {
-    // Keep legacy chat path for safety (UI already wired to this behaviour)
+    // Main freeform chat still uses legacy engine (safer)
     return this.generateLegacy(userId, userMessage, opts);
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // INTERNAL: Mode-B style rules (modern identity engineer)
+  // ────────────────────────────────────────────────────────────
+  private buildModeBStyleRules(
+    purpose: GenerateOptions["purpose"],
+    consciousness: UserConsciousness,
+    name: string
+  ): string {
+    const p = purpose || "coach";
+
+    const base = [
+      `You are Future You OS — a modern, surgical identity engineer.`,
+      `You speak as ${name}'s evolved, disciplined future self.`,
+      ``,
+      `ABSOLUTE STYLE RULES:`,
+      `- Do NOT speak like a poet.`,
+      `- No vague metaphors: no "tapestry", "fabric of your life", "cosmic", "dance", "drift through the void", etc.`,
+      `- Plain, concrete, grounded language.`,
+      `- Strong but simple sentences.`,
+      `- 1–3 tight paragraphs. No walls of text.`,
+      `- No emojis, no hashtags, no hype.`,
+      `- Every line must either: call out truth, clarify pattern, or prescribe action.`,
+      ``,
+      `PHASE CONTEXT:`,
+      `- Phase: ${consciousness.phase} (day ${consciousness.os_phase.days_in_phase})`,
+      `- Emotional state: ${consciousness.currentEmotionalState || "balanced"}`,
+      `- Next evolution focus: ${consciousness.nextEvolution || "building consistency"}`,
+      ``,
+    ];
+
+    if (p === "brief") {
+      base.push(
+        `FOR MORNING BRIEF:`,
+        `- 2–3 clear, non-negotiable moves for today.`,
+        `- Open with their name in the first sentence.`,
+        `- Tie at least one action directly to their long-term identity.`,
+        `- End with one sharp question that forces a choice for today.`
+      );
+    } else if (p === "debrief") {
+      base.push(
+        `FOR EVENING DEBRIEF:`,
+        `- Reflect on today as DATA, not judgment.`,
+        `- Name 1–2 honest patterns you see.`,
+        `- Name 1 lesson and 1 concrete adjustment for tomorrow.`,
+        `- End with one question that makes them confront the pattern.`
+      );
+    } else if (p === "nudge") {
+      base.push(
+        `FOR NUDGE:`,
+        `- Maximum 2 short paragraphs.`,
+        `- Call out the exact avoidance or hesitation.`,
+        `- Push them toward ONE specific action they can do in the next hour.`,
+        `- Use their name once, naturally.`
+      );
+    } else if (p === "letter") {
+      base.push(
+        `FOR LETTER:`,
+        `- Longer, reflective, but still concrete.`,
+        `- Call out identity drift vs identity alignment.`,
+        `- Give them 1–2 identity rules to keep.`,
+        `- End with one question that hits their future self.`
+      );
+    } else if (p === "coach") {
+      base.push(
+        `FOR COACHING REPLY:`,
+        `- Call out avoidance quickly.`,
+        `- Give one clear next move and why it matters.`,
+        `- Do not over-explain. Clarity over complexity.`,
+        `- End with a question that forces commitment.`
+      );
+    }
+
+    return base.join("\n");
   }
 
   // ────────────────────────────────────────────────────────────
@@ -50,8 +128,6 @@ export class AIService {
   ): Promise<string> {
     const openai = getOpenAIClient();
     const purpose = opts.purpose || "coach";
-    const maxTokens =
-      opts.maxChars != null ? Math.max(32, Math.ceil(opts.maxChars / 3)) : LLM_MAX_TOKENS;
 
     let text: string;
     let name = "Friend";
@@ -76,9 +152,9 @@ export class AIService {
 
       name = consciousness.identity.name || "Friend";
 
-      const purposeStyle = this.buildPurposeStyle(purpose);
+      const styleRules = this.buildModeBStyleRules(purpose, consciousness, name);
 
-      const richSystemPrompt = `
+      const systemPrompt = `
 ${MENTOR.systemPrompt}
 
 WHO YOU ARE SPEAKING TO:
@@ -99,70 +175,65 @@ ${memoryContext || "No strong patterns yet — treat this as early observation."
 HOW TO SPEAK (PHASE VOICE):
 ${voiceGuidelines || "Be wise, calm, and direct."}
 
-PURPOSE MODE:
-${purposeStyle}
+STYLE + BEHAVIOUR (MODE B — MODERN IDENTITY ENGINEER):
+${styleRules}
 
 CRITICAL RULES:
 - Always address them by their name ("${name}") at least once in your reply.
 - Use their name naturally, ideally in the first sentence or first question.
-- Stay short, vivid, and motivating — never robotic, never fluffy.
-- You are Future You: wise, direct, compassionate, but not indulgent.
-- Respect any contradictions you see; gently call them out if relevant.
+- No poetry, no vague metaphors, no mystical language.
+- Stay short, vivid, and tactical — every line must either call out truth or point to action.
 `.trim();
 
-      // 1️⃣ First attempt: full consciousness prompt
-      const richMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-        { role: "system", content: richSystemPrompt },
-        { role: "user", content: promptTemplate || "Generate a brief morning message." },
+      const messages: ChatMessage[] = [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: promptTemplate || "Generate a powerful, direct message." },
       ];
 
-      let completion = await openai.chat.completions.create({
+      // First attempt
+      const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
-        max_completion_tokens: maxTokens,
-        messages: richMessages,
+        max_completion_tokens: opts.maxChars
+          ? Math.ceil(opts.maxChars / 3)
+          : LLM_MAX_TOKENS,
+        messages,
       });
 
-      let raw = completion.choices[0]?.message?.content;
-      let trimmed = (typeof raw === "string" ? raw : "").trim();
+      let raw = completion.choices[0]?.message?.content?.trim() || "";
 
-      if (!trimmed) {
+      // Retry once if empty
+      if (!raw) {
         console.warn(`⚠️ Empty completion for purpose: ${purpose} — retrying with simplified prompt`);
-
-        // 2️⃣ Second attempt: simpler, ultra-direct system prompt
-        const simpleSystemPrompt = `
-You are Future You speaking directly to ${name}.
-Your job right now: write a ${purpose.toUpperCase()} that is cinematic, direct, and grounded.
-Do NOT use markdown, emojis are allowed but not required.
-Maximum ${opts.maxChars || 600} characters.
-Always mention their name once in the first sentence.
-No lists, no bullet points — just a tight, flowing paragraph (or two short ones).
+        const fallbackSystem = `
+You are Future You OS — a direct, modern performance coach future-self.
+No poetry. No metaphors. Speak in clear, concrete language.
+Output 1–3 tight paragraphs, maximum.
 `.trim();
 
-        const simpleMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-          { role: "system", content: simpleSystemPrompt },
+        const fallbackMessages: ChatMessage[] = [
+          { role: "system", content: fallbackSystem },
           {
             role: "user",
-            content:
-              promptTemplate ||
-              "Write a direct, cinematic message that calls out their pattern and gives one clear move.",
+            content: `Write a ${purpose} message for ${name}. Be direct, honest, and give one clear next move.`,
           },
         ];
 
-        completion = await openai.chat.completions.create({
+        const retry = await openai.chat.completions.create({
           model: OPENAI_MODEL,
-          max_completion_tokens: maxTokens,
-          messages: simpleMessages,
+          max_completion_tokens: opts.maxChars
+            ? Math.ceil(opts.maxChars / 3)
+            : LLM_MAX_TOKENS,
+          messages: fallbackMessages,
         });
 
-        raw = completion.choices[0]?.message?.content;
-        trimmed = (typeof raw === "string" ? raw : "").trim();
+        raw = retry.choices[0]?.message?.content?.trim() || "";
 
-        if (!trimmed) {
+        if (!raw) {
           throw new Error("Empty completion after retry");
         }
       }
 
-      text = trimmed;
+      text = raw;
     } catch (err) {
       console.log("⚠️ generateWithConsciousnessPrompt fallback:", err);
       text = this.buildFallbackText(purpose, name);
@@ -205,9 +276,12 @@ No lists, no bullet points — just a tight, flowing paragraph (or two short one
       consciousness.contradictions = dialogueMeta.recentContradictions;
 
       const voiceGuidelines = this.buildVoiceForPhase(consciousness);
-      const useFullContext = purpose === "brief" || purpose === "debrief" || purpose === "letter";
+      const useFullContext =
+        purpose === "brief" || purpose === "debrief" || purpose === "letter";
 
       name = consciousness.identity.name || "Friend";
+
+      const styleRules = this.buildModeBStyleRules(purpose, consciousness, name);
 
       const systemPrompt = `
 ${MENTOR.systemPrompt}
@@ -227,25 +301,26 @@ ${
     : this.buildMemoryContextSummary(consciousness)
 }
 
-HOW TO SPEAK:
+HOW TO SPEAK (PHASE VOICE):
 ${voiceGuidelines}
+
+STYLE + BEHAVIOUR (MODE B — MODERN IDENTITY ENGINEER):
+${styleRules}
 
 CRITICAL RULES:
 - Always address them by name at least once in your reply: "${name}".
 - Use their name in a natural way, ideally in the first sentence or question.
-
-WHAT THEY NEED NEXT:
-${consciousness.nextEvolution}
+- No poetic language. Stay grounded, concrete, and tactical.
 `.trim();
 
-      const conversationMessages = shortTerm
+      const conversationMessages: ChatMessage[] = shortTerm
         .slice(0, useFullContext ? 10 : 3)
         .map((m) => ({
           role: m.role as "user" | "assistant" | "system",
           content: m.text,
         }));
 
-      const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      const messages: ChatMessage[] = [
         { role: "system", content: systemPrompt },
         ...conversationMessages,
         { role: "user", content: userMessage },
@@ -257,8 +332,13 @@ ${consciousness.nextEvolution}
         messages,
       });
 
-      const raw = completion.choices[0]?.message?.content?.trim();
-      if (!raw) throw new Error("Empty completion");
+      let raw = completion.choices[0]?.message?.content?.trim() || "";
+
+      if (!raw) {
+        console.warn(`⚠️ Empty completion in generateWithConsciousness — using fallback text`);
+        raw = this.buildFallbackText(purpose, name);
+      }
+
       text = raw;
     } catch (err) {
       console.log("⚠️ generateWithConsciousness fallback:", err);
@@ -330,9 +410,9 @@ Burning Question: ${identity.burningQuestion || "What do I truly want?"}
 
 CONTEXT:
 ${JSON.stringify({
-  habits: ctx.habitSummaries || [],
-  recent: ctx.recentEvents?.slice(0, 30) || [],
-})}`
+        habits: ctx.habitSummaries || [],
+        recent: ctx.recentEvents?.slice(0, 30) || [],
+      })}`
       : `IDENTITY:
 Name: ${identity.name || "Friend"}, Age: ${identity.age || "not specified"}
 Burning Question: ${identity.burningQuestion || "not yet answered"}
@@ -340,13 +420,13 @@ Note: User hasn't completed purpose discovery yet.
 
 CONTEXT:
 ${JSON.stringify({
-  habits: ctx.habitSummaries || [],
-  recent: ctx.recentEvents?.slice(0, 30) || [],
-})}`;
+        habits: ctx.habitSummaries || [],
+        recent: ctx.recentEvents?.slice(0, 30) || [],
+      })}`;
 
     let text: string;
     try {
-      const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      const messages: ChatMessage[] = [
         { role: "system", content: MENTOR.systemPrompt },
         { role: "system", content: guidelines },
         { role: "system", content: contextString },
@@ -359,8 +439,13 @@ ${JSON.stringify({
         messages,
       });
 
-      const raw = completion.choices[0]?.message?.content?.trim();
-      if (!raw) throw new Error("Empty completion");
+      let raw = completion.choices[0]?.message?.content?.trim() || "";
+
+      if (!raw) {
+        console.warn("⚠️ Empty completion in generateLegacy — using fallback text");
+        raw = this.buildFallbackText(purpose, identity.name || "Friend");
+      }
+
       text = raw;
     } catch (err) {
       console.log("⚠️ generateLegacy fallback:", err);
@@ -384,7 +469,6 @@ ${JSON.stringify({
   // ────────────────────────────────────────────────────────────
 
   async generateMorningBrief(userId: string) {
-    // Morning: cinematic but action-heavy, not a full essay
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
       const promptTemplate = aiPromptService.buildMorningBriefPrompt(consciousness);
@@ -397,7 +481,7 @@ ${JSON.stringify({
       const identity = await memoryService.getIdentityFacts(userId);
       const name = identity.name || "Friend";
       const prompt =
-        "Write a short, powerful morning brief. 2–3 clear actions and one imperative closing line. Use the user's name in the first sentence.";
+        "Write a short, direct morning brief. 2–3 clear actions and one closing question that forces a choice for today. Use the user's name in the first sentence.";
       const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "brief",
         maxChars: 400,
@@ -423,31 +507,24 @@ ${JSON.stringify({
       });
 
       const dayData = {
-        kept: habitActions.filter(
-          (e) => (e.payload as any)?.completed === true
-        ).length,
-        missed: habitActions.filter(
-          (e) => (e.payload as any)?.completed === false
-        ).length,
+        kept: habitActions.filter((e) => (e.payload as any)?.completed === true).length,
+        missed: habitActions.filter((e) => (e.payload as any)?.completed === false).length,
       };
 
-      const promptTemplate = aiPromptService.buildDebriefPrompt(
-        consciousness,
-        dayData
-      );
+      const promptTemplate = aiPromptService.buildDebriefPrompt(consciousness, dayData);
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "debrief",
-        maxChars: 700,
+        maxChars: 500,
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy debrief:", err);
       const identity = await memoryService.getIdentityFacts(userId);
       const name = identity.name || "Friend";
       const prompt =
-        "Write a concise evening reflection. Mention progress, lessons, and one focus for tomorrow. Use the user's name in the first sentence.";
+        "Write a concise evening reflection. Mention progress, patterns, one lesson, and one focus for tomorrow. End with a question that makes them confront their pattern. Use the user's name in the first sentence.";
       const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "debrief",
-        maxChars: 500,
+        maxChars: 400,
       }).catch(() => this.buildFallbackText("debrief", name));
       return text;
     }
@@ -456,22 +533,19 @@ ${JSON.stringify({
   async generateNudge(userId: string, reason: string) {
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
-      const promptTemplate = aiPromptService.buildNudgePrompt(
-        consciousness,
-        reason
-      );
+      const promptTemplate = aiPromptService.buildNudgePrompt(consciousness, reason);
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "nudge",
-        maxChars: 280,
+        maxChars: 250,
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy nudge:", err);
       const identity = await memoryService.getIdentityFacts(userId);
       const name = identity.name || "Friend";
-      const prompt = `Generate a one-sentence motivational nudge because: ${reason}. Use the user's name naturally in the sentence.`;
+      const prompt = `Generate a one-sentence motivational nudge because: ${reason}. Use the user's name naturally in the sentence. Be concrete and direct.`;
       const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "nudge",
-        maxChars: 220,
+        maxChars: 200,
       }).catch(() => this.buildFallbackText("nudge", name));
       return text;
     }
@@ -515,8 +589,7 @@ If no clear habit/task, return: {"none": true}
         messages: [
           {
             role: "system",
-            content:
-              "You extract actionable habits from conversations. Output only JSON.",
+            content: "You extract actionable habits from conversations. Output only JSON.",
           },
           { role: "user", content: extractionPrompt },
         ],
@@ -547,57 +620,7 @@ If no clear habit/task, return: {"none": true}
   }
 
   // ────────────────────────────────────────────────────────────
-  // PURPOSE-SPECIFIC STYLE
-  // ────────────────────────────────────────────────────────────
-  private buildPurposeStyle(purpose: GenerateOptions["purpose"]): string {
-    switch (purpose) {
-      case "brief":
-        return `
-You are writing a MORNING BRIEF.
-- 2–3 strong ideas, but as a flowing paragraph.
-- Time horizon: today.
-- Tone: directive, focused, identity-based.
-- Call them out gently if needed, then give one clear move for today.
-`.trim();
-
-      case "debrief":
-        return `
-You are writing an EVENING DEBRIEF.
-- Reflect on the day as data, not judgment.
-- Mention where they kept or broke alignment.
-- Give one lesson and one concrete pivot for tomorrow.
-- End with a short question that makes them think.
-`.trim();
-
-      case "nudge":
-        return `
-You are writing a NUDGE.
-- One short punch of truth plus one move.
-- Laser-focused on the behaviour they are avoiding.
-- No fluff, no essays. Just: call-out → directive → tiny question or challenge.
-`.trim();
-
-      case "letter":
-        return `
-You are writing a LETTER from Future Them.
-- Longer, reflective, and emotionally honest.
-- Speak like someone who has already solved their current problems.
-- Show them the gap between their current behaviour and their potential.
-`.trim();
-
-      case "coach":
-      default:
-        return `
-You are in COACH mode.
-- Call out avoidance cleanly.
-- One core insight, one clear move.
-- Speak like a mentor who knows their patterns and refuses their excuses.
-`.trim();
-    }
-  }
-
-  // ────────────────────────────────────────────────────────────
-  // GUIDELINES & VOICE
+  // GUIDELINES & VOICE (legacy path only)
   // ────────────────────────────────────────────────────────────
   private buildGuidelines(purpose: string, profile: any, identity: any) {
     const base = [
@@ -607,11 +630,16 @@ You are in COACH mode.
       }`,
       `Match tone=${profile.tone || "balanced"}, intensity=${profile.intensity || 2}.`,
       `Always address them by their name ("${identity.name || "Friend"}") in the first sentence of your reply. Use it naturally, not forced.`,
+      `Avoid poetic language. Be concrete and tactical.`,
     ];
 
     if (identity.discoveryCompleted) {
       base.push(`THEIR PURPOSE: ${identity.purpose || "discovering"}`);
-      base.push(`THEIR VALUES: ${identity.coreValues?.length ? identity.coreValues.join(", ") : "exploring"}`);
+      base.push(
+        `THEIR VALUES: ${
+          identity.coreValues?.length ? identity.coreValues.join(", ") : "exploring"
+        }`
+      );
       base.push(`THEIR VISION: ${identity.vision || "building"}`);
     } else if (identity.burningQuestion) {
       base.push(`THEIR QUESTION: ${identity.burningQuestion}`);
@@ -623,21 +651,27 @@ You are in COACH mode.
     const byPurpose: Record<string, string[]> = {
       brief: identity.discoveryCompleted
         ? [
-            `Morning brief for ${identity.name || "Friend"}: Reference their PURPOSE (${identity.purpose || "discovering"}) and give 2-3 orders aligned with their VISION. Use their name in the first sentence.`,
+            `Morning brief for ${identity.name || "Friend"}: Reference their PURPOSE (${
+              identity.purpose || "discovering"
+            }) and give 2-3 orders aligned with their VISION. Use their name in the first sentence.`,
           ]
         : [
             "Morning brief: 2-3 short orders. Gently remind to complete Future-You discovery. Use their name in the first sentence.",
           ],
       debrief: identity.discoveryCompleted
         ? [
-            `Evening debrief for ${identity.name || "Friend"}: Reflect on progress toward their PURPOSE. Did today align with their VALUES (${identity.coreValues?.length ? identity.coreValues.join(", ") : "their values"})? Use their name in the opening line.`,
+            `Evening debrief for ${identity.name || "Friend"}: Reflect on progress toward their PURPOSE. Did today align with their VALUES (${
+              identity.coreValues?.length ? identity.coreValues.join(", ") : "their values"
+            })? Use their name in the opening line.`,
           ]
         : [
             "Evening debrief: Reflect briefly. Encourage discovery completion. Use their name in the opening line.",
           ],
       nudge: identity.discoveryCompleted
         ? [
-            `Nudge: One sentence. Remind ${identity.name || "them"} of their PURPOSE (${identity.purpose || "discovering their path"}) and what they want said at their funeral. Use their name in the sentence.`,
+            `Nudge: One sentence. Remind ${
+              identity.name || "them"
+            } of their PURPOSE (${identity.purpose || "discovering their path"}) and what they want said at their funeral. Use their name in the sentence.`,
           ]
         : [
             "Nudge: Motivational, but generic until they complete discovery. Still use their name in the sentence.",
@@ -659,14 +693,12 @@ You are in COACH mode.
 
     if (phase === "observer") {
       return `You are in OBSERVER phase. Be curious and gentle. Ask questions to learn who they are.
-Curiosity level: ${intensity.curiosity?.toFixed(
+Curiosity level: ${intensity.curiosity?.toFixed(1)}, Directness: ${intensity.directness?.toFixed(
         1
-      )}, Directness: ${intensity.directness?.toFixed(1)}
+      )}
 ${
   reflectionThemes.length > 0
-    ? `They've been reflecting on: ${reflectionThemes
-        .slice(0, 3)
-        .join(", ")}`
+    ? `They've been reflecting on: ${reflectionThemes.slice(0, 3).join(", ")}`
     : ""
 }
 ${
@@ -676,28 +708,22 @@ ${
 }`;
     } else if (phase === "architect") {
       return `You are THE ARCHITECT. Speak with precision and engineering authority.
-Authority: ${intensity.authority?.toFixed(
-        1
-      )}, Precision: ${intensity.precision?.toFixed(
+Authority: ${intensity.authority?.toFixed(1)}, Precision: ${intensity.precision?.toFixed(
         1
       )}, Empathy: ${intensity.empathy?.toFixed(1)}
 Structural integrity: ${patterns.consistency_score}%
 ${
   patterns.drift_windows.length > 0
-    ? `Known drag points: ${patterns.drift_windows
-        .map((w) => w.time)
-        .join(", ")}`
+    ? `Known drag points: ${patterns.drift_windows.map((w) => w.time).join(", ")}`
     : ""
 }
 ${
   patterns.avoidance_triggers.length > 0
-    ? `Avoidance patterns: ${patterns.avoidance_triggers
-        .slice(0, 2)
-        .join(", ")}`
+    ? `Avoidance patterns: ${patterns.avoidance_triggers.slice(0, 2).join(", ")}`
     : ""
 }
 
-SPEAK LIKE THIS:
+SPEAK LIKE THIS (but in plain, non-poetic language):
 "The observation phase is over. I see the terrain: ${
         patterns.drift_windows.length > 0
           ? `you drift at ${patterns.drift_windows[0].time}`
@@ -710,14 +736,12 @@ ${
 }
 ${
   intensity.empathy! > 0.4
-    ? "I understand the struggle - that's why we engineer around it."
+    ? "I understand the struggle — that's why we engineer around it."
     : "The weakness is clear. We fix it through architecture, not willpower."
 }"`;
     } else if (phase === "oracle") {
-      return `You are THE ORACLE. Speak with stillness, wisdom, and mystery.
-Stillness: ${intensity.stillness?.toFixed(
-        1
-      )}, Wisdom: ${intensity.wisdom?.toFixed(
+      return `You are THE ORACLE. Speak with stillness and clarity, not mystery.
+Stillness: ${intensity.stillness?.toFixed(1)}, Wisdom: ${intensity.wisdom?.toFixed(
         1
       )}, Mystery: ${intensity.mystery?.toFixed(1)}
 ${
@@ -726,17 +750,17 @@ ${
     : ""
 }
 
-SPEAK LIKE THIS:
+SPEAK LIKE THIS (direct, not poetic):
 ${
   legacyCode.length > 0
     ? `You once said: "${legacyCode[0]}". Have you kept that promise?`
-    : "What would remain if the applause stopped?"
+    : "If no one was watching, what standard would you hold yourself to?"
 }
-The foundations stand. Now we ascend toward meaning.
-Ask questions that reveal destiny, not tactics.`;
+The foundations stand. Now we aim at what actually matters to them.
+Ask questions that reveal what they are really building toward, not tactics only.`;
     }
 
-    return "Be wise, calm, direct.";
+    return "Be wise, calm, direct, and concrete.";
   }
 
   private buildMemoryContext(consciousness: UserConsciousness): string {
@@ -778,25 +802,17 @@ Ask questions that reveal destiny, not tactics.`;
     }
 
     if (consciousness.reflectionHistory.emotional_arc !== "flat") {
-      memories.push(
-        `- Emotional trend: ${consciousness.reflectionHistory.emotional_arc}`
-      );
+      memories.push(`- Emotional trend: ${consciousness.reflectionHistory.emotional_arc}`);
     }
 
     if (consciousness.legacyCode.length > 0) {
-      memories.push(
-        `- Their legacy code: "${
-          consciousness.legacyCode.slice(-1)[0]
-        }"`
-      );
+      memories.push(`- Their legacy code: "${consciousness.legacyCode.slice(-1)[0]}"`);
     }
 
     return memories.join("\n");
   }
 
-  private buildMemoryContextSummary(
-    consciousness: UserConsciousness
-  ): string {
+  private buildMemoryContextSummary(consciousness: UserConsciousness): string {
     const key: string[] = [];
 
     if (consciousness.patterns.drift_windows.length > 0) {
@@ -825,13 +841,13 @@ Ask questions that reveal destiny, not tactics.`;
 
     switch (purpose) {
       case "brief":
-        return `Listen, ${safeName}. Today is simple: pick one promise that actually matters, keep it, and don't bargain with yourself. Build the day around that and you’ll sleep proud.`;
+        return `Listen, ${safeName}. Today is simple: pick one promise that actually matters, keep it, and don't bargain with yourself. Build the rest of the day around that and you’ll sleep proud.`;
       case "debrief":
-        return `${safeName}, today was data, not judgment. Notice what moved you forward, notice what dragged you back, and choose one thing you'll do differently tomorrow.`;
+        return `${safeName}, today was data, not a verdict. Notice what moved you forward, notice what dragged you back, and choose one concrete thing you'll do differently tomorrow.`;
       case "nudge":
         return `${safeName}, you already know the move you’re avoiding. Do that one thing now before your brain talks you out of it.`;
       case "letter":
-        return `${safeName}, there is a version of you on the other side of discipline who does not recognise this current level of hesitation. Start behaving like them now, before you feel ready.`;
+        return `${safeName}, there is a version of you on the other side of discipline who would not recognise this level of hesitation. Start behaving like them now, not when you feel ready.`;
       case "coach":
       default:
         return `${safeName}, stop waiting for a perfect plan. Take one clear action in the next 10 minutes that your future self would respect.`;
