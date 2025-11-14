@@ -5,7 +5,7 @@ import { redis } from "../utils/redis";
 import OpenAI from "openai";
 import { memoryService } from "./memory.service";
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 
 function getOpenAIClient() {
   if (process.env.NODE_ENV === "build" || process.env.RAILWAY_ENVIRONMENT === "build") return null;
