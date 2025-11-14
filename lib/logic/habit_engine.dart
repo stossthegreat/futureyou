@@ -20,6 +20,7 @@ class HabitEngine extends ChangeNotifier {
   Future<void> loadHabits() async {
     _habits = LocalStorageService.getAllHabits();
     notifyListeners();
+    debugPrint('✅ Loaded ${_habits.length} habits');
   }
 
   Future<void> addHabit(Habit h) async {
@@ -27,15 +28,16 @@ class HabitEngine extends ChangeNotifier {
     _habits.add(h);
     notifyListeners();
 
-    // Only schedule alarm if explicitly turned on
-    if (h.reminderOn) {
+    // Schedule alarm if reminder is enabled
+    if (h.reminderOn && h.time.isNotEmpty) {
       try {
-        await _scheduleNext(h);
+        await AlarmService.scheduleAlarm(h);
         debugPrint('✅ Alarm scheduled successfully for habit: ${h.title}');
       } catch (e) {
         debugPrint('⚠️ Failed to schedule alarm for habit "${h.title}": $e');
-        // Don't break habit creation - alarm can be set later
       }
+    } else {
+      debugPrint('⏰ No alarm scheduled for "${h.title}" (reminderOn=${h.reminderOn}, time="${h.time}")');
     }
   }
 
@@ -44,6 +46,7 @@ class HabitEngine extends ChangeNotifier {
     _habits.removeWhere((x) => x.id == id);
     notifyListeners();
     await AlarmService.cancelAlarm(id);
+    debugPrint('🗑️ Deleted habit and cancelled alarms: $id');
   }
 
   Future<void> completeHabit(String id) async {
@@ -63,14 +66,6 @@ class HabitEngine extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 🔔 Schedule next alarm using AlarmService
-  Future<void> _scheduleNext(Habit h) async {
-    await AlarmService.scheduleAlarm(h);
-    if (kDebugMode) {
-      print('✅ Scheduled alarm for ${h.title}');
-    }
-  }
-
   Future<void> createHabit({
     required String title,
     required String type,
@@ -80,9 +75,27 @@ class HabitEngine extends ChangeNotifier {
     List<int>? repeatDays,
     Color? color,
     String? emoji,
-    bool reminderOn = false, // default OFF
-    String? systemId, // NEW: Link to parent system
+    bool reminderOn = false,
+    String? systemId,
   }) async {
+    // CRITICAL DEBUG LOGGING
+    debugPrint('═══════════════════════════════════════');
+    debugPrint('🔍 createHabit called:');
+    debugPrint('   - title: "$title"');
+    debugPrint('   - type: "$type"');
+    debugPrint('   - time: "$time"');
+    debugPrint('   - reminderOn: $reminderOn');
+    debugPrint('   - repeatDays: $repeatDays');
+    debugPrint('   - systemId: $systemId');
+    debugPrint('═══════════════════════════════════════');
+
+    // Validate: Don't create alarm if no time set
+    bool finalReminderOn = reminderOn;
+    if (reminderOn && time.isEmpty) {
+      debugPrint('⚠️ WARNING: reminderOn=true but time is EMPTY! Disabling alarm.');
+      finalReminderOn = false;
+    }
+
     final habit = Habit(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: title.trim(),
@@ -94,11 +107,25 @@ class HabitEngine extends ChangeNotifier {
       createdAt: DateTime.now(),
       colorValue: color?.value ?? 0xFF10B981,
       emoji: emoji,
-      reminderOn: reminderOn,
-      systemId: systemId, // NEW: Set systemId
+      reminderOn: finalReminderOn,
+      systemId: systemId,
     );
 
+    debugPrint('✅ Habit object created:');
+    debugPrint('   - id: ${habit.id}');
+    debugPrint('   - title: "${habit.title}"');
+    debugPrint('   - time: "${habit.time}"');
+    debugPrint('   - reminderOn: ${habit.reminderOn}');
+    debugPrint('   - repeatDays: ${habit.repeatDays}');
+
     await addHabit(habit);
+
+    // Verify alarm scheduling
+    if (habit.reminderOn) {
+      debugPrint('✅✅✅ Alarm SHOULD be scheduled for "${habit.title}"');
+    } else {
+      debugPrint('⏰⏰⏰ Alarm NOT scheduled (reminderOn=false)');
+    }
   }
 
   Future<void> toggleHabitCompletion(String habitId) async {
@@ -121,7 +148,7 @@ class HabitEngine extends ChangeNotifier {
       notifyListeners();
     }
 
-    // Sync completion to backend (observer pattern)
+    // Sync completion to backend
     _syncCompletionToBackend(habitId, nowDone, today);
   }
 
@@ -135,7 +162,6 @@ class HabitEngine extends ChangeNotifier {
         completedAt: done ? DateTime.now() : null,
       );
 
-      // Queue for sync service to handle
       syncService.queueCompletion(completion);
       debugPrint('📤 Queued completion for sync: $habitId (${done ? "done" : "undone"})');
     } catch (e) {
