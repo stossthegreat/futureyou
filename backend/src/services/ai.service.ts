@@ -30,14 +30,25 @@ export class AIService {
   // ────────────────────────────────────────────────────────────
   // PUBLIC: main chat entry
   // ────────────────────────────────────────────────────────────
-  async generateFutureYouReply(
-    userId: string,
-    userMessage: string,
-    opts: GenerateOptions = {}
-  ) {
-    // For now keep chat on legacy path (safer for existing clients)
+  // PUBLIC: main chat entry (NEW ENGINE)
+async generateFutureYouReply(
+  userId: string,
+  userMessage: string,
+  opts: GenerateOptions = {}
+) {
+  try {
+    const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
+    const prompt = aiPromptService.buildReflectionChatPrompt(consciousness, userMessage);
+
+    return this.generateWithConsciousnessPrompt(userId, prompt, {
+      purpose: opts.purpose || "coach",
+      maxChars: opts.maxChars,
+    });
+  } catch (err) {
+    console.log("⚠️ Consciousness chat failed — using legacy:", err);
     return this.generateLegacy(userId, userMessage, opts);
   }
+}
 
   // ────────────────────────────────────────────────────────────
   // INTERNAL: consciousness-based prompt processor
