@@ -243,6 +243,7 @@ class AlarmService {
       debugPrint('✅ Notification shown successfully with SOUND');
 
       // Reschedule for next week
+      // Reschedule for next week
       final nextTime = _getNextAlarmTimeForCallback(day, hour, minute);
       await AndroidAlarmManager.oneShotAt(
         nextTime,
@@ -252,11 +253,16 @@ class AlarmService {
         wakeup: true,
         allowWhileIdle: true,
         rescheduleOnReboot: true,
-        params: params,
+        params: params ?? {
+          'habitTitle': habitTitle,
+          'habitId': habitId,
+          'day': day,
+          'hour': hour,
+          'minute': minute,
+        },
       );
 
       debugPrint('🔁 Rescheduled for next occurrence: $nextTime');
-      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     } catch (e, stack) {
       debugPrint('❌ Alarm callback error: $e');
       debugPrint('Stack: $stack');
