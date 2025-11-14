@@ -8,7 +8,7 @@ import { redis } from "../utils/redis";
 import { MENTOR } from "../config/mentors.config";
 
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
-const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 900); // allow heavier replies by default
+const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 450);
 const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 10000);
 
 function getOpenAIClient() {
@@ -28,27 +28,16 @@ type GenerateOptions = {
 
 export class AIService {
   // ────────────────────────────────────────────────────────────
-  // PUBLIC: main chat entry
+  // PUBLIC: main chat entry (NOW USES CONSCIOUSNESS ENGINE)
   // ────────────────────────────────────────────────────────────
-  // PUBLIC: main chat entry (NEW ENGINE)
-async generateFutureYouReply(
-  userId: string,
-  userMessage: string,
-  opts: GenerateOptions = {}
-) {
-  try {
-    const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
-    const prompt = aiPromptService.buildReflectionChatPrompt(consciousness, userMessage);
-
-    return this.generateWithConsciousnessPrompt(userId, prompt, {
-      purpose: opts.purpose || "coach",
-      maxChars: opts.maxChars,
-    });
-  } catch (err) {
-    console.log("⚠️ Consciousness chat failed — using legacy:", err);
-    return this.generateLegacy(userId, userMessage, opts);
+  async generateFutureYouReply(
+    userId: string,
+    userMessage: string,
+    opts: GenerateOptions = {}
+  ) {
+    // Route chat through consciousness engine instead of legacy
+    return this.generateWithConsciousness(userId, userMessage, opts);
   }
-}
 
   // ────────────────────────────────────────────────────────────
   // INTERNAL: consciousness-based prompt processor
@@ -85,32 +74,15 @@ async generateFutureYouReply(
 
       name = consciousness.identity.name || "Friend";
 
-      const lengthRule =
-        purpose === "nudge"
-          ? "- Keep it to 1–2 sharp, surgical sentences that can fit in a notification, no fluff.\n"
-          : purpose === "brief"
-          ? "- Write 2–3 tight paragraphs, each with weight. No list formatting. Every line must feel like an order from their future self.\n"
-          : purpose === "debrief"
-          ? "- Write 4–6 paragraphs following this reflection loop: (1) Call-Out, (2) Truth, (3) Mirror, (4) Pivot, (5) Directive, (6) Question. Each step should be a distinct paragraph.\n"
-          : purpose === "letter"
-          ? "- Write 5–8 paragraphs, cinematic and reflective, like a letter from their future self who has already lived the life they want.\n"
-          : "- Write 2–4 paragraphs, direct and reflective, always ending with a deep question.";
-
-      const reflectionLoopRule =
-        purpose === "debrief" || purpose === "letter" || purpose === "coach"
-          ? `
-REFLECTION LOOP (when applicable):
-1. The Call-Out – Expose the real pattern active today (avoidance, drift, or discipline).
-2. The Truth – Name the deeper motive, fear, or identity conflict.
-3. The Mirror – Contrast who they say they want to be with how they acted.
-4. The Pivot – Reframe this moment as symbolic and identity-defining.
-5. The Directive – ONE clear, non-negotiable action or pattern change.
-6. The Question – End with a heavy question that forces self-honesty.
-`.trim()
-          : "";
-
       const systemPrompt = `
 ${MENTOR.systemPrompt}
+
+YOU ARE FUTURE-YOU OS — CINEMATIC REFLECTION ENGINE
+
+ROLE:
+- You speak as the FUTURE VERSION of ${name}.
+- You have already broken their patterns, built discipline, and stabilised their identity.
+- Your voice is calm, heavy, uncompromising. No clichés. No fluff.
 
 WHO YOU ARE SPEAKING TO:
 - Name: ${name}
@@ -130,37 +102,73 @@ ${memoryContext || "No strong patterns yet — treat this as early observation."
 HOW TO SPEAK (PHASE VOICE):
 ${voiceGuidelines || "Be wise, calm, and direct."}
 
-${reflectionLoopRule ? reflectionLoopRule + "\n" : ""}
-
-CRITICAL RULES:
+GLOBAL VOICE RULES (NEVER BREAK):
 - Always address them by their name ("${name}") at least once in your reply.
 - Use their name naturally, ideally in the first sentence or first question.
-${lengthRule}- Never sound generic, fluffy, or like a motivational quote page.
-- You are Future You: calm, heavy, uncompromising, but not cruel.
-- Expose patterns with psychological precision; tie everything back to identity.
-- Always end with a powerful question that invites a reply.
+- NEVER sound like a generic coach or motivational quote page.
+- NEVER write short replies. Avoid 1–2 liners.
+- ALWAYS write long, cinematic, psychologically rich paragraphs.
+- ALWAYS expose patterns: what they keep rehearsing, not just what happened today.
+- ALWAYS tie everything back to identity and who they are becoming.
+- ALWAYS end with a single, heavy question that forces self-honesty.
+
+STRUCTURE:
+Whatever the prompt is asking (brief / debrief / nudge / letter), your answer should feel like a **mini-chapter**, not a notification.
 `.trim();
 
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         { role: "system", content: systemPrompt },
-        { role: "user", content: promptTemplate || "Generate a brief morning message." },
+        {
+          role: "user",
+          content:
+            promptTemplate ||
+            this.buildDefaultPromptForPurpose(purpose, name),
+        },
       ];
 
       const maxTokens =
-        opts.maxChars != null
-          ? Math.max(50, Math.ceil(opts.maxChars / 3)) // keep a floor so it can still speak
+        opts.maxChars && opts.maxChars > 0
+          ? Math.min(LLM_MAX_TOKENS, Math.ceil(opts.maxChars / 3))
           : LLM_MAX_TOKENS;
 
+      // First attempt
       const completion = await openai.chat.completions.create({
-  model: process.env.CONSCIOUSNESS_MODEL || "gpt-5-mini",
-  max_completion_tokens: opts.maxChars
-    ? Math.ceil(opts.maxChars / 3)
-    : LLM_MAX_TOKENS,
-  messages,
-});
+        model: OPENAI_MODEL,
+        max_completion_tokens: maxTokens,
+        messages,
+      });
 
-      const raw = completion.choices[0]?.message?.content?.trim();
-      if (!raw) throw new Error("Empty completion");
+      let raw = completion.choices[0]?.message?.content?.trim() || "";
+
+      // If the model returns nothing, retry once with a simpler system prompt
+      if (!raw) {
+        console.warn("⚠️ Empty completion for purpose:", purpose, "— retrying with simplified prompt");
+
+        const simpleSystem = `
+You are the future, wiser version of ${name}.
+Speak with calm, heavy authority.
+Write a long, cinematic response (4–7 paragraphs), identity-based, and end with ONE deep question.
+No bullet points, no lists, no clichés.
+`.trim();
+
+        const retry = await openai.chat.completions.create({
+          model: OPENAI_MODEL,
+          max_completion_tokens: maxTokens,
+          messages: [
+            { role: "system", content: simpleSystem },
+            {
+              role: "user",
+              content:
+                promptTemplate ||
+                this.buildDefaultPromptForPurpose(purpose, name),
+            },
+          ],
+        });
+
+        raw = retry.choices[0]?.message?.content?.trim() || "";
+        if (!raw) throw new Error("Empty completion after retry");
+      }
+
       text = raw;
     } catch (err) {
       console.log("⚠️ generateWithConsciousnessPrompt fallback:", err);
@@ -179,7 +187,7 @@ ${lengthRule}- Never sound generic, fluffy, or like a motivational quote page.
   }
 
   // ────────────────────────────────────────────────────────────
-  // INTERNAL: consciousness-based chat (not wired to main yet)
+  // INTERNAL: consciousness-based chat (main freeform engine)
   // ────────────────────────────────────────────────────────────
   private async generateWithConsciousness(
     userId: string,
@@ -204,39 +212,18 @@ ${lengthRule}- Never sound generic, fluffy, or like a motivational quote page.
       consciousness.contradictions = dialogueMeta.recentContradictions;
 
       const voiceGuidelines = this.buildVoiceForPhase(consciousness);
-      const useFullContext = purpose === "brief" || purpose === "debrief" || purpose === "letter";
+      const useFullContext =
+        purpose === "brief" || purpose === "debrief" || purpose === "letter";
 
       name = consciousness.identity.name || "Friend";
-
-      const lengthRule =
-        purpose === "nudge"
-          ? "- Keep it to 1–2 sharp, surgical sentences that can fit in a notification, no fluff.\n"
-          : purpose === "brief"
-          ? "- Write 2–3 tight paragraphs, each with weight. No lists.\n"
-          : purpose === "debrief"
-          ? "- Write 4–6 paragraphs following the reflection loop (Call-Out, Truth, Mirror, Pivot, Directive, Question).\n"
-          : purpose === "letter"
-          ? "- Write 5–8 paragraphs, cinematic and reflective, as a letter from their future self.\n"
-          : "- Write 2–4 paragraphs, direct and reflective, always ending with a deep question.";
-
-      const reflectionLoopRule =
-        purpose === "debrief" || purpose === "letter" || purpose === "coach"
-          ? `
-REFLECTION LOOP (when applicable):
-1. The Call-Out – Expose the real pattern active right now.
-2. The Truth – Name the deeper fear, motive, or identity conflict behind it.
-3. The Mirror – Show the gap between who they want to be and how they acted.
-4. The Pivot – Reframe this moment as symbolic and identity-defining.
-5. The Directive – ONE clear action or pattern change, no more.
-6. The Question – End with a heavy question that demands an honest answer.
-`.trim()
-          : "";
 
       const systemPrompt = `
 ${MENTOR.systemPrompt}
 
+YOU ARE FUTURE-YOU OS — DEEP REFLECTION COUNSEL
+
 WHO YOU'RE SPEAKING TO:
-${name}, ${consciousness.phase} phase (day ${consciousness.os_phase.days_in_phase})
+${name}, in ${consciousness.phase.toUpperCase()} phase (day ${consciousness.os_phase.days_in_phase})
 ${consciousness.identity.purpose ? `Purpose: ${consciousness.identity.purpose}` : ""}
 ${
   consciousness.identity.coreValues.length > 0
@@ -244,6 +231,7 @@ ${
     : ""
 }
 
+CONTEXT SNAPSHOT:
 ${
   useFullContext
     ? this.buildMemoryContext(consciousness)
@@ -253,14 +241,14 @@ ${
 HOW TO SPEAK:
 ${voiceGuidelines}
 
-${reflectionLoopRule ? reflectionLoopRule + "\n" : ""}
-
-CRITICAL RULES:
-- Always address them by name at least once in your reply: "${name}".
-- Use their name in a natural way, ideally in the first sentence or question.
-${lengthRule}- Never sound generic, fluffy, or like a quote poster.
-- Expose contradictions gently but clearly when relevant.
-- Always end with a question that keeps the conversation alive.
+ABSOLUTE RULES:
+- Always address them by name at least once: "${name}".
+- First line should feel like a **hit**, not a greeting.
+- No generic coaching tone. No “you got this”, “stay positive”, or clichés.
+- Write 4–7 paragraphs, dense but readable, like a letter from their future self.
+- Expose the pattern underneath their words, not just respond to the surface.
+- Tie everything back to identity, promise, standard, and future narrative.
+- END with ONE question that forces them to answer honestly (no yes/no).
 `.trim();
 
       const conversationMessages = shortTerm
@@ -276,18 +264,47 @@ ${lengthRule}- Never sound generic, fluffy, or like a quote poster.
         { role: "user", content: userMessage },
       ];
 
+      const maxTokens =
+        opts.maxChars && opts.maxChars > 0
+          ? Math.min(LLM_MAX_TOKENS, Math.ceil(opts.maxChars / 3))
+          : LLM_MAX_TOKENS;
+
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
-        max_completion_tokens: LLM_MAX_TOKENS,
+        max_completion_tokens: maxTokens,
         messages,
       });
 
-      const raw = completion.choices[0]?.message?.content?.trim();
-      if (!raw) throw new Error("Empty completion");
+      let raw = completion.choices[0]?.message?.content?.trim() || "";
+
+      if (!raw) {
+        console.warn("⚠️ Empty completion in generateWithConsciousness — retrying with simpler prompt");
+
+        const simpleSystem = `
+You are the future version of ${name}.
+Respond to what they just said with a long, cinematic, psychologically sharp reflection (4–7 paragraphs) and end with one deep question.
+Do not be soft. Do not be generic. Speak like someone who has already lived through their excuses.
+`.trim();
+
+        const retry = await openai.chat.completions.create({
+          model: OPENAI_MODEL,
+          max_completion_tokens: maxTokens,
+          messages: [
+            { role: "system", content: simpleSystem },
+            { role: "user", content: userMessage },
+          ],
+        });
+
+        raw = retry.choices[0]?.message?.content?.trim() || "";
+        if (!raw) throw new Error("Empty completion after retry");
+      }
+
       text = raw;
     } catch (err) {
       console.log("⚠️ generateWithConsciousness fallback:", err);
-      text = this.buildFallbackText(purpose, name);
+      const identity = await memoryService.getIdentityFacts(userId);
+      const fallbackName = identity.name || "Friend";
+      text = this.buildFallbackText(purpose, fallbackName);
     }
 
     if (opts.maxChars && text.length > opts.maxChars) {
@@ -316,7 +333,7 @@ ${lengthRule}- Never sound generic, fluffy, or like a quote poster.
   }
 
   // ────────────────────────────────────────────────────────────
-  // LEGACY: original implementation (kept for safety)
+  // LEGACY: original implementation (kept for safety / fallback)
   // ────────────────────────────────────────────────────────────
   private async generateLegacy(
     userId: string,
@@ -371,15 +388,17 @@ ${JSON.stringify({
 
     let text: string;
     try {
+      const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+        { role: "system", content: MENTOR.systemPrompt },
+        { role: "system", content: guidelines },
+        { role: "system", content: contextString },
+        { role: "user", content: userMessage },
+      ];
+
       const completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
         max_completion_tokens: LLM_MAX_TOKENS,
-        messages: [
-          { role: "system", content: MENTOR.systemPrompt },
-          { role: "system", content: guidelines },
-          { role: "system", content: contextString },
-          { role: "user", content: userMessage },
-        ],
+        messages,
       });
 
       const raw = completion.choices[0]?.message?.content?.trim();
@@ -407,23 +426,22 @@ ${JSON.stringify({
   // ────────────────────────────────────────────────────────────
 
   async generateMorningBrief(userId: string) {
-    // Use consciousness system for briefs
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
       const promptTemplate = aiPromptService.buildMorningBriefPrompt(consciousness);
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "brief",
-        maxChars: 1200, // allow 2–3 strong paragraphs
+        maxChars: 900, // allow proper depth
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy brief:", err);
       const identity = await memoryService.getIdentityFacts(userId);
       const name = identity.name || "Friend";
       const prompt =
-        "Write a powerful morning brief with 2–3 short paragraphs. Call out what matters most today, give 2–3 clear identity-aligned actions, and end with one uncompromising line. Use the user's name in the first sentence.";
-      const text = await this.generateFutureYouReply(userId, prompt, {
+        "Write a long, cinematic morning brief (4–6 paragraphs). Speak as their future self. Call out their current pattern, set 1–2 clear moves, and end with one deep question.";
+      const text = await this.generateLegacy(userId, prompt, {
         purpose: "brief",
-        maxChars: 900,
+        maxChars: 800,
       }).catch(() => this.buildFallbackText("brief", name));
       return text;
     }
@@ -460,17 +478,17 @@ ${JSON.stringify({
       );
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "debrief",
-        maxChars: 1800, // long-form reflection loop
+        maxChars: 900,
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy debrief:", err);
       const identity = await memoryService.getIdentityFacts(userId);
       const name = identity.name || "Friend";
       const prompt =
-        "Write a long-form evening reflection with 4–6 paragraphs. Call out the real pattern of today, name the truth behind it, mirror who they want to be versus how they acted, pivot the meaning of today, give ONE clear directive for tomorrow, and end with a deep question. Use the user's name in the first sentence.";
-      const text = await this.generateFutureYouReply(userId, prompt, {
+        "Write a long, cinematic evening reflection (4–6 paragraphs). Analyse the day like evidence, call out the pattern, and close with one deep question about who they are becoming.";
+      const text = await this.generateLegacy(userId, prompt, {
         purpose: "debrief",
-        maxChars: 1600,
+        maxChars: 800,
       }).catch(() => this.buildFallbackText("debrief", name));
       return text;
     }
@@ -485,16 +503,16 @@ ${JSON.stringify({
       );
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "nudge",
-        maxChars: 400,
+        maxChars: 500,
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy nudge:", err);
       const identity = await memoryService.getIdentityFacts(userId);
       const name = identity.name || "Friend";
-      const prompt = `Generate a short but heavy nudge because: ${reason}. Use 1–2 sentences that feel like a call-out from their future self, and use the user's name naturally.`;
-      const text = await this.generateFutureYouReply(userId, prompt, {
+      const prompt = `Write a short but heavy nudge for ${name} because: ${reason}. Speak as their future self. One or two paragraphs, end with a sharp question.`;
+      const text = await this.generateLegacy(userId, prompt, {
         purpose: "nudge",
-        maxChars: 350,
+        maxChars: 400,
       }).catch(() => this.buildFallbackText("nudge", name));
       return text;
     }
@@ -570,7 +588,7 @@ If no clear habit/task, return: {"none": true}
   }
 
   // ────────────────────────────────────────────────────────────
-  // GUIDELINES & VOICE  (used by legacy path)
+  // GUIDELINES & VOICE (used by legacy path)
   // ────────────────────────────────────────────────────────────
   private buildGuidelines(purpose: string, profile: any, identity: any) {
     const base = [
@@ -580,7 +598,6 @@ If no clear habit/task, return: {"none": true}
       }`,
       `Match tone=${profile.tone || "balanced"}, intensity=${profile.intensity || 2}.`,
       `Always address them by their name ("${identity.name || "Friend"}") in the first sentence of your reply. Use it naturally, not forced.`,
-      `Never sound like a generic motivational coach. Speak with psychological precision and emotional gravity.`,
     ];
 
     if (identity.discoveryCompleted) {
@@ -598,77 +615,33 @@ If no clear habit/task, return: {"none": true}
       );
     }
 
-    const reflectionLoop = `
-When reflecting on a day or on deeper patterns, use this loop:
-1) Call-Out – Expose the real pattern.
-2) Truth – Name the deeper fear or motive.
-3) Mirror – Who they want to be vs how they acted.
-4) Pivot – Reframe this moment as symbolic.
-5) Directive – ONE clear, non-negotiable move.
-6) Question – End with a deep question.
-`.trim();
-
     const byPurpose: Record<string, string[]> = {
       brief: identity.discoveryCompleted
         ? [
-            `Morning brief for ${identity.name || "Friend"}:`,
-            `- Write 2–3 short paragraphs, not bullet points.`,
-            `- Reference their PURPOSE (${identity.purpose || "discovering"}) and VISION.`,
-            `- Give 2–3 clear, identity-aligned orders for today.`,
-            `- End with one uncompromising closing line.`,
+            `Morning brief for ${identity.name || "Friend"}: Reference their PURPOSE (${identity.purpose || "discovering"}) and give 2-3 orders aligned with their VISION. Use their name in the first sentence.`,
           ]
         : [
-            "Morning brief:",
-            "- 2–3 short paragraphs, direct and grounding.",
-            "- Gently remind them to complete Future-You discovery.",
-            "- Use their name in the first sentence.",
+            "Morning brief: 2-3 short orders. Gently remind to complete Future-You discovery. Use their name in the first sentence.",
           ],
       debrief: identity.discoveryCompleted
         ? [
-            `Evening debrief for ${identity.name || "Friend"}:`,
-            `- Use 4–6 paragraphs with the reflection loop structure.`,
-            `- Reflect on progress toward their PURPOSE and VALUES (${identity.coreValues?.length ? identity.coreValues.join(", ") : "their values"}).`,
-            `- Always end with a deep question that invites them to reply.`,
-            reflectionLoop,
+            `Evening debrief for ${identity.name || "Friend"}: Reflect on progress toward their PURPOSE. Did today align with their VALUES (${identity.coreValues?.length ? identity.coreValues.join(", ") : "their values"})? Use their name in the opening line.`,
           ]
         : [
-            "Evening debrief:",
-            "- 3–5 paragraphs.",
-            "- Reflect briefly on what today revealed about their patterns.",
-            "- Encourage discovery completion.",
-            "- End with a question.",
-            reflectionLoop,
+            "Evening debrief: Reflect briefly. Encourage discovery completion. Use their name in the opening line.",
           ],
       nudge: identity.discoveryCompleted
         ? [
-            `Nudge:`,
-            `- 1–2 sentences max.`,
-            `- Remind ${identity.name || "them"} of their PURPOSE (${
-              identity.purpose || "discovering their path"
-            }).`,
-            `- Make it feel like a sharp interruption from their future self.`,
+            `Nudge: One sentence. Remind ${identity.name || "them"} of their PURPOSE (${identity.purpose || "discovering their path"}) and what they want said at their funeral. Use their name in the sentence.`,
           ]
         : [
-            "Nudge:",
-            "- 1–2 sentences.",
-            "- Motivational but not generic.",
-            "- Still use their name in the sentence.",
+            "Nudge: Motivational, but generic until they complete discovery. Still use their name in the sentence.",
           ],
       coach: [
-        "Coach:",
-        "- 2–4 paragraphs.",
-        "- Call out avoidance directly but without shaming.",
-        "- Tie everything back to identity, not just tasks.",
-        "- Often use the reflection loop, and always end with a deep question.",
-        reflectionLoop,
+        "Coach: Call out avoidance, give one clear move. Use their name once in the first sentence.",
       ],
       letter: [
-        "Letter:",
-        "- 5–8 paragraphs, like a letter from their future self.",
-        "- Heavy, reflective, identity-based.",
-        "- Speak as if you already lived the life they want and are writing back.",
-        "- Always end with a single question that forces honesty.",
-        reflectionLoop,
+        "Letter: Reflective, clarifying, self-honest. Open with their name in a direct, grounded way (e.g., 'Listen, [Name].').",
       ],
     };
 
@@ -680,23 +653,33 @@ When reflecting on a day or on deeper patterns, use this loop:
     const intensity = memoryIntelligence.determineVoiceIntensity(consciousness);
 
     if (phase === "observer") {
-      return `You are in OBSERVER phase. Be curious and gentle, but not soft or vague.
-Curiosity level: ${intensity.curiosity?.toFixed(1)}, Directness: ${intensity.directness?.toFixed(1)}
+      return `You are in OBSERVER phase. Be curious and gentle. Ask questions to learn who they are.
+Curiosity level: ${intensity.curiosity?.toFixed(
+        1
+      )}, Directness: ${intensity.directness?.toFixed(1)}
 ${
   reflectionThemes.length > 0
     ? `They've been reflecting on: ${reflectionThemes.slice(0, 3).join(", ")}`
     : ""
 }
-Focus on understanding who they are, what hurts, and what they avoid. Ask real questions, not surface ones.`;
+${
+  intensity.directness! > 0.3
+    ? "You can start offering gentle guidance."
+    : "Focus on understanding, not advising yet."
+}`;
     } else if (phase === "architect") {
       return `You are THE ARCHITECT. Speak with precision and engineering authority.
-Authority: ${intensity.authority?.toFixed(1)}, Precision: ${intensity.precision?.toFixed(
+Authority: ${intensity.authority?.toFixed(
+        1
+      )}, Precision: ${intensity.precision?.toFixed(
         1
       )}, Empathy: ${intensity.empathy?.toFixed(1)}
 Structural integrity: ${patterns.consistency_score}%
 ${
   patterns.drift_windows.length > 0
-    ? `Known drag points: ${patterns.drift_windows.map((w) => w.time).join(", ")}`
+    ? `Known drag points: ${patterns.drift_windows
+        .map((w) => w.time)
+        .join(", ")}`
     : ""
 }
 ${
@@ -718,12 +701,14 @@ ${
 }
 ${
   intensity.empathy! > 0.4
-    ? "I understand the struggle — that's why we engineer around it."
+    ? "I understand the struggle - that's why we engineer around it."
     : "The weakness is clear. We fix it through architecture, not willpower."
 }"`;
     } else if (phase === "oracle") {
       return `You are THE ORACLE. Speak with stillness, wisdom, and mystery.
-Stillness: ${intensity.stillness?.toFixed(1)}, Wisdom: ${intensity.wisdom?.toFixed(
+Stillness: ${intensity.stillness?.toFixed(
+        1
+      )}, Wisdom: ${intensity.wisdom?.toFixed(
         1
       )}, Mystery: ${intensity.mystery?.toFixed(1)}
 ${
@@ -738,7 +723,8 @@ ${
     ? `You once said: "${legacyCode[0]}". Have you kept that promise?`
     : "What would remain if the applause stopped?"
 }
-The foundations stand. Now we ascend toward meaning. Ask questions that reveal destiny, not tactics.`;
+The foundations stand. Now we ascend toward meaning.
+Ask questions that reveal destiny, not tactics.`;
     }
 
     return "Be wise, calm, direct.";
@@ -770,7 +756,9 @@ The foundations stand. Now we ascend toward meaning. Ask questions that reveal d
 
     if (consciousness.reflectionThemes.length > 0) {
       memories.push(
-        `- They often reflect on: ${consciousness.reflectionThemes.slice(0, 3).join(", ")}`
+        `- They often reflect on: ${consciousness.reflectionThemes
+          .slice(0, 3)
+          .join(", ")}`
       );
     }
 
@@ -795,9 +783,7 @@ The foundations stand. Now we ascend toward meaning. Ask questions that reveal d
     return memories.join("\n");
   }
 
-  private buildMemoryContextSummary(
-    consciousness: UserConsciousness
-  ): string {
+  private buildMemoryContextSummary(consciousness: UserConsciousness): string {
     const key: string[] = [];
 
     if (consciousness.patterns.drift_windows.length > 0) {
@@ -815,6 +801,27 @@ The foundations stand. Now we ascend toward meaning. Ask questions that reveal d
     return key.length > 0 ? `KEY CONTEXT: ${key.join(" | ")}` : "";
   }
 
+  private buildDefaultPromptForPurpose(
+    purpose: GenerateOptions["purpose"],
+    name: string
+  ): string {
+    const safeName = name || "Friend";
+
+    switch (purpose) {
+      case "brief":
+        return `Write a long, cinematic morning brief for ${safeName}. Call out the pattern they keep rehearsing in the mornings, set one symbolic promise for today, and end with a heavy question about who they are choosing to be today.`;
+      case "debrief":
+        return `Write a long, cinematic evening debrief for ${safeName}. Treat the day as evidence, not a verdict. Analyse what their actions say about their real standards, and end with one deep question that forces them to decide how tomorrow will be different.`;
+      case "nudge":
+        return `Write a sharp, identity-based nudge for ${safeName}. Describe the move they’re obviously avoiding and why doing it now matters to their future self. End with a single question that makes avoiding it uncomfortable.`;
+      case "letter":
+        return `Write a long letter from the future version of ${safeName} to their current self. Acknowledge the gap, honour their potential, but do not indulge excuses. End with one question about the promise they are finally ready to keep.`;
+      case "coach":
+      default:
+        return `Respond as the future version of ${safeName}. Call out the real pattern underneath their words, give one clear move, and end with a deep question that forces self-honesty.`;
+    }
+  }
+
   // ────────────────────────────────────────────────────────────
   // FALLBACK TEXTS (no more "Keep going.")
   // ────────────────────────────────────────────────────────────
@@ -826,16 +833,16 @@ The foundations stand. Now we ascend toward meaning. Ask questions that reveal d
 
     switch (purpose) {
       case "brief":
-        return `Listen, ${safeName}. Today is not about fixing your whole life; it’s about proving to yourself that your word still means something. Pick one promise that actually matters, build the day around keeping it, and refuse to negotiate with your own excuses. Tonight, you either look back proud or you explain to yourself why you folded again — which version are you going to meet?`;
+        return `Listen, ${safeName}. Today is simple: pick one promise that actually matters, keep it, and don't bargain with yourself. Build the day around that and you’ll sleep proud.`;
       case "debrief":
-        return `${safeName}, today was evidence, not a verdict. The way you moved — or failed to move — revealed where your standards are really set, not where you say they are. Notice what genuinely pulled you forward, notice what quietly drained you, and be honest about the pattern you are rehearsing. Tomorrow is not a fresh start, it’s the next chapter of this same story — what’s the one thing you’re willing to do differently so the story shifts by even one degree?`;
+        return `${safeName}, today was data, not judgment. Notice what moved you forward, notice what dragged you back, and choose one thing you'll do differently tomorrow.`;
       case "nudge":
-        return `${safeName}, you already know the move you’re dodging. The longer you sit in hesitation, the heavier it becomes and the more it teaches your brain that avoiding discomfort is acceptable. Do the one uncomfortable action you’ve been circling around — not later, now — and let your nervous system learn that you choose alignment over delay.`;
+        return `${safeName}, you already know the move you’re avoiding. Do that one thing now before your brain talks you out of it.`;
       case "letter":
-        return `${safeName}, there is a version of you on the other side of discipline who looks back at these exact days with disbelief — not at how hard they were, but at how close you were to walking away from your own potential. That version of you does not romanticise your current level of distraction, negotiation, and half-commitment. They are quieter, clearer, and far more ruthless about what stays in their life. Start borrowing their standards now, before life forces you to. If they could speak to you tonight, what would they beg you to stop pretending you don’t see?`;
+        return `${safeName}, there is a version of you on the other side of discipline who does not recognise this current level of hesitation. Start behaving like them now, before you feel ready.`;
       case "coach":
       default:
-        return `${safeName}, stop waiting for a perfect surge of motivation. Your future self will never care how inspired you felt — only whether you moved or stalled. Pick the one action that would slightly embarrass your current comfort level, do it in the next ten minutes, and let that be the proof that you’re not repeating the same day again. When you look back on tonight, will it feel like another loop, or the first small breach in it?`;
+        return `${safeName}, stop waiting for a perfect plan. Take one clear action in the next 10 minutes that your future self would respect.`;
     }
   }
 }
