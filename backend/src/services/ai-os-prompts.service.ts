@@ -35,10 +35,10 @@ ${FUTURE_YOU_REFLECTION_PROMPT}
 
 BEGIN
 {
-  "phase": "${consciousness.os_phase.current_phase}",
+  "phase": "${consciousness.os_phase?.current_phase || 'observer'}",
   "time_of_day": "morning",
   "user_context": {
-    "emotional_state": "${consciousness.currentEmotionalState}",
+    "emotional_state": "${consciousness.currentEmotionalState || 'neutral'}",
     "patterns": ${JSON.stringify(consciousness.patterns || {})},
     "themes": ${JSON.stringify(consciousness.reflectionThemes || [])},
     "contradictions": ${JSON.stringify(consciousness.contradictions || [])}
@@ -52,18 +52,18 @@ BEGIN
     consciousness: UserConsciousness,
     dayData: { kept: number; missed: number }
   ): string {
-    return `
+        return `
 ${FUTURE_YOU_REFLECTION_PROMPT}
 
 BEGIN
 {
-  "phase": "${consciousness.os_phase.current_phase}",
+  "phase": "${consciousness.os_phase?.current_phase || 'observer'}",
   "time_of_day": "night",
   "user_context": {
     "kept": ${dayData.kept},
     "missed": ${dayData.missed},
-    "patterns": ${JSON.stringify(consciousness.patterns)},
-    "emotional_state": "${consciousness.currentEmotionalState}"
+    "patterns": ${JSON.stringify(consciousness.patterns || {})},
+    "emotional_state": "${consciousness.currentEmotionalState || 'neutral'}"
   }
 }
 `.trim();
@@ -76,12 +76,12 @@ ${FUTURE_YOU_REFLECTION_PROMPT}
 
 BEGIN
 {
-  "phase": "${consciousness.os_phase.current_phase}",
+  "phase": "${consciousness.os_phase?.current_phase || 'observer'}",
   "time_of_day": "midday",
   "user_context": {
     "reason": "${reason}",
-    "emotion": "${consciousness.currentEmotionalState}",
-    "avoidance": ${JSON.stringify(consciousness.patterns.avoidance_triggers || [])}
+    "emotion": "${consciousness.currentEmotionalState || 'neutral'}",
+    "avoidance": ${JSON.stringify(consciousness.patterns?.avoidance_triggers || [])}
   }
 }
 `.trim();
@@ -97,12 +97,12 @@ ${FUTURE_YOU_REFLECTION_PROMPT}
 
 BEGIN CHAT
 {
-  "phase": "${consciousness.os_phase.current_phase}",
+  "phase": "${consciousness.os_phase?.current_phase || 'observer'}",
   "time_of_day": "dynamic",
   "user_message": "${userMessage.replace(/"/g, "'")}",
   "user_context": {
-    "emotion": "${consciousness.currentEmotionalState}",
-    "patterns": ${JSON.stringify(consciousness.patterns)},
+    "emotion": "${consciousness.currentEmotionalState || 'neutral'}",
+    "patterns": ${JSON.stringify(consciousness.patterns || {})},
     "legacy_code": ${JSON.stringify(consciousness.legacyCode || [])}
   }
 }
