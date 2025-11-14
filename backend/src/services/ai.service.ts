@@ -10,7 +10,7 @@ import { redis } from "../utils/redis";
 import { MENTOR } from "../config/mentors.config";
 
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o";
-const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 450);
+const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS || 1000); // Increased for GPT-4o longer responses
 const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 10000);
 
 function getOpenAIClient() {
