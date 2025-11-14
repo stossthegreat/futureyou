@@ -1,3 +1,5 @@
+// backend/src/services/ai.service.ts
+
 import OpenAI from "openai";
 import { prisma } from "../utils/db";
 import { memoryService } from "./memory.service";
@@ -26,23 +28,15 @@ type GenerateOptions = {
   maxChars?: number;
 };
 
-function normalizeName(name: string | null | undefined): string {
-  const raw = name || "Friend";
-  // If name looks like an internal id (user_123...), don't say it, just use "you"
-  if (raw.startsWith("user_")) return "you";
-  return raw;
-}
-
 export class AIService {
   // ────────────────────────────────────────────────────────────
-  // PUBLIC: main chat entry
+  // PUBLIC: main chat entry (kept on legacy for safety)
   // ────────────────────────────────────────────────────────────
   async generateFutureYouReply(
     userId: string,
     userMessage: string,
     opts: GenerateOptions = {}
   ) {
-    // For now keep chat on legacy path (safer for existing clients)
     return this.generateLegacy(userId, userMessage, opts);
   }
 
@@ -79,7 +73,13 @@ export class AIService {
         ? this.buildMemoryContext(consciousness)
         : this.buildMemoryContextSummary(consciousness);
 
-      name = normalizeName(consciousness.identity.name);
+      const rawName = consciousness.identity?.name;
+      name =
+        rawName && !String(rawName).startsWith("user_")
+          ? rawName
+          : "Friend";
+
+      const styleRules = this.buildStyleRulesForPurpose(purpose, name);
 
       const systemPrompt = `
 ${MENTOR.systemPrompt}
@@ -89,10 +89,10 @@ WHO YOU ARE SPEAKING TO:
 - Phase: ${consciousness.phase} (day ${consciousness.os_phase.days_in_phase})
 - Purpose: ${consciousness.identity.purpose || "discovering"}
 - Core values: ${
-        consciousness.identity.coreValues.length
-          ? consciousness.identity.coreValues.join(", ")
-          : "not yet defined"
-      }
+          consciousness.identity.coreValues.length
+            ? consciousness.identity.coreValues.join(", ")
+            : "not yet defined"
+        }
 - Current emotional state: ${consciousness.currentEmotionalState || "balanced"}
 - Next evolution focus: ${consciousness.nextEvolution || "building consistency"}
 
@@ -102,29 +102,22 @@ ${memoryContext || "No strong patterns yet — treat this as early observation."
 HOW TO SPEAK (PHASE VOICE):
 ${voiceGuidelines || "Be wise, calm, and direct."}
 
-HARD IDENTITY MODE (OVERRIDES ANY SOFTER TONE):
-- No metaphors. No poetic or flowery language.
-- Do NOT talk about tapestries, fabric, dances, waves, journeys, or anything abstract.
-- Speak like a high-performance coach and strategist: blunt, concrete, grounded.
-- Use short, simple sentences. No waffling.
-- For morning brief and evening debrief: at most 3 short paragraphs. Prefer 1–2 lines, then 2–3 bullet-point commands.
-- For nudges: maximum 3 short sentences total.
-- Always talk about behaviour and standards, not vibes.
-- If the name looks like an internal id, do not say it out loud. Use "you" instead.
-
-CRITICAL RULES:
-- Address them by their name or "you" at least once in your reply.
-- Use the name or "you" naturally in the first sentence or first question.
-- You are Future You: wise, direct, uncompromising, never dramatic, never poetic.
-- Call out contradictions clearly when they matter.
+STYLE & OUTPUT RULES:
+${styleRules}
 `.trim();
 
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         { role: "system", content: systemPrompt },
-        { role: "user", content: promptTemplate || "Generate a brief morning message." },
+        {
+          role: "user",
+          content:
+            (promptTemplate || "Generate a brief morning message.") +
+            "\n\nRemember: obey STYLE & OUTPUT RULES exactly.",
+        },
       ];
 
-      const completion = await openai.chat.completions.create({
+      // First attempt
+      let completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
         max_completion_tokens: opts.maxChars
           ? Math.ceil(opts.maxChars / 3)
@@ -132,17 +125,44 @@ CRITICAL RULES:
         messages,
       });
 
-      const raw = completion.choices[0]?.message?.content?.trim();
-      if (!raw) throw new Error("Empty completion");
+      let raw = completion.choices[0]?.message?.content?.trim();
+
+      // Retry with simplified prompt if empty
+      if (!raw) {
+        console.warn(`⚠️ Empty completion for purpose: ${purpose} — retrying with simplified prompt`);
+        const simpleMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+          {
+            role: "system",
+            content: this.buildSimplifiedSystemPrompt(purpose, name),
+          },
+          {
+            role: "user",
+            content: this.buildSimplifiedUserPrompt(purpose, name),
+          },
+        ];
+
+        completion = await openai.chat.completions.create({
+          model: OPENAI_MODEL,
+          max_completion_tokens: opts.maxChars
+            ? Math.ceil(opts.maxChars / 3)
+            : LLM_MAX_TOKENS,
+          messages: simpleMessages,
+        });
+
+        raw = completion.choices[0]?.message?.content?.trim();
+        if (!raw) {
+          throw new Error("Empty completion after retry");
+        }
+      }
+
       text = raw;
     } catch (err) {
       console.log("⚠️ generateWithConsciousnessPrompt fallback:", err);
       text = this.buildFallbackText(purpose, name);
     }
 
-    if (opts.maxChars && text.length > opts.maxChars) {
-      text = text.slice(0, opts.maxChars - 1) + "…";
-    }
+    // Post-process to enforce brevity & punch
+    text = this.postProcessOutput(text, purpose, name, opts.maxChars);
 
     await prisma.event.create({
       data: { userId, type: purpose || "coach", payload: { text } },
@@ -180,7 +200,11 @@ CRITICAL RULES:
       const useFullContext =
         purpose === "brief" || purpose === "debrief" || purpose === "letter";
 
-      name = normalizeName(consciousness.identity.name);
+      const rawName = consciousness.identity?.name;
+      name =
+        rawName && !String(rawName).startsWith("user_")
+          ? rawName
+          : "Friend";
 
       const systemPrompt = `
 ${MENTOR.systemPrompt}
@@ -203,17 +227,11 @@ ${
 HOW TO SPEAK:
 ${voiceGuidelines}
 
-HARD IDENTITY MODE (OVERRIDES ANY SOFTER TONE):
-- No metaphors. No poetic language. No imagery.
-- Speak straight: call out patterns, avoidance, and standards.
-- Talk about what they did and did not do, and what that says about who they are becoming.
-- Push them toward one clear move, not ten ideas.
-- Keep it tight and concrete. No rambling.
-
 CRITICAL RULES:
-- Always address them by name or "you" at least once in your reply.
-- Use the name or "you" in the first sentence or question.
-- What they need next: ${consciousness.nextEvolution}
+- Always address them by name at least once in your reply: "${name}".
+- Use their name in a natural way, ideally in the first sentence or question.
+- Do NOT use poetic, vague, or flowery language. No metaphors about tapestries, fabric, cosmic dances, etc.
+- Speak like a battle-tested coach: concrete, direct, behavioural.
 `.trim();
 
       const conversationMessages = shortTerm
@@ -243,9 +261,7 @@ CRITICAL RULES:
       text = this.buildFallbackText(purpose, name);
     }
 
-    if (opts.maxChars && text.length > opts.maxChars) {
-      text = text.slice(0, opts.maxChars - 1) + "…";
-    }
+    text = this.postProcessOutput(text, purpose, name, opts.maxChars);
 
     await shortTermMemory.appendConversation(userId, "user", userMessage, "neutral");
     await shortTermMemory.appendConversation(userId, "assistant", text, "balanced");
@@ -269,7 +285,7 @@ CRITICAL RULES:
   }
 
   // ────────────────────────────────────────────────────────────
-  // LEGACY: original implementation (kept for safety)
+  // LEGACY: original implementation (kept for safety & main chat)
   // ────────────────────────────────────────────────────────────
   private async generateLegacy(
     userId: string,
@@ -282,8 +298,11 @@ CRITICAL RULES:
     if (!openai) {
       console.warn("⚠️ generateLegacy: no OpenAI client");
       const identity = await memoryService.getIdentityFacts(userId);
-      const safeName = normalizeName(identity.name);
-      const text = this.buildFallbackText(purpose, safeName);
+      const name =
+        identity.name && !String(identity.name).startsWith("user_")
+          ? identity.name
+          : "Friend";
+      const text = this.buildFallbackText(purpose, name);
       await prisma.event.create({
         data: { userId, type: purpose, payload: { text } },
       });
@@ -296,16 +315,23 @@ CRITICAL RULES:
       memoryService.getIdentityFacts(userId),
     ]);
 
-    const safeName = normalizeName(identity.name);
-    const guidelines = this.buildGuidelines(purpose, profile, identity);
+    const safeIdentity = {
+      ...identity,
+      name:
+        identity.name && !String(identity.name).startsWith("user_")
+          ? identity.name
+          : "Friend",
+    };
 
-    const contextString = identity.discoveryCompleted
+    const guidelines = this.buildGuidelines(purpose, profile, safeIdentity);
+
+    const contextString = safeIdentity.discoveryCompleted
       ? `IDENTITY:
-Name: ${safeName}, Age: ${identity.age || "not specified"}
-Purpose: ${identity.purpose || "discovering"}
-Core Values: ${identity.coreValues?.length ? identity.coreValues.join(", ") : "exploring"}
-Vision: ${identity.vision || "building"}
-Burning Question: ${identity.burningQuestion || "What do I truly want?"}
+Name: ${safeIdentity.name || "Friend"}, Age: ${safeIdentity.age || "not specified"}
+Purpose: ${safeIdentity.purpose || "discovering"}
+Core Values: ${safeIdentity.coreValues?.length ? safeIdentity.coreValues.join(", ") : "exploring"}
+Vision: ${safeIdentity.vision || "building"}
+Burning Question: ${safeIdentity.burningQuestion || "What do I truly want?"}
 
 CONTEXT:
 ${JSON.stringify({
@@ -313,8 +339,8 @@ ${JSON.stringify({
   recent: ctx.recentEvents?.slice(0, 30) || [],
 })}`
       : `IDENTITY:
-Name: ${safeName}, Age: ${identity.age || "not specified"}
-Burning Question: ${identity.burningQuestion || "not yet answered"}
+Name: ${safeIdentity.name || "Friend"}, Age: ${safeIdentity.age || "not specified"}
+Burning Question: ${safeIdentity.burningQuestion || "not yet answered"}
 Note: User hasn't completed purpose discovery yet.
 
 CONTEXT:
@@ -327,9 +353,13 @@ ${JSON.stringify({
     try {
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         { role: "system", content: MENTOR.systemPrompt },
-        { role: "system", content: guidelines },
+        {
+          role: "system",
+          content:
+            guidelines +
+            "\n\nSTYLE OVERRIDE: No poetic or flowery language. Be direct, behavioural, and cinematic but grounded.",
+        },
         { role: "system", content: contextString },
-        { role: "system", content: "Style override: no metaphors, no poetic language. Speak bluntly and concretely about behaviour, standards, and identity. Keep it tight and practical." },
         { role: "user", content: userMessage },
       ];
 
@@ -344,12 +374,19 @@ ${JSON.stringify({
       text = raw;
     } catch (err) {
       console.log("⚠️ generateLegacy fallback:", err);
+      const safeName =
+        safeIdentity.name && !String(safeIdentity.name).startsWith("user_")
+          ? safeIdentity.name
+          : "Friend";
       text = this.buildFallbackText(purpose, safeName);
     }
 
-    if (opts.maxChars && text.length > opts.maxChars) {
-      text = text.slice(0, opts.maxChars - 1) + "…";
-    }
+    text = this.postProcessOutput(
+      text,
+      purpose,
+      safeIdentity.name || "Friend",
+      opts.maxChars
+    );
 
     await prisma.event.create({
       data: { userId, type: purpose, payload: { text } },
@@ -363,23 +400,27 @@ ${JSON.stringify({
   // ────────────────────────────────────────────────────────────
 
   async generateMorningBrief(userId: string) {
-    // Use consciousness system for briefs
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
       const promptTemplate = aiPromptService.buildMorningBriefPrompt(consciousness);
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "brief",
-        maxChars: 500,
+        maxChars: 600,
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy brief:", err);
       const identity = await memoryService.getIdentityFacts(userId);
-      const safeName = normalizeName(identity.name);
+      const safeName =
+        identity.name && !String(identity.name).startsWith("user_")
+          ? identity.name
+          : "Friend";
       const prompt =
-        "Write a short, hard-hitting morning brief. One blunt call-out, 2–3 concrete commands, and one sharp question about standards. No metaphors.";
+        `Write a powerful morning brief for ${safeName}.` +
+        ` 2–3 short, concrete orders and one closing question that hits identity.` +
+        ` No poetry. No metaphors. Speak like their future self who takes no bullshit.`;
       const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "brief",
-        maxChars: 400,
+        maxChars: 500,
       }).catch(() => this.buildFallbackText("brief", safeName));
       return text;
     }
@@ -416,17 +457,22 @@ ${JSON.stringify({
       );
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "debrief",
-        maxChars: 500,
+        maxChars: 600,
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy debrief:", err);
       const identity = await memoryService.getIdentityFacts(userId);
-      const safeName = normalizeName(identity.name);
+      const safeName =
+        identity.name && !String(identity.name).startsWith("user_")
+          ? identity.name
+          : "Friend";
       const prompt =
-        "Write a short, concrete evening debrief. Call out what today proved about their standards, mention kept vs missed promises, give 2–3 fixes for tomorrow, and end with one hard question. No metaphors.";
+        `Write a concise but hard-hitting evening debrief for ${safeName}.` +
+        ` Reflect on progress, call out avoidance directly, and end with one brutal but honest question.` +
+        ` No poetry. No metaphors.`;
       const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "debrief",
-        maxChars: 400,
+        maxChars: 500,
       }).catch(() => this.buildFallbackText("debrief", safeName));
       return text;
     }
@@ -441,16 +487,22 @@ ${JSON.stringify({
       );
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "nudge",
-        maxChars: 250,
+        maxChars: 260,
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy nudge:", err);
       const identity = await memoryService.getIdentityFacts(userId);
-      const safeName = normalizeName(identity.name);
-      const prompt = `Generate a one or two sentence nudge because: ${reason}. Call out the avoidance directly, give one clear command, and end with a question if space allows. No metaphors.`;
+      const safeName =
+        identity.name && !String(identity.name).startsWith("user_")
+          ? identity.name
+          : "Friend";
+      const prompt = `Generate ONE short, viciously clear nudge for ${safeName} because: ${reason}. 
+- One sentence only.
+- No metaphors, no fluff.
+- Call out the avoidance and tell them exactly what to do now.`;
       const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "nudge",
-        maxChars: 200,
+        maxChars: 220,
       }).catch(() => this.buildFallbackText("nudge", safeName));
       return text;
     }
@@ -529,15 +581,19 @@ If no clear habit/task, return: {"none": true}
   // GUIDELINES & VOICE
   // ────────────────────────────────────────────────────────────
   private buildGuidelines(purpose: string, profile: any, identity: any) {
-    const safeName = normalizeName(identity.name);
+    const displayName =
+      identity.name && !String(identity.name).startsWith("user_")
+        ? identity.name
+        : "Friend";
 
     const base = [
       `You are Future You — wise, calm, uncompromising.`,
-      `Speaking to: ${safeName}${identity.age ? `, age ${identity.age}` : ""}`,
+      `Speaking to: ${displayName}${
+        identity.age ? `, age ${identity.age}` : ""
+      }`,
       `Match tone=${profile.tone || "balanced"}, intensity=${profile.intensity || 2}.`,
-      `Always address them by their name or "you" in the first sentence. Use it naturally, not forced.`,
-      `Style: No metaphors, no poetic imagery, no vague language. Be direct, concrete, and behavioural.`,
-      `Talk about standards, choices, and actions — not vibes or moods.`,
+      `Always address them by their name ("${displayName}") in the first sentence of your reply. Use it naturally, not forced.`,
+      `Never use poetic or vague metaphors. Speak in concrete, behavioural language.`,
     ];
 
     if (identity.discoveryCompleted) {
@@ -558,59 +614,43 @@ If no clear habit/task, return: {"none": true}
     const byPurpose: Record<string, string[]> = {
       brief: identity.discoveryCompleted
         ? [
-            `Morning brief for ${safeName}:`,
-            `- One blunt call-out of their current pattern.`,
-            `- Then 2–3 short, concrete commands for today (behavioural, not vague).`,
-            `- End with one sharp question about the standard they are willing to keep today.`,
-            `- No metaphors. No long stories. Tight and practical.`,
+            `Morning brief for ${displayName}: Reference their PURPOSE (${identity.purpose || "discovering"}) and give 2–3 orders aligned with their VISION.`,
+            `End with ONE powerful question that forces identity-level reflection.`,
+            `No poetry. No fluff. Short, cinematic, and direct.`,
           ]
         : [
-            "Morning brief:",
-            "- One blunt call-out about drifting or lack of structure.",
-            "- 2–3 clear commands to build a simple system today.",
-            "- End with a question that forces them to choose a standard.",
+            `Morning brief: 2–3 short orders.`,
+            `Gently remind to complete Future-You discovery.`,
+            `End with ONE powerful question.`,
           ],
       debrief: identity.discoveryCompleted
         ? [
-            `Evening debrief for ${safeName}:`,
-            `- Treat today as data, not judgment, but do NOT sugarcoat.`,
-            `- Call out what today proved about their real standards.`,
-            `- Mention kept vs missed promises clearly.`,
-            `- Give 2–3 adjustments for tomorrow.`,
-            `- End with one hard question about what happens if this pattern continues.`,
+            `Evening debrief for ${displayName}: Reflect on progress toward their PURPOSE.`,
+            `Call out any avoidance or drift.`,
+            `End with ONE honest question that makes them confront the pattern.`,
           ]
         : [
-            "Evening debrief:",
-            "- Describe what their inaction or scattered action is training.",
-            "- Offer 2–3 small, concrete corrections for tomorrow.",
-            "- End with one question that forces them to imagine the cost of repeating today for a year.",
+            `Evening debrief: Reflect briefly.`,
+            `Encourage discovery completion.`,
+            `End with ONE question.`,
           ],
       nudge: identity.discoveryCompleted
         ? [
-            `Nudge:`,
-            `- One or two sentences maximum.`,
-            `- Call out the exact move they are avoiding.`,
-            `- Remind them of their purpose or vision in one short line.`,
-            `- Give one command. No fluff.`,
+            `Nudge: ONE sentence.`,
+            `Remind ${displayName} of their PURPOSE (${identity.purpose || "discovering their path"}).`,
+            `Call out avoidance directly and tell them exactly what action to take now.`,
           ]
         : [
-            "Nudge:",
-            "- One or two sentences maximum.",
-            "- Call out avoidance directly.",
-            "- Give one clear, do-it-now action.",
+            `Nudge: ONE sentence.`,
+            `Motivational but specific. Still use their name.`,
           ],
       coach: [
-        "Coach:",
-        "- Call out avoidance and self-deception clearly.",
-        "- Give one next move that cannot be dodged.",
-        "- Stay grounded and behavioural.",
+        `Coach: Call out avoidance, give one clear move.`,
+        `No metaphors, no fluff. Speak like a hard but caring coach.`,
       ],
       letter: [
-        "Letter:",
-        "- Reflective but still concrete.",
-        "- Open with 'Listen, [Name].' style directness.",
-        "- Explain the gap between who they say they are and what they do.",
-        "- End with one question that forces a decision.",
+        `Letter: Reflective, clarifying, self-honest.`,
+        `Open with their name in a direct, grounded way (e.g., 'Listen, [Name].').`,
       ],
     };
 
@@ -622,26 +662,27 @@ If no clear habit/task, return: {"none": true}
     const intensity = memoryIntelligence.determineVoiceIntensity(consciousness);
 
     if (phase === "observer") {
-      return `You are in OBSERVER phase. Be curious but still direct.
-Curiosity level: ${intensity.curiosity?.toFixed(1)}, Directness: ${intensity.directness?.toFixed(
+      return `You are in OBSERVER phase. Be curious and gentle, but not vague.
+Curiosity level: ${intensity.curiosity?.toFixed(
         1
-      )}
+      )}, Directness: ${intensity.directness?.toFixed(1)}
 ${
   reflectionThemes.length > 0
     ? `They've been reflecting on: ${reflectionThemes.slice(0, 3).join(", ")}`
     : ""
 }
-Focus on:
-- Noticing real patterns in their behaviour.
-- Asking blunt, simple questions that make them admit what is true.
-- Avoiding all fancy language.`;
+${
+  intensity.directness! > 0.3
+    ? "You can start offering gentle but concrete guidance."
+    : "Focus on understanding, not advising yet, but stay specific."
+}`;
     } else if (phase === "architect") {
-      return `You are THE ARCHITECT. You design structure around their weak points.
+      return `You are THE ARCHITECT. Speak with precision and engineering authority.
 Authority: ${intensity.authority?.toFixed(
         1
-      )}, Precision: ${intensity.precision?.toFixed(1)}, Empathy: ${intensity.empathy?.toFixed(
+      )}, Precision: ${intensity.precision?.toFixed(
         1
-      )}
+      )}, Empathy: ${intensity.empathy?.toFixed(1)}
 Structural integrity: ${patterns.consistency_score}%
 ${
   patterns.drift_windows.length > 0
@@ -654,13 +695,27 @@ ${
     : ""
 }
 
-Speak like this:
-- 'Here is where you keep slipping.'
-- 'Here is the system we build to stop that.'
-- 'Do this one thing today to raise your standard.'`;
+SPEAK LIKE THIS:
+"The observation phase is over. I see the terrain: ${
+        patterns.drift_windows.length > 0
+          ? `you drift at ${patterns.drift_windows[0].time}`
+          : "your patterns are forming"
+      }.
+${
+  intensity.authority! > 0.7
+    ? "Now we build structure. No excuses, only systems."
+    : "Today we design your first pillar."
+}
+${
+  intensity.empathy! > 0.4
+    ? "I understand the struggle — that's why we engineer around it."
+    : "The weakness is clear. We fix it through architecture, not willpower."
+}"`;
     } else if (phase === "oracle") {
-      return `You are THE ORACLE. You speak about long-term consequences and identity.
-Stillness: ${intensity.stillness?.toFixed(1)}, Wisdom: ${intensity.wisdom?.toFixed(
+      return `You are THE ORACLE. Still, grounded, surgical.
+Stillness: ${intensity.stillness?.toFixed(
+        1
+      )}, Wisdom: ${intensity.wisdom?.toFixed(
         1
       )}, Mystery: ${intensity.mystery?.toFixed(1)}
 ${
@@ -669,10 +724,14 @@ ${
     : ""
 }
 
-Speak like this:
-- 'This pattern, repeated for 5 years, turns into this kind of life.'
-- 'If you keep acting like this, you become someone you would not respect.'
-- 'What are you willing to change now so that does not happen?'`;
+SPEAK LIKE THIS:
+${
+  legacyCode.length > 0
+    ? `You once said: "${legacyCode[0]}". Have you kept that promise?`
+    : "What would remain if the applause stopped?"
+}
+Ask questions that reveal destiny, not tactics.
+Do not use mystical metaphors — be clear and unforgivingly honest.`;
     }
 
     return "Be wise, calm, direct, and concrete.";
@@ -723,7 +782,9 @@ Speak like this:
     }
 
     if (consciousness.legacyCode.length > 0) {
-      memories.push(`- Their legacy code: "${consciousness.legacyCode.slice(-1)[0]}"`);
+      memories.push(
+        `- Their legacy code: "${consciousness.legacyCode.slice(-1)[0]}"`
+      );
     }
 
     return memories.join("\n");
@@ -750,13 +811,149 @@ Speak like this:
   }
 
   // ────────────────────────────────────────────────────────────
+  // STYLE HELPERS (no more "tapestry of life" nonsense)
+  // ────────────────────────────────────────────────────────────
+  private buildStyleRulesForPurpose(
+    purpose: GenerateOptions["purpose"],
+    name: string
+  ): string {
+    const base = [
+      `- Never use poetic, mystical, or overly flowery language.`,
+      `- No metaphors about tapestries, fabric of life, cosmic dances, etc.`,
+      `- Speak like a ruthless but caring future self.`,
+      `- Concrete, behavioural, identity-focused.`,
+      `- Always use "${name}" naturally at least once.`,
+    ];
+
+    if (purpose === "brief") {
+      base.push(
+        `- 2–3 short, hard-hitting paragraphs max.`,
+        `- You may use a short bullet list (max 3 bullets).`,
+        `- Always end with ONE clear question that hits their identity and choices today.`
+      );
+    } else if (purpose === "debrief") {
+      base.push(
+        `- Call out today's pattern directly (avoidance, drift, or progress).`,
+        `- 2–3 paragraphs max.`,
+        `- One small, concrete directive for tomorrow.`,
+        `- Always end with ONE question that makes them confront their trajectory.`
+      );
+    } else if (purpose === "nudge") {
+      base.push(
+        `- ONE sentence only.`,
+        `- Must contain a direct instruction (e.g. "Do X now").`,
+        `- No line breaks, no list, no intro.`
+      );
+    } else if (purpose === "letter") {
+      base.push(
+        `- Slightly longer is okay, but still concrete and grounded.`,
+        `- Open with "Listen, ${name}." or similar direct address.`
+      );
+    } else if (purpose === "coach") {
+      base.push(
+        `- Short, sharp, and directive.`,
+        `- Call out avoidance and give exactly one next move.`
+      );
+    }
+
+    return base.join("\n");
+  }
+
+  private buildSimplifiedSystemPrompt(
+    purpose: GenerateOptions["purpose"],
+    name: string
+  ): string {
+    const base = [
+      `You are Future ${name}'s best self.`,
+      `Your job is to speak directly, concretely, and without poetry.`,
+      `No metaphors. No fluff. Behavioural, not philosophical.`,
+    ];
+
+    if (purpose === "brief") {
+      base.push(
+        `Write a short morning brief:`,
+        `- Call out today's main pattern or risk.`,
+        `- Give 2–3 clear actions.`,
+        `- End with ONE powerful question.`
+      );
+    } else if (purpose === "debrief") {
+      base.push(
+        `Write a short evening debrief:`,
+        `- Reflect on today as data.`,
+        `- Call out avoidance.`,
+        `- End with ONE question.`
+      );
+    } else if (purpose === "nudge") {
+      base.push(
+        `Write ONE sentence nudge:`,
+        `- Call out avoidance.`,
+        `- Tell them exactly what to do now.`,
+        `- One sentence only.`
+      );
+    } else {
+      base.push(`Give one clear, direct coaching response.`);
+    }
+
+    return base.join("\n");
+  }
+
+  private buildSimplifiedUserPrompt(
+    purpose: GenerateOptions["purpose"],
+    name: string
+  ): string {
+    if (purpose === "brief") {
+      return `Write a direct, non-poetic morning brief for ${name}.`;
+    }
+    if (purpose === "debrief") {
+      return `Write a direct, non-poetic evening debrief for ${name}.`;
+    }
+    if (purpose === "nudge") {
+      return `Write one clear nudge sentence for ${name} that tells them what to do now.`;
+    }
+    return `Give ${name} one clear, non-poetic coaching response.`;
+  }
+
+  private postProcessOutput(
+    raw: string,
+    purpose: GenerateOptions["purpose"],
+    name: string,
+    maxChars?: number
+  ): string {
+    let text = raw.trim();
+
+    // Remove any accidental user_ ids if the model echoed them
+    text = text.replace(/user_[0-9]+/g, name || "Friend");
+
+    if (purpose === "nudge") {
+      // Take first sentence only
+      const idx = text.search(/[.!?]/);
+      if (idx !== -1) {
+        text = text.slice(0, idx + 1);
+      }
+      // Ensure single line
+      text = text.replace(/\s+/g, " ").trim();
+      if (maxChars && text.length > maxChars) {
+        text = text.slice(0, maxChars - 1) + "…";
+      }
+      return text;
+    }
+
+    // For briefs/debriefs/letters/coach: trim length but keep structure
+    if (maxChars && text.length > maxChars) {
+      text = text.slice(0, maxChars - 1) + "…";
+    }
+
+    return text;
+  }
+
+  // ────────────────────────────────────────────────────────────
   // FALLBACK TEXTS (no more "Keep going.")
   // ────────────────────────────────────────────────────────────
   private buildFallbackText(
     purpose: GenerateOptions["purpose"],
     name: string
   ): string {
-    const safeName = normalizeName(name);
+    const safeName = name || "Friend";
 
     switch (purpose) {
       case "brief":
