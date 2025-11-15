@@ -175,6 +175,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
             DateStrip(
               selectedDate: _selectedDate,
               onDateSelected: _onDateSelected,
+              accentColor: AppColors.emerald, // Match home header
             ),
             
             const SizedBox(height: AppSpacing.md),

@@ -293,7 +293,11 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               ),
                     // Date strip
               SliverToBoxAdapter(
-                  child: DateStrip(selectedDate: _selectedDate, onDateSelected: _onDateSelected),
+                  child: DateStrip(
+                    selectedDate: _selectedDate, 
+                    onDateSelected: _onDateSelected,
+                    accentColor: const Color(0xFFFF6B35), // Match planner header
+                  ),
                 ),
                 SliverToBoxAdapter(
                   child: const SizedBox(height: AppSpacing.md),

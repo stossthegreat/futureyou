@@ -6,11 +6,13 @@ import '../design/tokens.dart';
 class DateStrip extends StatefulWidget {
   final DateTime selectedDate;
   final Function(DateTime) onDateSelected;
+  final Color? accentColor; // Optional color parameter
   
   const DateStrip({
     super.key,
     required this.selectedDate,
     required this.onDateSelected,
+    this.accentColor,
   });
 
   @override
@@ -93,6 +95,8 @@ class _DateStripState extends State<DateStrip> {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = widget.accentColor ?? AppColors.emerald;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -102,10 +106,10 @@ class _DateStripState extends State<DateStrip> {
           children: [
             Row(
               children: [
-                const Icon(
+                Icon(
                   LucideIcons.calendar,
                   size: 16,
-                  color: AppColors.emerald,
+                  color: accentColor,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
@@ -179,21 +183,21 @@ class _DateStripState extends State<DateStrip> {
                   margin: const EdgeInsets.only(right: AppSpacing.sm),
                   decoration: BoxDecoration(
                     color: isSelected 
-                        ? AppColors.emerald 
+                        ? accentColor 
                         : AppColors.glassBackground,
                     borderRadius: BorderRadius.circular(AppBorderRadius.full),
                     border: Border.all(
                       color: isSelected 
-                          ? AppColors.emerald 
+                          ? accentColor 
                           : isToday
-                              ? AppColors.emerald.withOpacity(0.5)
+                              ? accentColor.withOpacity(0.5)
                               : AppColors.glassBorder,
                       width: isToday && !isSelected ? 2 : 1,
                     ),
                     boxShadow: isSelected 
                         ? [
                             BoxShadow(
-                              color: AppColors.emerald.withOpacity(0.3),
+                              color: accentColor.withOpacity(0.3),
                               blurRadius: 8,
                               spreadRadius: 0,
                             ),
