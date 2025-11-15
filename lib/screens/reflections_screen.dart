@@ -40,13 +40,20 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
         ? messagesService.getAllMessages()
         : messagesService.getMessagesByKind(_filter!);
 
-    debugPrint('📨 Got ${newMessages.length} messages from service');
-    if (newMessages.isNotEmpty) {
-      debugPrint('   First message: ${newMessages.first.id} - ${newMessages.first.title}');
+    // Deduplicate by message ID
+    final uniqueMessages = <String, CoachMessage>{};
+    for (final message in newMessages) {
+      uniqueMessages[message.id] = message;
+    }
+    final deduplicatedMessages = uniqueMessages.values.toList();
+
+    debugPrint('📨 Got ${newMessages.length} messages, ${deduplicatedMessages.length} unique');
+    if (deduplicatedMessages.isNotEmpty) {
+      debugPrint('   First message: ${deduplicatedMessages.first.id} - ${deduplicatedMessages.first.title}');
     }
 
     setState(() {
-      _messages = newMessages;
+      _messages = deduplicatedMessages;
       debugPrint('📨 setState called, _messages now has ${_messages.length} items');
     });
   }
@@ -151,10 +158,9 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                                 onDelete: () async {
                                   debugPrint('🗑️ DELETE STARTED: ${message.id}');
                                   await messagesService.deleteMessage(message.id);
-                                  debugPrint('🗑️ DELETE COMPLETED, REFRESHING UI...');
-                                  setState(() {
-                                    _messages.removeWhere((m) => m.id == message.id);
-                                  });
+                                  debugPrint('🗑️ DELETE COMPLETED, RELOADING FROM HIVE...');
+                                  // Reload from Hive to ensure consistency
+                                  await _loadMessages();
                                   debugPrint('🗑️ UI REFRESHED - ${_messages.length} messages remaining');
                                 },
                               );

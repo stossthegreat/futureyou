@@ -200,23 +200,24 @@ class _NudgeCardState extends State<NudgeCard>
           onTap: () => setState(() => _isExpanded = !_isExpanded),
           borderRadius: BorderRadius.circular(28),
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
+            padding: _isExpanded 
+              ? const EdgeInsets.all(AppSpacing.xl)
+              : const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header: Phase + Nudge indicator
                 _buildHeader(),
                 
-                const SizedBox(height: AppSpacing.lg),
-                
-                // Message Body
-                _buildMessageBody(),
-                
-                // Expand hint or actions
-                if (!_isExpanded)
-                  _buildExpandHint()
-                else
+                // Only show message body and actions when expanded
+                if (_isExpanded) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildMessageBody(),
                   _buildActions(),
+                ] else ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildExpandHint(),
+                ],
               ],
             ),
           ),
@@ -354,42 +355,39 @@ class _NudgeCardState extends State<NudgeCard>
   }
 
   Widget _buildExpandHint() {
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.lg),
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 10,
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: _phaseTheme.accentColor.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _phaseTheme.accentColor.withOpacity(0.4),
+            width: 1.5,
           ),
-          decoration: BoxDecoration(
-            color: _phaseTheme.accentColor.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: _phaseTheme.accentColor.withOpacity(0.4),
-              width: 1.5,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              LucideIcons.chevronDown,
+              color: _phaseTheme.accentColor.withOpacity(0.9),
+              size: 16,
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                LucideIcons.chevronDown,
-                color: _phaseTheme.accentColor.withOpacity(0.9),
-                size: 18,
+            const SizedBox(width: 8),
+            Text(
+              'Tap to expand',
+              style: AppTextStyles.caption.copyWith(
+                color: _phaseTheme.accentColor.withOpacity(0.95),
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Tap to expand',
-                style: AppTextStyles.caption.copyWith(
-                  color: _phaseTheme.accentColor.withOpacity(0.95),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.6,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -467,7 +465,7 @@ class _ActionButton extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(
           vertical: 16,
-          horizontal: isPrimary ? 24 : 16,
+          horizontal: isPrimary ? 28 : 16,
         ),
         decoration: BoxDecoration(
           gradient: isPrimary
@@ -504,13 +502,16 @@ class _ActionButton extends StatelessWidget {
             ),
             if (isPrimary) ...[
               const SizedBox(width: 10),
-              Text(
-                label,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.3,
-                  color: Colors.white,
+              Flexible(
+                child: Text(
+                  label,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.3,
+                    color: Colors.white,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

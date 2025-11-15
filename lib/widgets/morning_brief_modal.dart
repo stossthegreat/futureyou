@@ -126,7 +126,7 @@ class _MorningBriefModalState extends State<MorningBriefModal>
                   ),
                 );
               },
-              child: Center(
+              child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Column(
@@ -204,6 +204,9 @@ class _MorningBriefModalState extends State<MorningBriefModal>
                           ),
                         ),
                       ),
+                      
+                      // Extra bottom padding for scroll room
+                      const SizedBox(height: 60),
                     ],
                   ),
                 ),

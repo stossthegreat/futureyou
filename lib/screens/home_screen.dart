@@ -29,7 +29,7 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
   DateTime _selectedDate = DateTime.now();
   bool _hasShownBrief = false;
   int _unreadCount = 0;
@@ -37,8 +37,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refreshMessages();
     _checkForMorningBrief();
     _loadUnreadCount();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // App came to foreground, refresh messages
+      _refreshMessages();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh when screen becomes visible
+    _refreshMessages();
+  }
+
+  Future<void> _refreshMessages() async {
+    try {
+      await messagesService.syncMessages('test-user-felix');
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      debugPrint('Error refreshing messages: $e');
+    }
   }
 
   Future<void> _loadUnreadCount() async {

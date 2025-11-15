@@ -54,7 +54,7 @@ class _ParchmentScrollCardState extends State<ParchmentScrollCard>
     );
 
     _rotationAnimation = Tween<double>(
-      begin: 0.02,
+      begin: 0.0,
       end: 0.0,
     ).animate(CurvedAnimation(
       parent: _unfurlController,
@@ -249,7 +249,9 @@ class _ParchmentScrollCardState extends State<ParchmentScrollCard>
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 1200),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.all(AppSpacing.xl),
+            padding: _isUnfurled 
+              ? const EdgeInsets.all(AppSpacing.xl)
+              : const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
             child: _isUnfurled ? _buildUnfurledContent() : _buildRolledContent(),
           ),
         ),
@@ -257,142 +259,103 @@ class _ParchmentScrollCardState extends State<ParchmentScrollCard>
     );
   }
 
-  /// Rolled up state - shows preview
+  /// Rolled up state - shows preview (compact single line)
   Widget _buildRolledContent() {
     final messageCount = widget.messages.length;
     final messageTypes = widget.messages.map((m) => m.kindLabel).toSet().join(' • ');
 
-    return Column(
+    return Row(
       children: [
-        // Wax seal + ribbon
-        Row(
-          children: [
-            // Wax seal
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    _phaseTheme.sealColor.withOpacity(0.9),
-                    _phaseTheme.sealColor,
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _phaseTheme.sealColor.withOpacity(0.5),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Icon(
-                  LucideIcons.scroll,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-            ),
-            
-            const SizedBox(width: AppSpacing.lg),
-            
-            // Message preview
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    messageCount == 1 ? '1 Message' : '$messageCount Messages',
-                    style: AppTextStyles.h3.copyWith(
-                      color: const Color(0xFF5C4A3A), // Dark brown ink
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    messageTypes,
-                    style: AppTextStyles.caption.copyWith(
-                      color: const Color(0xFF8B7355), // Medium brown
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Bookmark ribbon
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: _phaseTheme.sealColor.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: _phaseTheme.sealColor.withOpacity(0.4),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                LucideIcons.bookmark,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-          ],
-        ),
-        
-        const SizedBox(height: AppSpacing.lg),
-        
-        // Unfurl hint
+        // Wax seal (smaller)
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 10,
-          ),
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
-            color: _phaseTheme.sealColor.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: _phaseTheme.sealColor.withOpacity(0.3),
-              width: 1.5,
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [
+                _phaseTheme.sealColor.withOpacity(0.9),
+                _phaseTheme.sealColor,
+              ],
             ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                LucideIcons.scrollText,
-                color: _phaseTheme.sealColor,
-                size: 18,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Tap to unfurl scroll',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: _phaseTheme.sealColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Icon(
-                LucideIcons.sparkles,
-                color: _phaseTheme.sealColor.withOpacity(0.7),
-                size: 16,
+            boxShadow: [
+              BoxShadow(
+                color: _phaseTheme.sealColor.withOpacity(0.5),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
+          child: const Center(
+            child: Icon(
+              LucideIcons.scroll,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+        ),
+        
+        const SizedBox(width: AppSpacing.md),
+        
+        // Message count
+        Text(
+          messageCount == 1 ? '1 Message' : '$messageCount Messages',
+          style: AppTextStyles.h3.copyWith(
+            color: const Color(0xFF5C4A3A), // Dark brown ink
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            letterSpacing: 0.3,
+          ),
+        ),
+        
+        const SizedBox(width: AppSpacing.md),
+        
+        // Unfurl hint (inline)
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: _phaseTheme.sealColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _phaseTheme.sealColor.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  LucideIcons.scrollText,
+                  color: _phaseTheme.sealColor,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Tap to unfurl scroll',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: _phaseTheme.sealColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        
+        const SizedBox(width: AppSpacing.sm),
+        
+        // Sparkle icon
+        Icon(
+          LucideIcons.sparkles,
+          color: _phaseTheme.sealColor.withOpacity(0.7),
+          size: 18,
         ),
       ],
     );
@@ -575,7 +538,7 @@ class _ParchmentScrollCardState extends State<ParchmentScrollCard>
       children: [
         Expanded(
           child: _buildActionButton(
-            label: 'View All Reflections',
+            label: 'View Reflections',
             icon: LucideIcons.bookOpen,
             onPressed: _handleDismiss,
             isPrimary: true,
@@ -584,14 +547,15 @@ class _ParchmentScrollCardState extends State<ParchmentScrollCard>
         const SizedBox(width: AppSpacing.md),
         _buildActionButton(
           label: '',
-          icon: LucideIcons.check,
+          icon: LucideIcons.x,
           onPressed: () async {
             for (final message in widget.messages) {
               await messagesService.markAsRead(message.id);
             }
-            setState(() {
-              _toggleUnfurl();
-            });
+            // Actually dismiss by triggering parent callback
+            if (widget.onNavigateToReflections != null) {
+              Navigator.pop(context);
+            }
           },
           isPrimary: false,
         ),
@@ -669,7 +633,7 @@ class _ParchmentScrollCardState extends State<ParchmentScrollCard>
       case MessageKind.brief:
         return const Color(0xFFFF9500); // Morning orange
       case MessageKind.debrief:
-        return const Color(0xFF5E5CE6); // Evening indigo
+        return const Color(0xFFC4B5A0); // Darker beige (like brief but darker)
       case MessageKind.letter:
         return const Color(0xFFFF2D55); // Letter pink
       default:

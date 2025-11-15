@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../services/api_client.dart';
 import '../services/habit_vault_service.dart';
 import '../models/vault_item.dart';
 import '../widgets/simple_header.dart';
+import '../providers/habit_provider.dart';
 
-class WhatIfRedesignScreen extends StatefulWidget {
+class WhatIfRedesignScreen extends ConsumerStatefulWidget {
   final String? initialTab; // 'simulator', 'architect', or 'library'
   
   const WhatIfRedesignScreen({super.key, this.initialTab});
 
   @override
-  State<WhatIfRedesignScreen> createState() => _WhatIfRedesignScreenState();
+  ConsumerState<WhatIfRedesignScreen> createState() => _WhatIfRedesignScreenState();
 }
 
-class _WhatIfRedesignScreenState extends State<WhatIfRedesignScreen> with SingleTickerProviderStateMixin {
+class _WhatIfRedesignScreenState extends ConsumerState<WhatIfRedesignScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _scenarioController = TextEditingController();
   bool _isLoading = false;
@@ -204,13 +206,69 @@ Timeline: 90 days to build habit + small audience''',
     }
   }
 
+  // ✅ Commit single habit to habit tracker
+  Future<void> _commitHabit(Map<String, dynamic> habit) async {
+    try {
+      final title = habit['title'] ?? '';
+      if (title.isEmpty) return;
+
+      final emoji = habit['emoji'] ?? '✅';
+      final frequency = habit['frequency'] ?? 'Daily';
+      final time = habit['time'] ?? '07:00';
+      
+      // Parse frequency to repeatDays
+      List<int> repeatDays;
+      if (frequency.toLowerCase().contains('daily')) {
+        repeatDays = [1, 2, 3, 4, 5, 6, 0]; // All days
+      } else if (frequency.toLowerCase().contains('weekday')) {
+        repeatDays = [1, 2, 3, 4, 5]; // Mon-Fri
+      } else if (frequency.toLowerCase().contains('weekend')) {
+        repeatDays = [6, 0]; // Sat-Sun
+      } else {
+        repeatDays = [1, 2, 3, 4, 5, 6, 0]; // Default to daily
+      }
+      
+      await ref.read(habitEngineProvider).createHabit(
+        title: title,
+        type: 'habit',
+        time: time,
+        startDate: DateTime.now(),
+        endDate: DateTime.now().add(const Duration(days: 90)), // 90 days default
+        repeatDays: repeatDays,
+        color: AppColors.emerald,
+        emoji: emoji,
+        reminderOn: false,
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Habit "$title" committed!'),
+            backgroundColor: AppColors.emerald,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Habit commit error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to commit: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   // ✅ Save to Habit Vault - SAVES COMPLETE OUTPUT
   Future<void> _saveToVault() async {
     if (_outputCard == null) return;
     
     try {
       // Get THE FULL CONTENT - same as what's displayed in the output card
-      final fullContent = _outputCard?['outputCard']?['content'] ?? 
+      final fullContent = _outputCard?['outputCard']?['fullText'] ?? 
                          _outputCard?['fullText'] ?? 
                          _outputCard?['message'] ?? '';
       
@@ -815,45 +873,48 @@ Timeline: 90 days to build habit + small audience''',
                       ],
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    ...habits.map((habit) => Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(AppSpacing.sm),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(AppBorderRadius.sm),
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            habit['emoji'] ?? '✅',
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  habit['title'] ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                if (habit['frequency'] != null)
+                    ...habits.map((habit) => GestureDetector(
+                      onTap: () => _commitHabit(habit),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              habit['emoji'] ?? '✅',
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                                   Text(
-                                    habit['frequency'],
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.6),
-                                      fontSize: 12,
+                                    habit['title'] ?? '',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                              ],
+                                  if (habit['frequency'] != null)
+                                    Text(
+                                      habit['frequency'],
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.6),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                          Icon(LucideIcons.plus, color: const Color(0xFF10b981), size: 20),
-                        ],
+                            Icon(LucideIcons.plus, color: const Color(0xFF10b981), size: 20),
+                          ],
+                        ),
                       ),
                     )).toList(),
                   ],
