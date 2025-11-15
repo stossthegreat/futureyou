@@ -27,14 +27,8 @@ class HabitMasterScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           // Header with settings icon
-          const SliverAppBar(
-            expandedHeight: 80,
-            floating: true,
-            snap: true,
-            pinned: false,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            flexibleSpace: SimpleHeader(
+          const SliverToBoxAdapter(
+            child: SimpleHeader(
               tabName: 'Habit Master',
               tabColor: Color(0xFF667EEA), // Beautiful purple
             ),

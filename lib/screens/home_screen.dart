@@ -38,7 +38,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _refreshMessages();
+    _initializeScreen();
+  }
+
+  Future<void> _initializeScreen() async {
+    await _refreshMessages();
     _checkForMorningBrief();
     _loadUnreadCount();
   }

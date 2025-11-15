@@ -28,12 +28,15 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
     messagesService.markAllAsRead();
   }
 
-  Future<void> _loadMessages() async {
-    debugPrint('🔄 _loadMessages called');
-    // Sync from backend first
-    debugPrint('🔄 Syncing messages from backend...');
-    final success = await messagesService.syncMessages('test-user-felix');
-    debugPrint('📊 Sync result: $success');
+  Future<void> _loadMessages({bool syncFromBackend = true}) async {
+    debugPrint('🔄 _loadMessages called (sync: $syncFromBackend)');
+    
+    // Only sync from backend if requested
+    if (syncFromBackend) {
+      debugPrint('🔄 Syncing messages from backend...');
+      final success = await messagesService.syncMessages('test-user-felix');
+      debugPrint('📊 Sync result: $success');
+    }
 
     debugPrint('🔄 Getting messages from service, filter: $_filter');
     final newMessages = _filter == null
@@ -159,8 +162,8 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                                   debugPrint('🗑️ DELETE STARTED: ${message.id}');
                                   await messagesService.deleteMessage(message.id);
                                   debugPrint('🗑️ DELETE COMPLETED, RELOADING FROM HIVE...');
-                                  // Reload from Hive to ensure consistency
-                                  await _loadMessages();
+                                  // Reload from Hive only (don't sync from backend)
+                                  await _loadMessages(syncFromBackend: false);
                                   debugPrint('🗑️ UI REFRESHED - ${_messages.length} messages remaining');
                                 },
                               );
