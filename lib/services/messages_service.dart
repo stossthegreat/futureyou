@@ -8,7 +8,9 @@ import 'api_client.dart';
 
 class MessagesService {
   static const String _boxName = 'coach_messages';
+  static const String _deletedBoxName = 'deleted_message_ids';
   late Box<model.CoachMessage> _box;
+  late Box<String> _deletedBox; // Track deleted message IDs
   bool _initialized = false;
   
   // Sync state
@@ -23,6 +25,7 @@ class MessagesService {
   Future<void> init() async {
     if (_initialized) return;
     _box = await Hive.openBox<model.CoachMessage>(_boxName);
+    _deletedBox = await Hive.openBox<String>(_deletedBoxName);
     _initialized = true;
   }
   
@@ -34,7 +37,10 @@ class MessagesService {
   /// Get all messages sorted by date (newest first)
   List<model.CoachMessage> getAllMessages() {
     if (!_initialized) return [];
-    final messages = _box.values.cast<model.CoachMessage>().toList();
+    final messages = _box.values
+        .cast<model.CoachMessage>()
+        .where((msg) => !_deletedBox.containsKey(msg.id)) // Filter out deleted
+        .toList();
     messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return messages;
   }
@@ -42,13 +48,19 @@ class MessagesService {
   /// Get unread message count
   int getUnreadCount() {
     if (!_initialized) return 0;
-    return _box.values.cast<model.CoachMessage>().where((msg) => !msg.isRead).length;
+    return _box.values
+        .cast<model.CoachMessage>()
+        .where((msg) => !msg.isRead && !_deletedBox.containsKey(msg.id))
+        .length;
   }
 
   /// Get messages by kind
   List<model.CoachMessage> getMessagesByKind(model.MessageKind kind) {
     if (!_initialized) return [];
-    final messages = _box.values.cast<model.CoachMessage>().where((msg) => msg.kind == kind).toList();
+    final messages = _box.values
+        .cast<model.CoachMessage>()
+        .where((msg) => msg.kind == kind && !_deletedBox.containsKey(msg.id)) // Filter deleted
+        .toList();
     messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return messages;
   }
@@ -135,6 +147,12 @@ class MessagesService {
       if (result.success && result.data != null) {
         // Convert API CoachMessage to model CoachMessage and store in Hive
         for (final apiMessage in result.data!) {
+          // Skip if message was deleted locally
+          if (_deletedBox.containsKey(apiMessage.id)) {
+            debugPrint('⏭️ Skipping deleted message: ${apiMessage.id}');
+            continue;
+          }
+          
           final existing = _box.get(apiMessage.id);
           
           // Convert to model
@@ -297,10 +315,16 @@ class MessagesService {
     }
     debugPrint('🗑️ Box length before delete: ${_box.length}');
     debugPrint('🗑️ Message exists in box: ${_box.containsKey(messageId)}');
+    
+    // Delete from messages box
     await _box.delete(messageId);
+    
+    // Track deletion permanently so it won't come back from backend
+    await _deletedBox.put(messageId, messageId);
+    
     debugPrint('🗑️ Box length after delete: ${_box.length}');
     debugPrint('🗑️ Message still exists: ${_box.containsKey(messageId)}');
-    debugPrint('🗑️ Deleted message: $messageId');
+    debugPrint('🗑️ Deleted message: $messageId (tracked in deleted list)');
   }
 }
 

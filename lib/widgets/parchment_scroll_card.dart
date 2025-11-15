@@ -308,6 +308,32 @@ class _ParchmentScrollCardState extends State<ParchmentScrollCard>
             ),
           ),
         ),
+        
+        // Animated sparkles on the right
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(seconds: 2),
+          curve: Curves.easeInOut,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: 0.5 + (0.5 * (1 - (value - 0.5).abs() * 2)),
+              child: Transform.scale(
+                scale: 0.8 + (0.2 * (1 - (value - 0.5).abs() * 2)),
+                child: Icon(
+                  LucideIcons.sparkles,
+                  color: _phaseTheme.sealColor,
+                  size: 24,
+                ),
+              ),
+            );
+          },
+          onEnd: () {
+            // Loop the animation
+            if (mounted) {
+              setState(() {});
+            }
+          },
+        ),
       ],
     );
   }

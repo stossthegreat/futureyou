@@ -229,6 +229,7 @@ class _NudgeCardState extends State<NudgeCard>
 
   Widget _buildHeader() {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         // Phase Badge (smaller)
         Container(
@@ -310,10 +311,23 @@ class _NudgeCardState extends State<NudgeCard>
         
         const Spacer(),
         
-        // Lightning emoji (smaller, no text)
-        Text(
-          '⚡',
-          style: const TextStyle(fontSize: 24),
+        // Lightning emoji + "Now"
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              '⚡',
+              style: const TextStyle(fontSize: 24),
+            ),
+            Text(
+              'Now',
+              style: AppTextStyles.caption.copyWith(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withOpacity(0.7),
+              ),
+            ),
+          ],
         ),
       ],
     );
