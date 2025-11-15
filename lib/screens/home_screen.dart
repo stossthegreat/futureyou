@@ -193,6 +193,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                     MaterialPageRoute(builder: (context) => const ReflectionsScreen()),
                   );
                 },
+                onDismiss: () {
+                  // Refresh home screen to hide dismissed messages
+                  setState(() {});
+                },
               ),
             
             // ⚡ ORANGE NUDGE BOX - Real-time nudges only

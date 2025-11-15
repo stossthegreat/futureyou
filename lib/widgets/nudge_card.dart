@@ -202,9 +202,10 @@ class _NudgeCardState extends State<NudgeCard>
           child: Padding(
             padding: _isExpanded 
               ? const EdgeInsets.all(AppSpacing.xl)
-              : const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+              : const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // Header: Phase + Nudge indicator
                 _buildHeader(),
@@ -215,7 +216,7 @@ class _NudgeCardState extends State<NudgeCard>
                   _buildMessageBody(),
                   _buildActions(),
                 ] else ...[
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.xs),
                   _buildExpandHint(),
                 ],
               ],
@@ -229,22 +230,22 @@ class _NudgeCardState extends State<NudgeCard>
   Widget _buildHeader() {
     return Row(
       children: [
-        // Phase Badge
+        // Phase Badge (smaller)
         Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 8,
+            horizontal: 10,
+            vertical: 6,
           ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: _phaseTheme.gradient,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
                 color: _phaseTheme.accentColor.withOpacity(0.6),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -253,15 +254,15 @@ class _NudgeCardState extends State<NudgeCard>
             children: [
               Text(
                 _phaseTheme.emoji,
-                style: const TextStyle(fontSize: 14),
+                style: const TextStyle(fontSize: 12),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
                 _phaseTheme.name,
                 style: AppTextStyles.captionSmall.copyWith(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 1.4,
+                  letterSpacing: 1.2,
                   color: Colors.white,
                 ),
               ),
@@ -269,17 +270,17 @@ class _NudgeCardState extends State<NudgeCard>
           ),
         ),
         
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: AppSpacing.xs),
         
-        // Nudge indicator (electric energy)
+        // Nudge indicator (smaller)
         Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 6,
+            horizontal: 10,
+            vertical: 5,
           ),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: Colors.white.withOpacity(0.25),
               width: 1.5,
@@ -291,15 +292,15 @@ class _NudgeCardState extends State<NudgeCard>
               Icon(
                 LucideIcons.zap,
                 color: Colors.white.withOpacity(0.95),
-                size: 14,
+                size: 12,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
                 'NUDGE',
                 style: AppTextStyles.caption.copyWith(
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
+                  letterSpacing: 1.0,
                   color: Colors.white.withOpacity(0.95),
                 ),
               ),
@@ -309,23 +310,10 @@ class _NudgeCardState extends State<NudgeCard>
         
         const Spacer(),
         
-        // Lightning emoji + "Now"
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '⚡',
-              style: const TextStyle(fontSize: 32),
-            ),
-            Text(
-              'Now',
-              style: AppTextStyles.caption.copyWith(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Colors.white.withOpacity(0.6),
-              ),
-            ),
-          ],
+        // Lightning emoji (smaller, no text)
+        Text(
+          '⚡',
+          style: const TextStyle(fontSize: 24),
         ),
       ],
     );
@@ -356,38 +344,13 @@ class _NudgeCardState extends State<NudgeCard>
 
   Widget _buildExpandHint() {
     return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: _phaseTheme.accentColor.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: _phaseTheme.accentColor.withOpacity(0.4),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              LucideIcons.chevronDown,
-              color: _phaseTheme.accentColor.withOpacity(0.9),
-              size: 16,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Tap to expand',
-              style: AppTextStyles.caption.copyWith(
-                color: _phaseTheme.accentColor.withOpacity(0.95),
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
+      child: Text(
+        'Tap to expand',
+        style: AppTextStyles.caption.copyWith(
+          color: _phaseTheme.accentColor.withOpacity(0.95),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.4,
         ),
       ),
     );

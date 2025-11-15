@@ -12,12 +12,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 class ParchmentScrollCard extends StatefulWidget {
   final List<CoachMessage> messages;
   final VoidCallback? onNavigateToReflections;
+  final VoidCallback? onDismiss; // Callback when messages are dismissed
   final String? phase; // 'observer', 'architect', 'oracle'
 
   const ParchmentScrollCard({
     super.key,
     required this.messages,
     this.onNavigateToReflections,
+    this.onDismiss,
     this.phase,
   });
 
@@ -261,12 +263,9 @@ class _ParchmentScrollCardState extends State<ParchmentScrollCard>
 
   /// Rolled up state - shows preview (compact single line)
   Widget _buildRolledContent() {
-    final messageCount = widget.messages.length;
-    final messageTypes = widget.messages.map((m) => m.kindLabel).toSet().join(' • ');
-
     return Row(
       children: [
-        // Wax seal (smaller)
+        // Wax seal (scroll emoji)
         Container(
           width: 44,
           height: 44,
@@ -297,65 +296,17 @@ class _ParchmentScrollCardState extends State<ParchmentScrollCard>
         
         const SizedBox(width: AppSpacing.md),
         
-        // Message count
-        Text(
-          messageCount == 1 ? '1 Message' : '$messageCount Messages',
-          style: AppTextStyles.h3.copyWith(
-            color: const Color(0xFF5C4A3A), // Dark brown ink
-            fontWeight: FontWeight.w800,
-            fontSize: 16,
-            letterSpacing: 0.3,
-          ),
-        ),
-        
-        const SizedBox(width: AppSpacing.md),
-        
-        // Unfurl hint (inline)
+        // Tap to unfurl text (no pill, no icon)
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 8,
-            ),
-            decoration: BoxDecoration(
-              color: _phaseTheme.sealColor.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _phaseTheme.sealColor.withOpacity(0.3),
-                width: 1.5,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  LucideIcons.scrollText,
-                  color: _phaseTheme.sealColor,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Tap to unfurl scroll',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: _phaseTheme.sealColor,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ],
+          child: Text(
+            'Tap to unfurl scroll',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: _phaseTheme.sealColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4,
             ),
           ),
-        ),
-        
-        const SizedBox(width: AppSpacing.sm),
-        
-        // Sparkle icon
-        Icon(
-          LucideIcons.sparkles,
-          color: _phaseTheme.sealColor.withOpacity(0.7),
-          size: 18,
         ),
       ],
     );
@@ -549,12 +500,13 @@ class _ParchmentScrollCardState extends State<ParchmentScrollCard>
           label: '',
           icon: LucideIcons.x,
           onPressed: () async {
+            // Mark all messages as read to dismiss them
             for (final message in widget.messages) {
               await messagesService.markAsRead(message.id);
             }
-            // Actually dismiss by triggering parent callback
-            if (widget.onNavigateToReflections != null) {
-              Navigator.pop(context);
+            // Notify parent to refresh and hide the card
+            if (widget.onDismiss != null) {
+              widget.onDismiss!();
             }
           },
           isPrimary: false,
