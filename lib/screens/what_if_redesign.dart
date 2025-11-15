@@ -262,7 +262,7 @@ Timeline: 90 days to build habit + small audience''',
     }
   }
 
-  // ✅ Save to Habit Vault - SAVES COMPLETE OUTPUT
+  // ✅ Save to Habit Vault - SAVES COMPLETE OUTPUT (NO USER INPUT)
   Future<void> _saveToVault() async {
     if (_outputCard == null) return;
     
@@ -288,16 +288,26 @@ Timeline: 90 days to build habit + small audience''',
         }
       }
       
+      // Extract summary from output (first 150 chars) - NO USER INPUT
+      String summary = completeContent.length > 150 
+        ? '${completeContent.substring(0, 150)}...'
+        : completeContent;
+      // Clean up summary (remove markdown, extra spaces)
+      summary = summary
+        .replaceAll(RegExp(r'[#*_`]'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+      
       debugPrint('💾 Saving to vault:');
       debugPrint('   Title: $title');
-      debugPrint('   Summary: ${_scenarioController.text}');
+      debugPrint('   Summary: $summary');
       debugPrint('   Content length: ${completeContent.length} chars');
       debugPrint('   Has habits: ${habits.length}');
       
       final vaultItem = HabitVaultItem.fromContent(
         title: title,
-        summary: _scenarioController.text,
-        content: completeContent, // FULL CONTENT NOW
+        summary: summary, // AI OUTPUT ONLY - NO USER INPUT
+        content: completeContent, // FULL OUTPUT CONTENT
         goalType: 'what-if',
       );
       
@@ -306,7 +316,7 @@ Timeline: 90 days to build habit + small audience''',
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('💾 COMPLETE OUTPUT saved to Habit Vault!'),
+            content: Text('💾 Complete AI output saved to Vault!'),
             backgroundColor: Color(0xFF10B981),
             duration: Duration(seconds: 3),
           ),
