@@ -1,5 +1,5 @@
 // 🌟 Celebrity Habit Systems Data
-// 25 viral celebrity routines with full details
+// 25 serious celebrity routines with full details
 
 class CelebritySystem {
   final String name;
@@ -25,12 +25,12 @@ class CelebritySystem {
 
 // 🔥 ALL 25 CELEBRITY SYSTEMS
 final List<CelebritySystem> celebritySystems = [
-  // TIER 1: MEGA-VIRAL
+  // TIER 1: EXTREME INTENSITY
   CelebritySystem(
     name: 'Andrew Huberman',
     title: 'Science-Based Protocol',
-    subtitle: 'MOST VIRAL SCIENCE ROUTINE',
-    tier: '🔥 MEGA-VIRAL (100M+ Views)',
+    subtitle: 'NEUROSCIENCE OPTIMIZED',
+    tier: '🔥 EXTREME INTENSITY',
     habits: [
       'Wake 5:30-6:30am (no alarm if rested)',
       'Do yoga nidra if not rested (10-30 min NSDR)',
@@ -44,7 +44,7 @@ final List<CelebritySystem> celebritySystems = [
       'Deep work tasks BEFORE eating',
       'Afternoon yoga nidra session (4:30pm)',
     ],
-    whyViral: 'People worldwide claim it\'s been "transformative"',
+    whyViral: 'Science-backed protocol proven transformative',
     emoji: '🧠',
     gradientColors: [99, 102, 241, 139, 92, 246], // Purple to violet
   ),
@@ -52,24 +52,66 @@ final List<CelebritySystem> celebritySystems = [
     name: 'The Rock',
     title: '4AM Discipline',
     subtitle: 'MOST CONSISTENT CELEBRITY',
-    tier: '🔥 MEGA-VIRAL (100M+ Views)',
+    tier: '🔥 EXTREME INTENSITY',
     habits: [
-      'Wake at 4am daily (non-negotiable)',
-      'Immediate cardio 30-60 minutes',
-      'Post workout photo to social media',
+      'Wake at 3:30am daily (non-negotiable)',
+      'Cardio 50 min (fasted)',
+      'Workout 90 min (4 sets x 12 reps)',
       'First meal by 5:30am',
       'Second "Iron Paradise" training session',
-      '6 days per week consistency',
+      '6 meals daily (5,000+ calories precision)',
+      'Answer fan DMs personally in car',
+      '7 workouts per week',
+      'Gratitude practice',
     ],
-    whyViral: 'Millions of daily followers track his routine',
+    whyViral: 'Legendary work ethic and consistency',
     emoji: '💪',
     gradientColors: [239, 68, 68, 220, 38, 38], // Red gradient
   ),
   CelebritySystem(
+    name: 'David Goggins',
+    title: 'Mental Warfare',
+    subtitle: 'ULTRA-ENDURANCE LEGEND',
+    tier: '🔥 EXTREME INTENSITY',
+    habits: [
+      'Wake 4am (no exceptions)',
+      '3-hour morning workout',
+      'Cold water immersion',
+      'Fasted until noon',
+      'Accountability mirror practice',
+      'Evening 1-2 hour workout',
+      'Visualization 30 min',
+      'Cookie jar method (recall past wins)',
+    ],
+    whyViral: '300lbs to Navy SEAL - ultimate transformation',
+    emoji: '⚔️',
+    gradientColors: [239, 68, 68, 185, 28, 28], // Dark red
+  ),
+  CelebritySystem(
+    name: 'Jocko Willink',
+    title: 'Discipline Equals Freedom',
+    subtitle: '4:30 AM FOR 10+ YEARS',
+    tier: '🔥 EXTREME INTENSITY',
+    habits: [
+      'Wake 4:30am (posts watch photo daily)',
+      'Immediate workout',
+      'Jiu-jitsu training daily',
+      'No sugar ever',
+      'Cold exposure',
+      'Same routine weekends',
+      'Early bed (discipline)',
+    ],
+    whyViral: 'Decade+ of 4:30am consistency, zero days off',
+    emoji: '⏰',
+    gradientColors: [71, 85, 105, 51, 65, 85], // Dark gray
+  ),
+
+  // TIER 2: HIGH INTENSITY
+  CelebritySystem(
     name: 'Cristiano Ronaldo',
     title: 'Peak Performance',
     subtitle: 'ATHLETE GOLD STANDARD',
-    tier: '🔥 MEGA-VIRAL (100M+ Views)',
+    tier: '🌟 HIGH INTENSITY',
     habits: [
       'Wake at 5:30am for football-specific workout',
       '90-minute nap after workout (recovery)',
@@ -82,13 +124,45 @@ final List<CelebritySystem> celebritySystems = [
     emoji: '⚽',
     gradientColors: [34, 197, 94, 22, 163, 74], // Green gradient
   ),
-
-  // TIER 2: SUPER VIRAL
+  CelebritySystem(
+    name: 'Jennifer Lopez',
+    title: 'NO Compromise',
+    subtitle: 'NO SUGAR, ALCOHOL, CAFFEINE EVER',
+    tier: '🌟 HIGH INTENSITY',
+    habits: [
+      'Wake 5am (no snooze)',
+      '90-min workout (cardio, strength, abs)',
+      'NO sugar, alcohol, caffeine EVER',
+      'Salmon, quinoa, veggies (no carbs after 6pm)',
+      'Sleep 8-10 hours',
+      'Same routine 20+ years',
+    ],
+    whyViral: 'Looks 35 at 55 - elimination diet works',
+    emoji: '✨',
+    gradientColors: [251, 191, 36, 245, 158, 11], // Gold gradient
+  ),
+  CelebritySystem(
+    name: 'LeBron James',
+    title: 'Recovery Investment',
+    subtitle: '\$1.5M ANNUAL RECOVERY',
+    tier: '🌟 HIGH INTENSITY',
+    habits: [
+      'Sleep 8-10 hours (non-negotiable)',
+      'Ice bath daily',
+      'Hyperbaric chamber sessions',
+      'Cryotherapy',
+      'Compression therapy',
+      'Professional recovery team',
+    ],
+    whyViral: 'Playing at elite level at 40 years old',
+    emoji: '🏀',
+    gradientColors: [147, 51, 234, 126, 34, 206], // Purple gradient
+  ),
   CelebritySystem(
     name: 'Oprah Winfrey',
     title: 'Spiritual Foundation',
     subtitle: 'MINDFULNESS QUEEN',
-    tier: '🌟 SUPER VIRAL (50M+ Views)',
+    tier: '🌟 HIGH INTENSITY',
     habits: [
       '20-minute meditation (non-negotiable)',
       'Gratitude practice first thing',
@@ -102,45 +176,10 @@ final List<CelebritySystem> celebritySystems = [
     gradientColors: [168, 85, 247, 147, 51, 234], // Purple gradient
   ),
   CelebritySystem(
-    name: 'Jennifer Aniston',
-    title: 'Hollywood Standard',
-    subtitle: 'CONSISTENCY FOR 20+ YEARS',
-    tier: '🌟 SUPER VIRAL (50M+ Views)',
-    habits: [
-      'Wake 4:30am on work days, 8-9am off days',
-      'Warm lemon water immediately',
-      '20-minute meditation',
-      'Protein shake with berries, frozen cherries',
-      '30min spinning + yoga with instructor',
-      'Intermittent fasting approach',
-      'Same routine for 20+ years',
-    ],
-    whyViral: 'Ageless beauty routine that actually works',
-    emoji: '✨',
-    gradientColors: [251, 191, 36, 245, 158, 11], // Gold gradient
-  ),
-  CelebritySystem(
-    name: 'Elon Musk',
-    title: 'Time-Blocking Empire',
-    subtitle: 'PRODUCTIVITY MAXIMIZER',
-    tier: '🌟 SUPER VIRAL (50M+ Views)',
-    habits: [
-      'Wake 7am, prioritize critical emails (30 min)',
-      '5-minute time blocks entire day',
-      '6-6.5 hours sleep minimum',
-      'Batch similar tasks together',
-      '30-minute meeting maximum',
-      'Strategic multitasking',
-    ],
-    whyViral: 'Manages multiple billion-dollar companies',
-    emoji: '🚀',
-    gradientColors: [59, 130, 246, 37, 99, 235], // Blue gradient
-  ),
-  CelebritySystem(
     name: 'Mark Wahlberg',
     title: 'Extreme Schedule',
     subtitle: 'MOST INTENSE',
-    tier: '🌟 SUPER VIRAL (50M+ Views)',
+    tier: '🌟 HIGH INTENSITY',
     habits: [
       'Wake at 3:30am',
       'Prayer time immediately',
@@ -150,46 +189,34 @@ final List<CelebritySystem> celebritySystems = [
       'Golf/meetings/family blocked',
     ],
     whyViral: 'Routinely makes headlines for intensity',
-    emoji: '⏰',
+    emoji: '🌅',
     gradientColors: [239, 68, 68, 185, 28, 28], // Dark red
   ),
+  CelebritySystem(
+    name: 'Bryan Johnson',
+    title: 'Blueprint Protocol',
+    subtitle: 'AGE 47, BIOLOGICAL AGE 37',
+    tier: '🌟 HIGH INTENSITY',
+    habits: [
+      'Wake 6am',
+      '111 pills daily',
+      'Vegan 1,977 calories',
+      'Workout protocol',
+      'Sleep optimization pod',
+      'Plasma transfusions',
+      '\$2M/year anti-aging investment',
+    ],
+    whyViral: 'Biological age reversal scientifically proven',
+    emoji: '🧬',
+    gradientColors: [14, 165, 233, 2, 132, 199], // Cyan gradient
+  ),
 
-  // TIER 3: HIGHLY INFLUENTIAL
-  CelebritySystem(
-    name: 'Ashton Hall',
-    title: 'Viral Morning',
-    subtitle: '2025 INTERNET SENSATION',
-    tier: '💫 HIGHLY INFLUENTIAL (20M+)',
-    habits: [
-      '3:50am-9:30am routine (5.5 hours!)',
-      'Banana peel facial treatment',
-      'Two facial ice baths',
-      'Multiple Saratoga Spring Waters',
-    ],
-    whyViral: 'Video viewed over 700 MILLION times',
-    emoji: '🍌',
-    gradientColors: [236, 72, 153, 219, 39, 119], // Pink gradient
-  ),
-  CelebritySystem(
-    name: 'Taylor Swift',
-    title: 'Creative Discipline',
-    subtitle: 'RECORD-BREAKING SUCCESS',
-    tier: '💫 HIGHLY INFLUENTIAL (20M+)',
-    habits: [
-      'Songwriting first thing (morning deep work)',
-      'Daily walks for inspiration',
-      'Treats songwriting like regular job',
-      'Dedicated time blocks for creativity',
-    ],
-    whyViral: 'Discipline enabled record-breaking 2024/2025 tour',
-    emoji: '🎵',
-    gradientColors: [147, 51, 234, 126, 34, 206], // Purple gradient
-  ),
+  // TIER 3: MODERATE INTENSITY
   CelebritySystem(
     name: 'Tim Ferriss',
     title: '5 Morning Rituals',
     subtitle: '4-HOUR WORKWEEK AUTHOR',
-    tier: '💫 HIGHLY INFLUENTIAL (20M+)',
+    tier: '💫 MODERATE INTENSITY',
     habits: [
       'Make bed immediately',
       'Meditate 20 minutes',
@@ -203,39 +230,27 @@ final List<CelebritySystem> celebritySystems = [
   ),
   CelebritySystem(
     name: 'Beyoncé',
-    title: '6AM Gratitude',
-    subtitle: 'QUEEN OF CONSISTENCY',
-    tier: '💫 HIGHLY INFLUENTIAL (20M+)',
+    title: 'Excellence Preparation',
+    subtitle: 'DECADES OF DOMINANCE',
+    tier: '💫 MODERATE INTENSITY',
     habits: [
       'Wake at 6am for gratitude practice',
-      'Prayer and intention setting',
-      'Plant-based vegan breakfast',
-      'Workout session',
+      '30 days vegan before tours',
+      'No alcohol for months before shows',
+      '5-6 hour rehearsals',
+      'Visualization practice',
+      'Team of 20+ professionals',
+      'Rest days sacred',
     ],
-    whyViral: '"We all have as many hours as Beyoncé" meme',
+    whyViral: '"I woke up like this" = extreme preparation',
     emoji: '👑',
     gradientColors: [251, 146, 60, 249, 115, 22], // Orange gradient
-  ),
-  CelebritySystem(
-    name: 'Paris Hilton',
-    title: 'Branding Routine',
-    subtitle: '\$300M+ EMPIRE',
-    tier: '💫 HIGHLY INFLUENTIAL (20M+)',
-    habits: [
-      'Morning meditation and gratitude',
-      'Significant content creation time',
-      'Self-care prioritization',
-      'Social media content development',
-    ],
-    whyViral: '\$300M+ brand built on consistency',
-    emoji: '💎',
-    gradientColors: [236, 72, 153, 219, 39, 119], // Pink gradient
   ),
   CelebritySystem(
     name: 'Barack Obama',
     title: 'Leadership Discipline',
     subtitle: 'PRESIDENTIAL ROUTINE',
-    tier: '💫 HIGHLY INFLUENTIAL (20M+)',
+    tier: '💫 MODERATE INTENSITY',
     habits: [
       'Wake 5am for workout (cardio + strength)',
       'Evening reading time',
@@ -247,13 +262,153 @@ final List<CelebritySystem> celebritySystems = [
     emoji: '🎖️',
     gradientColors: [59, 130, 246, 29, 78, 216], // Blue gradient
   ),
+  CelebritySystem(
+    name: 'Jennifer Aniston',
+    title: 'Hollywood Standard',
+    subtitle: 'CONSISTENCY FOR 20+ YEARS',
+    tier: '💫 MODERATE INTENSITY',
+    habits: [
+      'Wake 4:30am on work days, 8-9am off days',
+      'Warm lemon water immediately',
+      '20-minute meditation',
+      'Protein shake with berries, frozen cherries',
+      '30min spinning + yoga with instructor',
+      'Intermittent fasting approach',
+      'Same routine for 20+ years',
+    ],
+    whyViral: 'Ageless beauty routine that actually works',
+    emoji: '💎',
+    gradientColors: [251, 191, 36, 245, 158, 11], // Gold gradient
+  ),
+  CelebritySystem(
+    name: 'Rihanna',
+    title: 'Billionaire Mom Balance',
+    subtitle: '\$1.4B NET WORTH',
+    tier: '💫 MODERATE INTENSITY',
+    habits: [
+      'Wake 7:30am',
+      'Morning affirmations (mirror work)',
+      'School drop-off personally',
+      'Fenty meetings (product, marketing)',
+      'Gym 45 min (strength)',
+      'Family dinner (Caribbean meals)',
+      'Present parenting (bath, bedtime)',
+    ],
+    whyViral: 'Built billion-dollar empire while being hands-on mom',
+    emoji: '💄',
+    gradientColors: [236, 72, 153, 219, 39, 119], // Pink gradient
+  ),
+  CelebritySystem(
+    name: 'Simone Biles',
+    title: 'Mental Health Champion',
+    subtitle: 'GOAT GYMNAST',
+    tier: '💫 MODERATE INTENSITY',
+    habits: [
+      'Wake 6am',
+      'Gymnastics training 6 hours (vault, bars, beam, floor)',
+      'Strength training 60 min',
+      'Weekly therapy (mental health non-negotiable)',
+      'Epsom salt bath nightly',
+      'Sleep 10pm (8+ hours)',
+      'Can say no (set boundaries)',
+    ],
+    whyViral: 'Mental health = physical health priority',
+    emoji: '🤸‍♀️',
+    gradientColors: [251, 146, 60, 249, 115, 22], // Orange gradient
+  ),
+  CelebritySystem(
+    name: 'Denzel Washington',
+    title: 'Silence Rule',
+    subtitle: 'LEGENDARY DISCIPLINE',
+    tier: '💫 MODERATE INTENSITY',
+    habits: [
+      'Half hour every morning in quiet time first',
+      'Step away from phones',
+      'Enjoy silence',
+      'Prayer and reflection',
+    ],
+    whyViral: 'Decades of success through discipline',
+    emoji: '🤫',
+    gradientColors: [71, 85, 105, 51, 65, 85], // Gray gradient
+  ),
 
-  // TIER 4: NICHE VIRAL
+  // TIER 4: ACCESSIBLE INTENSITY
+  CelebritySystem(
+    name: 'Olivia Rodrigo',
+    title: 'Creative Emotions',
+    subtitle: 'AGE 21 - TEEN ICON',
+    tier: '🎯 ACCESSIBLE INTENSITY',
+    habits: [
+      'Wake 6:45am naturally',
+      'Journal 3 pages (emotions out)',
+      'Skincare: cleanser, moisturizer, SPF 50',
+      'Voice warmups 15 min',
+      'Pilates/yoga 60 min',
+      'Studio practice 90 min',
+      'Evening walk (no phone)',
+      'Sleep 10:30pm (8+ hours)',
+    ],
+    whyViral: 'Feelings = creativity fuel for Gen Z',
+    emoji: '🎵',
+    gradientColors: [147, 51, 234, 126, 34, 206], // Purple gradient
+  ),
+  CelebritySystem(
+    name: 'Zendaya',
+    title: 'Multi-Skill Mastery',
+    subtitle: 'AGE 28 - TRIPLE THREAT',
+    tier: '🎯 ACCESSIBLE INTENSITY',
+    habits: [
+      'Wake 6:30am',
+      'Meditation 10-15 min',
+      'Dance cardio/choreography 60 min',
+      '12-step Korean skincare',
+      'Family calls daily',
+      'Gratitude journal',
+      'Sleep 10:30pm',
+    ],
+    whyViral: 'Korean skincare + dance = career longevity',
+    emoji: '✨',
+    gradientColors: [236, 72, 153, 219, 39, 119], // Pink gradient
+  ),
+  CelebritySystem(
+    name: 'Sabrina Carpenter',
+    title: 'Voice as Instrument',
+    subtitle: 'AGE 25 - VOCAL DISCIPLINE',
+    tier: '🎯 ACCESSIBLE INTENSITY',
+    habits: [
+      'Wake 7am',
+      '1L lemon water first',
+      'Vocal steaming 10 min',
+      'Vocal exercises 30 min',
+      'Cardio 30 min (stamina)',
+      'Rehearsal 2 hours',
+      'Ice bath post-show',
+      'Throat care: tea, steam',
+    ],
+    whyViral: 'Daily voice care = flawless performances',
+    emoji: '🎤',
+    gradientColors: [251, 146, 60, 249, 115, 22], // Orange gradient
+  ),
+  CelebritySystem(
+    name: 'Taylor Swift',
+    title: 'Creative Discipline',
+    subtitle: 'RECORD-BREAKING SUCCESS',
+    tier: '🎯 ACCESSIBLE INTENSITY',
+    habits: [
+      'Songwriting first thing (morning deep work)',
+      'Daily walks for inspiration',
+      'Treats songwriting like regular job',
+      'Dedicated time blocks for creativity',
+    ],
+    whyViral: 'Discipline enabled record-breaking 2024/2025 tour',
+    emoji: '🎸',
+    gradientColors: [147, 51, 234, 126, 34, 206], // Purple gradient
+  ),
   CelebritySystem(
     name: 'Serena Williams',
     title: 'Champion Mentality',
     subtitle: 'TENNIS LEGEND',
-    tier: '🎯 NICHE VIRAL (10M+)',
+    tier: '🎯 ACCESSIBLE INTENSITY',
     habits: [
       'Wake before sunrise',
       'Gratitude mantra first thing',
@@ -266,24 +421,10 @@ final List<CelebritySystem> celebritySystems = [
     gradientColors: [34, 197, 94, 21, 128, 61], // Green gradient
   ),
   CelebritySystem(
-    name: 'Lizzo',
-    title: 'Hydration Focus',
-    subtitle: 'SIMPLE SELF-CARE',
-    tier: '🎯 NICHE VIRAL (10M+)',
-    habits: [
-      'Water immediately upon waking',
-      'More water! "Water is really important"',
-      'Evian spray to face',
-    ],
-    whyViral: 'Simple but effective self-care',
-    emoji: '💧',
-    gradientColors: [14, 165, 233, 3, 105, 161], // Light blue
-  ),
-  CelebritySystem(
     name: 'Drake',
     title: '5AM Meditation',
     subtitle: 'RAP MOGUL MINDFULNESS',
-    tier: '🎯 NICHE VIRAL (10M+)',
+    tier: '🎯 ACCESSIBLE INTENSITY',
     habits: [
       '5am meditation focusing on breathing and intentions',
       'Check news and phone',
@@ -295,68 +436,28 @@ final List<CelebritySystem> celebritySystems = [
     gradientColors: [168, 85, 247, 126, 34, 206], // Purple gradient
   ),
   CelebritySystem(
-    name: 'Miley Cyrus',
-    title: 'Yoga Non-Negotiable',
-    subtitle: 'MENTAL HEALTH WARRIOR',
-    tier: '🎯 NICHE VIRAL (10M+)',
+    name: 'Viola Davis',
+    title: 'Authentic Excellence',
+    subtitle: 'AGE 59 - OSCAR WINNER',
+    tier: '🎯 ACCESSIBLE INTENSITY',
     habits: [
-      '"Gotta do yoga, not for my body but for my mind!"',
-      '"DO YOGA or GO CRAZY!"',
-      'Multiple yoga sessions daily',
+      'Wake 6am',
+      'Meditation 15 min',
+      'Journal (gratitude, intentions)',
+      'Script study 1 hour',
+      'Workout 45 min',
+      'Family board games',
+      'Nighttime skincare (retinol)',
     ],
-    whyViral: 'Public advocate for yoga\'s mental health benefits',
-    emoji: '🧘‍♀️',
-    gradientColors: [236, 72, 153, 219, 39, 119], // Pink gradient
-  ),
-  CelebritySystem(
-    name: 'Denzel Washington',
-    title: 'Silence Rule',
-    subtitle: 'LEGENDARY DISCIPLINE',
-    tier: '🎯 NICHE VIRAL (10M+)',
-    habits: [
-      '"Spend a half hour every morning in quiet time first"',
-      'Step away from phones',
-      'Enjoy silence',
-    ],
-    whyViral: 'Decades of success through discipline',
-    emoji: '🤫',
-    gradientColors: [71, 85, 105, 51, 65, 85], // Gray gradient
-  ),
-  CelebritySystem(
-    name: 'Zendaya',
-    title: 'Family Morning',
-    subtitle: 'RELATABLE STAR',
-    tier: '🎯 NICHE VIRAL (10M+)',
-    habits: [
-      'Wake around 8am but stays in bed',
-      'Mornings filled with family time',
-      'Bothering family members (relatable!)',
-    ],
-    whyViral: 'Most relatable celebrity routine',
-    emoji: '👨‍👩‍👧',
-    gradientColors: [251, 146, 60, 249, 115, 22], // Orange gradient
-  ),
-  CelebritySystem(
-    name: 'Kamala Harris',
-    title: 'Two Non-Negotiables',
-    subtitle: 'POLITICAL POWER',
-    tier: '🎯 NICHE VIRAL (10M+)',
-    habits: [
-      'Must eat breakfast every morning',
-      'Must get workout in',
-      'Spinach omelet, chicken apple sausage, toast',
-    ],
-    whyViral: 'Simple routine enables demanding schedule',
-    emoji: '🇺🇸',
+    whyViral: 'Deep character preparation + family connection',
+    emoji: '🎭',
     gradientColors: [59, 130, 246, 37, 99, 235], // Blue gradient
   ),
-
-  // BONUS: UNIQUE VIRAL HABITS
   CelebritySystem(
     name: 'Orlando Bloom',
     title: 'Earn Your Breakfast',
     subtitle: 'UNCONVENTIONAL COMBO',
-    tier: '🎨 BONUS: UNIQUE VIRAL',
+    tier: '🎯 ACCESSIBLE INTENSITY',
     habits: [
       'Track sleep quality immediately',
       'Green powders, brain octane oil, collagen powder pre-breakfast',
@@ -365,65 +466,6 @@ final List<CelebritySystem> celebritySystems = [
     whyViral: 'Unusual combinations sparked debate',
     emoji: '🏔️',
     gradientColors: [34, 197, 94, 22, 163, 74], // Green gradient
-  ),
-  CelebritySystem(
-    name: 'Jim Carrey',
-    title: 'Creative Call',
-    subtitle: 'GENIUS CREATIVITY HACK',
-    tier: '🎨 BONUS: UNIQUE VIRAL',
-    habits: [
-      'Calls himself at 11am daily',
-      'Pretends someone from past is calling with news',
-      'Gets creative ideas flowing and new perspective',
-    ],
-    whyViral: 'Most creative morning routine ever',
-    emoji: '📞',
-    gradientColors: [251, 191, 36, 245, 158, 11], // Gold gradient
-  ),
-  CelebritySystem(
-    name: 'Kate Hudson',
-    title: 'Ice Bath Face',
-    subtitle: 'BEAUTY BIOHACK',
-    tier: '🎨 BONUS: UNIQUE VIRAL',
-    habits: [
-      'Ice bath on face using water and lots of ice',
-      'Holds face in as long as possible',
-      'Refreshes tired/dull skin',
-    ],
-    whyViral: 'Simple biohack for ageless beauty',
-    emoji: '🧊',
-    gradientColors: [14, 165, 233, 3, 105, 161], // Cyan gradient
-  ),
-  CelebritySystem(
-    name: 'Gwyneth Paltrow',
-    title: 'Oil Pulling',
-    subtitle: 'GOOP FOUNDER ROUTINE',
-    tier: '🎨 BONUS: UNIQUE VIRAL',
-    habits: [
-      '6:30am rise',
-      'Swish minty coconut oil for 10 minutes',
-      'Coffee and meditation with husband',
-      'Workout then smoothie',
-    ],
-    whyViral: 'Wellness empire built on morning rituals',
-    emoji: '🥥',
-    gradientColors: [236, 72, 153, 219, 39, 119], // Pink gradient
-  ),
-  CelebritySystem(
-    name: 'Jeff Bezos',
-    title: 'Puttering Morning',
-    subtitle: 'BILLIONAIRE LEISURE',
-    tier: '🎨 BONUS: UNIQUE VIRAL',
-    habits: [
-      'No meetings before 10am',
-      'Leisurely breakfast with family',
-      'Read newspaper',
-      '"Puttering around" time',
-      'High-IQ meetings before lunch only',
-    ],
-    whyViral: 'Even billionaires need downtime',
-    emoji: '☕',
-    gradientColors: [120, 113, 108, 87, 83, 78], // Brown/coffee gradient
   ),
 ];
 

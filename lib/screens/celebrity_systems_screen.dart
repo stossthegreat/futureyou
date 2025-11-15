@@ -63,7 +63,7 @@ class _CelebritySystemsScreenState extends ConsumerState<CelebritySystemsScreen>
                 const SizedBox(height: AppSpacing.sm),
 
                 Text(
-                  'Most Followed, Most Viewed, Most Influential',
+                  'Rated by Intensity Presets',
                   style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
                 ).animate().fadeIn(duration: 600.ms, delay: 100.ms),
 
@@ -81,21 +81,27 @@ class _CelebritySystemsScreenState extends ConsumerState<CelebritySystemsScreen>
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       _FilterChip(
-                        label: 'MEGA-VIRAL',
-                        isSelected: _selectedFilter == 'MEGA-VIRAL',
-                        onTap: () => setState(() => _selectedFilter = 'MEGA-VIRAL'),
+                        label: 'EXTREME',
+                        isSelected: _selectedFilter == 'EXTREME',
+                        onTap: () => setState(() => _selectedFilter = 'EXTREME'),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       _FilterChip(
-                        label: 'SUPER VIRAL',
-                        isSelected: _selectedFilter == 'SUPER VIRAL',
-                        onTap: () => setState(() => _selectedFilter = 'SUPER VIRAL'),
+                        label: 'HIGH',
+                        isSelected: _selectedFilter == 'HIGH',
+                        onTap: () => setState(() => _selectedFilter = 'HIGH'),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       _FilterChip(
-                        label: 'INFLUENTIAL',
-                        isSelected: _selectedFilter == 'INFLUENTIAL',
-                        onTap: () => setState(() => _selectedFilter = 'INFLUENTIAL'),
+                        label: 'MODERATE',
+                        isSelected: _selectedFilter == 'MODERATE',
+                        onTap: () => setState(() => _selectedFilter = 'MODERATE'),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      _FilterChip(
+                        label: 'ACCESSIBLE',
+                        isSelected: _selectedFilter == 'ACCESSIBLE',
+                        onTap: () => setState(() => _selectedFilter = 'ACCESSIBLE'),
                       ),
                     ],
                   ),
