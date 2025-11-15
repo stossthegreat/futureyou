@@ -92,7 +92,7 @@ class HabitMasterScreen extends StatelessWidget {
                 // 🎯 CARD 3: Celebrity Systems
                 _MasterCard(
                   title: 'Celebrity Systems',
-                  subtitle: '25 serious habit systems',
+                  subtitle: '41 elite habit systems',
                   icon: LucideIcons.star,
                   gradientColors: const [Color(0xFFDA22FF), Color(0xFF9733EE), Color(0xFF4F46E5)],
                   accentColor: const Color(0xFFDA22FF),

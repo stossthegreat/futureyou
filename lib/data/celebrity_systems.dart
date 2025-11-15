@@ -1,5 +1,5 @@
 // 🌟 Celebrity Habit Systems Data
-// 25 serious celebrity routines with full details
+// 40+ serious celebrity routines with full details
 
 class CelebritySystem {
   final String name;
@@ -23,55 +23,13 @@ class CelebritySystem {
   });
 }
 
-// 🔥 ALL 25 CELEBRITY SYSTEMS
+// 🔥 ALL CELEBRITY SYSTEMS
 final List<CelebritySystem> celebritySystems = [
   // TIER 1: EXTREME INTENSITY
   CelebritySystem(
-    name: 'Andrew Huberman',
-    title: 'Science-Based Protocol',
-    subtitle: 'NEUROSCIENCE OPTIMIZED',
-    tier: '🔥 EXTREME INTENSITY',
-    habits: [
-      'Wake 5:30-6:30am (no alarm if rested)',
-      'Do yoga nidra if not rested (10-30 min NSDR)',
-      'Drink 16-32oz water + electrolytes immediately',
-      'Get 10-30min sunlight exposure (eyes, no sunglasses)',
-      'DELAY caffeine 90-120 min after waking',
-      'Yerba Mate over coffee (preferred)',
-      'Exercise early (cardio/weights alternating)',
-      'Intermittent fasting (no food until noon)',
-      'Cold plunge/ice bath for resilience',
-      'Deep work tasks BEFORE eating',
-      'Afternoon yoga nidra session (4:30pm)',
-    ],
-    whyViral: 'Science-backed protocol proven transformative',
-    emoji: '🧠',
-    gradientColors: [99, 102, 241, 139, 92, 246], // Purple to violet
-  ),
-  CelebritySystem(
-    name: 'The Rock',
-    title: '4AM Discipline',
-    subtitle: 'MOST CONSISTENT CELEBRITY',
-    tier: '🔥 EXTREME INTENSITY',
-    habits: [
-      'Wake at 3:30am daily (non-negotiable)',
-      'Cardio 50 min (fasted)',
-      'Workout 90 min (4 sets x 12 reps)',
-      'First meal by 5:30am',
-      'Second "Iron Paradise" training session',
-      '6 meals daily (5,000+ calories precision)',
-      'Answer fan DMs personally in car',
-      '7 workouts per week',
-      'Gratitude practice',
-    ],
-    whyViral: 'Legendary work ethic and consistency',
-    emoji: '💪',
-    gradientColors: [239, 68, 68, 220, 38, 38], // Red gradient
-  ),
-  CelebritySystem(
     name: 'David Goggins',
     title: 'Mental Warfare',
-    subtitle: 'ULTRA-ENDURANCE LEGEND',
+    subtitle: '300LBS TO NAVY SEAL',
     tier: '🔥 EXTREME INTENSITY',
     habits: [
       'Wake 4am (no exceptions)',
@@ -105,20 +63,98 @@ final List<CelebritySystem> celebritySystems = [
     emoji: '⏰',
     gradientColors: [71, 85, 105, 51, 65, 85], // Dark gray
   ),
+  CelebritySystem(
+    name: 'The Rock',
+    title: '3:30AM Discipline',
+    subtitle: '\$800M NET WORTH',
+    tier: '🔥 EXTREME INTENSITY',
+    habits: [
+      'Wake at 3:30am daily',
+      'Cardio 50 min (fasted)',
+      'Workout 90 min (4 sets x 12 reps)',
+      '6 meals daily (5,000+ calories)',
+      'Work 12 hours',
+      'Answer fan DMs personally in car',
+      'Gratitude practice',
+      '7 workouts per week',
+    ],
+    whyViral: 'Legendary work ethic and consistency',
+    emoji: '💪',
+    gradientColors: [239, 68, 68, 220, 38, 38], // Red gradient
+  ),
+  CelebritySystem(
+    name: 'Andrew Huberman',
+    title: 'Science-Based Protocol',
+    subtitle: 'NEUROSCIENCE OPTIMIZED',
+    tier: '🔥 EXTREME INTENSITY',
+    habits: [
+      'Wake 5:30-6:30am (no alarm if rested)',
+      'Do yoga nidra if not rested (10-30 min NSDR)',
+      'Drink 16-32oz water + electrolytes immediately',
+      'Get 10-30min sunlight exposure (eyes, no sunglasses)',
+      'DELAY caffeine 90-120 min after waking',
+      'Yerba Mate over coffee (preferred)',
+      'Exercise early (cardio/weights alternating)',
+      'Intermittent fasting (no food until noon)',
+      'Cold plunge/ice bath for resilience',
+      'Deep work tasks BEFORE eating',
+      'Afternoon yoga nidra session (4:30pm)',
+    ],
+    whyViral: 'Science-backed protocol proven transformative',
+    emoji: '🧠',
+    gradientColors: [99, 102, 241, 139, 92, 246], // Purple to violet
+  ),
+  CelebritySystem(
+    name: 'Mike Tyson',
+    title: 'Prison Peak Form',
+    subtitle: 'NO EXCUSES SYSTEM',
+    tier: '🔥 EXTREME INTENSITY',
+    habits: [
+      'Wake 4am',
+      '2,000 sit-ups daily',
+      '500 push-ups',
+      '500 dips',
+      '500 shrugs',
+      '8 miles jogging',
+      '10 rounds shadow boxing',
+      'Read Malcolm X autobiography',
+    ],
+    whyViral: 'Peak form in prison - all bodyweight, extreme volume',
+    emoji: '🥊',
+    gradientColors: [239, 68, 68, 185, 28, 28], // Dark red
+  ),
+  CelebritySystem(
+    name: 'Mark Wahlberg',
+    title: 'Extreme Schedule',
+    subtitle: 'MOST INTENSE',
+    tier: '🔥 EXTREME INTENSITY',
+    habits: [
+      'Wake at 3:30am',
+      'Prayer time immediately',
+      '4am workout (95 minutes)',
+      'Breakfast #1 at 5:15am',
+      'Cryotherapy chamber',
+      'Golf/meetings/family blocked',
+    ],
+    whyViral: 'Routinely makes headlines for intensity',
+    emoji: '🌅',
+    gradientColors: [239, 68, 68, 185, 28, 28], // Dark red
+  ),
 
   // TIER 2: HIGH INTENSITY
   CelebritySystem(
     name: 'Cristiano Ronaldo',
     title: 'Peak Performance',
-    subtitle: 'ATHLETE GOLD STANDARD',
+    subtitle: '643M FOLLOWERS - AGE 39',
     tier: '🌟 HIGH INTENSITY',
     habits: [
-      'Wake at 5:30am for football-specific workout',
-      '90-minute nap after workout (recovery)',
-      'Avocado toast breakfast for healthy fats',
-      'Ice bath or cryotherapy immediately post-workout',
-      'Multiple naps throughout day for recovery',
-      'Science-backed every step',
+      'Wake at 7am',
+      'Training 2 sessions (4 hours total)',
+      '6 meals daily (whole grains, tuna, chicken, fish)',
+      '2 naps (90 min each)',
+      'Ice bath daily',
+      'Strength training 90 min',
+      '12% body fat at 39',
     ],
     whyViral: 'Peak athletic performance maintained into 40s',
     emoji: '⚽',
@@ -159,40 +195,6 @@ final List<CelebritySystem> celebritySystems = [
     gradientColors: [147, 51, 234, 126, 34, 206], // Purple gradient
   ),
   CelebritySystem(
-    name: 'Oprah Winfrey',
-    title: 'Spiritual Foundation',
-    subtitle: 'MINDFULNESS QUEEN',
-    tier: '🌟 HIGH INTENSITY',
-    habits: [
-      '20-minute meditation (non-negotiable)',
-      'Gratitude practice first thing',
-      'Workout (yoga or brisk walk)',
-      'No phone for first hour awake',
-      'Spiritual reading time',
-      'Healthy breakfast ritual',
-    ],
-    whyViral: 'Most studied morning routine by wellness seekers',
-    emoji: '🙏',
-    gradientColors: [168, 85, 247, 147, 51, 234], // Purple gradient
-  ),
-  CelebritySystem(
-    name: 'Mark Wahlberg',
-    title: 'Extreme Schedule',
-    subtitle: 'MOST INTENSE',
-    tier: '🌟 HIGH INTENSITY',
-    habits: [
-      'Wake at 3:30am',
-      'Prayer time immediately',
-      '4am workout (95 minutes)',
-      'Breakfast #1 at 5:15am',
-      'Cryotherapy chamber',
-      'Golf/meetings/family blocked',
-    ],
-    whyViral: 'Routinely makes headlines for intensity',
-    emoji: '🌅',
-    gradientColors: [239, 68, 68, 185, 28, 28], // Dark red
-  ),
-  CelebritySystem(
     name: 'Bryan Johnson',
     title: 'Blueprint Protocol',
     subtitle: 'AGE 47, BIOLOGICAL AGE 37',
@@ -210,24 +212,119 @@ final List<CelebritySystem> celebritySystems = [
     emoji: '🧬',
     gradientColors: [14, 165, 233, 2, 132, 199], // Cyan gradient
   ),
+  CelebritySystem(
+    name: 'Joe Rogan',
+    title: 'Carnivore + Recovery',
+    subtitle: 'AGE 57 - \$200M+',
+    tier: '🌟 HIGH INTENSITY',
+    habits: [
+      'Wake 5-10am (flexible)',
+      'Cold plunge 3 min (34°F)',
+      'Workout 90 min',
+      'Sauna 20-30 min (180°F)',
+      'Jiu-jitsu 60 min',
+      'Podcast 2-3 hours',
+      'Float tank weekly',
+      '16-hour fast daily',
+      'Carnivore diet (wild game, elk)',
+    ],
+    whyViral: 'Extreme recovery focus enables longevity',
+    emoji: '🎙️',
+    gradientColors: [220, 38, 38, 185, 28, 28], // Red gradient
+  ),
+  CelebritySystem(
+    name: 'Kim Kardashian',
+    title: 'Billionaire Work Ethic',
+    subtitle: '\$1.7B + LAW STUDENT + 4 KIDS',
+    tier: '🌟 HIGH INTENSITY',
+    habits: [
+      'Wake 5:45am',
+      'Workout 6am (85% weights, 15% cardio)',
+      'School drop-off 7:05am',
+      'Business meetings 8am-6pm',
+      'Law study until 11pm',
+      'Everything laid out night before',
+    ],
+    whyViral: 'Built billion-dollar empire while studying law with 4 kids',
+    emoji: '💼',
+    gradientColors: [236, 72, 153, 219, 39, 119], // Pink gradient
+  ),
+  CelebritySystem(
+    name: 'Virat Kohli',
+    title: 'Complete Transformation',
+    subtitle: 'CHUBBY TO FITTEST',
+    tier: '🌟 HIGH INTENSITY',
+    habits: [
+      'Wake 6am',
+      'Yoga + meditation 30 min',
+      'Cardio 45 min',
+      'Cricket practice 2 hours',
+      'Strength training 90 min',
+      'Video analysis nightly',
+      'Plant-forward diet',
+      'Sleep 10:30pm (8 hours)',
+    ],
+    whyViral: 'Complete transformation - yoga prevents injury',
+    emoji: '🏏',
+    gradientColors: [34, 197, 94, 22, 163, 74], // Green gradient
+  ),
+  CelebritySystem(
+    name: 'Oprah Winfrey',
+    title: 'Spiritual Foundation',
+    subtitle: 'MINDFULNESS QUEEN',
+    tier: '🌟 HIGH INTENSITY',
+    habits: [
+      '20-minute meditation (non-negotiable)',
+      'Gratitude practice first thing',
+      'Workout (yoga or brisk walk)',
+      'No phone for first hour awake',
+      'Spiritual reading time',
+      'Healthy breakfast ritual',
+    ],
+    whyViral: 'Most studied morning routine by wellness seekers',
+    emoji: '🙏',
+    gradientColors: [168, 85, 247, 147, 51, 234], // Purple gradient
+  ),
+  CelebritySystem(
+    name: 'Giannis Antetokounmpo',
+    title: 'Immigrant Work Ethic',
+    subtitle: 'FAMILY = EVERYTHING',
+    tier: '🌟 HIGH INTENSITY',
+    habits: [
+      'Wake 7am',
+      'Shooting practice (500 shots)',
+      'Weight training 90 min',
+      'Team practice 2 hours',
+      'Nap 90 min',
+      'Family dinner (Greek-Nigerian fusion)',
+      'Evening: 300 free throws (800 shots daily total)',
+      'Sleep 10pm (9 hours)',
+    ],
+    whyViral: 'Immigrant work ethic - extra work daily',
+    emoji: '🏆',
+    gradientColors: [34, 197, 94, 22, 163, 74], // Green gradient
+  ),
+  CelebritySystem(
+    name: 'Peter Attia MD',
+    title: 'Healthspan Protocol',
+    subtitle: 'DATA-DRIVEN LONGEVITY',
+    tier: '🌟 HIGH INTENSITY',
+    habits: [
+      'Zone 2 cardio 3-4 hours/week',
+      'VO2 max training weekly',
+      'Heavy strength 3x/week',
+      'Continuous glucose monitor',
+      'Sleep tracking',
+      'Rapamycin weekly',
+      'Metformin daily',
+      'NMN supplementation',
+    ],
+    whyViral: 'Healthspan not lifespan - data-driven everything',
+    emoji: '⚕️',
+    gradientColors: [59, 130, 246, 37, 99, 235], // Blue gradient
+  ),
 
   // TIER 3: MODERATE INTENSITY
-  CelebritySystem(
-    name: 'Tim Ferriss',
-    title: '5 Morning Rituals',
-    subtitle: '4-HOUR WORKWEEK AUTHOR',
-    tier: '💫 MODERATE INTENSITY',
-    habits: [
-      'Make bed immediately',
-      'Meditate 20 minutes',
-      'Exercise 30+ minutes minimum',
-      'Drink strong tea',
-      'Journal 5-10 minutes',
-    ],
-    whyViral: 'Millions follow his 4-Hour Workweek methods',
-    emoji: '📚',
-    gradientColors: [14, 165, 233, 2, 132, 199], // Cyan gradient
-  ),
   CelebritySystem(
     name: 'Beyoncé',
     title: 'Excellence Preparation',
@@ -245,6 +342,22 @@ final List<CelebritySystem> celebritySystems = [
     whyViral: '"I woke up like this" = extreme preparation',
     emoji: '👑',
     gradientColors: [251, 146, 60, 249, 115, 22], // Orange gradient
+  ),
+  CelebritySystem(
+    name: 'Tim Ferriss',
+    title: '5 Morning Rituals',
+    subtitle: '4-HOUR WORKWEEK AUTHOR',
+    tier: '💫 MODERATE INTENSITY',
+    habits: [
+      'Make bed immediately',
+      'Meditate 20 minutes',
+      'Exercise 30+ minutes minimum',
+      'Drink strong tea',
+      'Journal 5-10 minutes',
+    ],
+    whyViral: 'Millions follow his 4-Hour Workweek methods',
+    emoji: '📚',
+    gradientColors: [14, 165, 233, 2, 132, 199], // Cyan gradient
   ),
   CelebritySystem(
     name: 'Barack Obama',
@@ -317,6 +430,78 @@ final List<CelebritySystem> celebritySystems = [
     gradientColors: [251, 146, 60, 249, 115, 22], // Orange gradient
   ),
   CelebritySystem(
+    name: 'Ryan Reynolds',
+    title: 'Dad + Mogul Balance',
+    subtitle: '\$350M - AVIATION GIN, MINT MOBILE, WREXHAM',
+    tier: '💫 MODERATE INTENSITY',
+    habits: [
+      'Wake 6am',
+      'Coffee with wife (connection)',
+      'Workout 60 min (Deadpool physique)',
+      'School drop-off (dad duty)',
+      'Business calls (Aviation Gin, Mint Mobile, Wrexham FC)',
+      'Family dinner (phones away)',
+      'Bedtime routine with kids',
+    ],
+    whyViral: 'Multiple revenue streams + present father',
+    emoji: '🎬',
+    gradientColors: [220, 38, 38, 185, 28, 28], // Red gradient
+  ),
+  CelebritySystem(
+    name: 'Alex Hormozi',
+    title: 'Leverage Maximizer',
+    subtitle: '\$100M+ NET WORTH',
+    tier: '💫 MODERATE INTENSITY',
+    habits: [
+      'Wake 6-7am → immediate work',
+      '1-2 hours strategic work',
+      'Plan night before',
+      'Order tasks by leverage',
+      'Workout (weights/mobility)',
+      'Same meals daily',
+      'Minimal wardrobe (preserve mental bandwidth)',
+    ],
+    whyViral: 'Volume negates luck - productivity per unit time',
+    emoji: '📊',
+    gradientColors: [59, 130, 246, 37, 99, 235], // Blue gradient
+  ),
+  CelebritySystem(
+    name: 'Gary Vaynerchuk',
+    title: 'Hustle + Balance',
+    subtitle: '\$200M+ - 3-MIN MEETINGS',
+    tier: '💫 MODERATE INTENSITY',
+    habits: [
+      'Wake 6am',
+      'Gym 45-60 min',
+      'Doesn\'t eat during day',
+      '3-5 min meetings (saves time)',
+      'Family dinner 7:30pm',
+      '6-7 hours sleep',
+    ],
+    whyViral: 'Built \$4M to \$60M wine business - now emphasizes balance',
+    emoji: '🚀',
+    gradientColors: [239, 68, 68, 220, 38, 38], // Red gradient
+  ),
+  CelebritySystem(
+    name: 'Marcus Rashford',
+    title: 'Platform = Purpose',
+    subtitle: 'FOUNDATION WORK DAILY',
+    tier: '💫 MODERATE INTENSITY',
+    habits: [
+      'Wake 7am',
+      'Team training 2.5 hours',
+      'Foundation work 1 hour (food banks, schools)',
+      'Personal training 45 min',
+      'Video analysis',
+      'Call mum daily',
+      'Audio learning (commute)',
+      'Sleep 10pm (9 hours)',
+    ],
+    whyViral: 'Foundation work daily - not PR, real impact',
+    emoji: '⚽',
+    gradientColors: [220, 38, 38, 185, 28, 28], // Red gradient
+  ),
+  CelebritySystem(
     name: 'Denzel Washington',
     title: 'Silence Rule',
     subtitle: 'LEGENDARY DISCIPLINE',
@@ -331,12 +516,48 @@ final List<CelebritySystem> celebritySystems = [
     emoji: '🤫',
     gradientColors: [71, 85, 105, 51, 65, 85], // Gray gradient
   ),
+  CelebritySystem(
+    name: 'Emma Chamberlain',
+    title: 'Coffee Empire',
+    subtitle: '\$20M REVENUE - CHAMBERLAIN COFFEE',
+    tier: '💫 MODERATE INTENSITY',
+    habits: [
+      'Wake early',
+      'Coffee FIRST (before anything)',
+      'Morning meditation/journal',
+      'Content creation + meetings',
+      'Family time evening',
+      'Reading/light journal before sleep',
+      'Balance discipline with listening to body',
+    ],
+    whyViral: 'Coffee became \$20M brand naturally - reinvests all profits',
+    emoji: '☕',
+    gradientColors: [120, 113, 108, 87, 83, 78], // Brown/coffee gradient
+  ),
+  CelebritySystem(
+    name: 'Kylie Jenner',
+    title: 'Social Media Empire',
+    subtitle: '\$710M - STARTED AT 19',
+    tier: '💫 MODERATE INTENSITY',
+    habits: [
+      'Wake 5:50-8am',
+      'Makeup before breakfast',
+      'Morning meeting',
+      'Afternoon with daughter',
+      'HIIT workout',
+      'Family dinner',
+      'Social media = direct pipeline',
+    ],
+    whyViral: 'Started with \$250K at 19 - Kylie Cosmetics valued \$1.2B',
+    emoji: '💋',
+    gradientColors: [236, 72, 153, 219, 39, 119], // Pink gradient
+  ),
 
   // TIER 4: ACCESSIBLE INTENSITY
   CelebritySystem(
     name: 'Olivia Rodrigo',
     title: 'Creative Emotions',
-    subtitle: 'AGE 21 - TEEN ICON',
+    subtitle: 'AGE 21 - GEN Z ICON',
     tier: '🎯 ACCESSIBLE INTENSITY',
     habits: [
       'Wake 6:45am naturally',
@@ -392,7 +613,7 @@ final List<CelebritySystem> celebritySystems = [
   CelebritySystem(
     name: 'Taylor Swift',
     title: 'Creative Discipline',
-    subtitle: 'RECORD-BREAKING SUCCESS',
+    subtitle: 'RECORD-BREAKING TOUR',
     tier: '🎯 ACCESSIBLE INTENSITY',
     habits: [
       'Songwriting first thing (morning deep work)',
@@ -452,6 +673,79 @@ final List<CelebritySystem> celebritySystems = [
     whyViral: 'Deep character preparation + family connection',
     emoji: '🎭',
     gradientColors: [59, 130, 246, 37, 99, 235], // Blue gradient
+  ),
+  CelebritySystem(
+    name: 'Central Cee',
+    title: 'UK Drill Work Ethic',
+    subtitle: 'AGE 26 - CARIBBEAN ROOTS',
+    tier: '🎯 ACCESSIBLE INTENSITY',
+    habits: [
+      'Wake 11am',
+      'Gym 60 min (chest, abs)',
+      'Studio 7 hours (2 sessions)',
+      'Record 2-3 songs daily',
+      'Caribbean food',
+      'Social media engagement',
+      'Sleep 4am',
+    ],
+    whyViral: 'UK drill work ethic - daily output minimum',
+    emoji: '🎤',
+    gradientColors: [71, 85, 105, 51, 65, 85], // Gray gradient
+  ),
+  CelebritySystem(
+    name: 'Bad Bunny',
+    title: 'Latino Time Alignment',
+    subtitle: 'AGE 30 - PUERTO RICAN PRIDE',
+    tier: '🎯 ACCESSIBLE INTENSITY',
+    habits: [
+      'Wake 10am',
+      'Cuban coffee ritual',
+      'Boxing 90 min',
+      'Studio 7 hours (2 sessions)',
+      'Puerto Rican soul food',
+      'Beach walk',
+      'Spanish first always',
+      'Sleep 3am',
+    ],
+    whyViral: 'Cultural pride + boxing for conditioning',
+    emoji: '🥊',
+    gradientColors: [251, 146, 60, 249, 115, 22], // Orange gradient
+  ),
+  CelebritySystem(
+    name: 'Shah Rukh Khan',
+    title: 'Bollywood King',
+    subtitle: 'AGE 59 - ACTOR TO OWNER',
+    tier: '🎯 ACCESSIBLE INTENSITY',
+    habits: [
+      'Wake 9am',
+      'Meditation + prayer 15 min',
+      'Workout 60 min (age-appropriate)',
+      'Script reading',
+      'Production meetings',
+      'Family time',
+      'Sleep 2am',
+    ],
+    whyViral: 'Fitness adapts with age - actor to producer to owner',
+    emoji: '🎬',
+    gradientColors: [251, 191, 36, 245, 158, 11], // Gold gradient
+  ),
+  CelebritySystem(
+    name: 'MrBeast',
+    title: 'Obsessive Consistency',
+    subtitle: '\$500M-\$1B NET WORTH',
+    tier: '🎯 ACCESSIBLE INTENSITY',
+    habits: [
+      'Work until crash (no set schedule)',
+      'Workout 45-60 min (5x week)',
+      'Film Mon-Fri',
+      '12,500 steps daily',
+      'Sleep 7-9 hours (improved)',
+      'High fiber, protein, nutrients',
+      'Reinvest all profit',
+    ],
+    whyViral: 'Obsessive consistency - audience obsession',
+    emoji: '💰',
+    gradientColors: [34, 197, 94, 22, 163, 74], // Green gradient
   ),
   CelebritySystem(
     name: 'Orlando Bloom',
