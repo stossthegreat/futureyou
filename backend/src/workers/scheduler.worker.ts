@@ -135,7 +135,6 @@ new Worker(QUEUE, async (job) => {
     case "evening-debrief": return runEveningDebrief(job.data.userId);
     case "nudge": return runNudge(job.data.userId, job.data.trigger); // ✅ NEW
     case "auto-nudges-hourly": return autoNudgesHourly();
-    case "welcome-series-daily": return processWelcomeSeries(); // ✅ NEW: 7-day welcome series
     default: return;
   }
 }, { 

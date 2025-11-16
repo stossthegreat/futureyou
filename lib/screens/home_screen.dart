@@ -21,6 +21,9 @@ import '../models/habit_system.dart';
 import '../models/habit.dart';
 import '../models/coach_message.dart';
 import '../widgets/week_overview_card.dart';
+import '../services/welcome_series_local.dart';
+import '../data/welcome_series_content.dart';
+import '../widgets/welcome_day_modal.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -32,6 +35,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
   DateTime _selectedDate = DateTime.now();
   bool _hasShownBrief = false;
+  bool _hasShownWelcomeDay = false;
   int _unreadCount = 0;
   
   @override
@@ -42,8 +46,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   }
 
   Future<void> _initializeScreen() async {
+    await welcomeSeriesLocal.init();
     await _refreshMessages();
     _checkForMorningBrief();
+    _checkForWelcomeDay();
     _loadUnreadCount();
   }
 
@@ -103,6 +109,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         });
       }
     }
+  }
+
+  void _checkForWelcomeDay() {
+    // Check if we should show welcome day (evening at 8 PM, different from brief)
+    final now = DateTime.now();
+    
+    // Show at 8 PM (or anytime after if not yet shown today)
+    final isEveningTime = now.hour >= 20 || now.hour < 6; // 8 PM to 6 AM window
+    
+    if (isEveningTime && !_hasShownWelcomeDay && welcomeSeriesLocal.shouldShowToday()) {
+      final dayContent = welcomeSeriesLocal.getTodaysContent();
+      if (dayContent != null) {
+        // Show welcome day after build completes (priority after brief)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              _showWelcomeDayModal(dayContent);
+              _hasShownWelcomeDay = true;
+            }
+          });
+        });
+      }
+    }
+  }
+
+  void _showWelcomeDayModal(WelcomeDayContent dayContent) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => WelcomeDayModal(
+        day: dayContent.day,
+        moonPhase: dayContent.moonPhase,
+        title: dayContent.title,
+        content: dayContent.content,
+        onContinue: () async {
+          // Mark as complete
+          await welcomeSeriesLocal.markDayComplete();
+          
+          // Save to messages service for reflections tab
+          final message = welcomeSeriesLocal.welcomeDayToMessage(dayContent);
+          await messagesService.saveLocalMessage(message);
+          
+          // Close modal
+          if (mounted) {
+            Navigator.of(context).pop();
+            setState(() {});
+          }
+        },
+        onBack: () {
+          // Just close, don't mark as complete
+          Navigator.of(context).pop();
+        },
+      ),
+    );
   }
   
   void _onDateSelected(DateTime date) {

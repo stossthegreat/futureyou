@@ -298,6 +298,18 @@ class MessagesService {
     await _box.put(message.id, message);
   }
 
+  /// Save a locally-generated message (like welcome series) to reflections
+  Future<void> saveLocalMessage(model.CoachMessage message) async {
+    if (!_initialized) await init();
+    
+    // Only save if not already exists and not deleted
+    if (!_box.containsKey(message.id) && !_deletedBox.containsKey(message.id)) {
+      await _box.put(message.id, message);
+      debugPrint('💾 Saved local message: ${message.id} (${message.kind})');
+      await _updateAppBadge();
+    }
+  }
+
   /// Clear all messages
   Future<void> clearAll() async {
     if (!_initialized) return;

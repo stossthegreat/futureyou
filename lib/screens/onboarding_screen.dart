@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../design/tokens.dart';
 import '../services/local_storage.dart';
 import '../services/api_client.dart';
+import '../services/welcome_series_local.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -24,7 +25,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _burningQuestionController = TextEditingController();
 
-  void _nextStep() {
+  void _nextStep() async {
     // Validate identity page before proceeding
     if (_step == 1) {
       if (_nameController.text.trim().isEmpty) {
@@ -50,6 +51,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     
     if (_step < _total - 1) {
       setState(() => _step++);
+    } else {
+      // Final step - onboarding complete!
+      // Start the 7-day welcome series
+      await welcomeSeriesLocal.init();
+      await welcomeSeriesLocal.start();
+      debugPrint('🌑 Welcome Series initialized for new user!');
+      
+      // Call onComplete to finish onboarding
+      widget.onComplete();
     }
   }
 
