@@ -47,6 +47,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
 
   Future<void> _initializeScreen() async {
     await welcomeSeriesLocal.init();
+    
+    // Debug: Check welcome series status
+    final stats = welcomeSeriesLocal.getStats();
+    debugPrint('🌑 Welcome series stats: $stats');
+    
     await _refreshMessages();
     _checkForMorningBrief();
     _checkForWelcomeDay();
@@ -76,12 +81,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
 
   Future<void> _refreshMessages() async {
     try {
+      debugPrint('🔄 Refreshing messages...');
       await messagesService.syncMessages('test-user-felix');
       if (mounted) {
+        debugPrint('✅ Messages refreshed, updating UI');
         setState(() {});
       }
     } catch (e) {
-      debugPrint('Error refreshing messages: $e');
+      debugPrint('❌ Error refreshing messages: $e');
+      // Don't crash the UI, just continue
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -112,15 +123,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   }
 
   void _checkForWelcomeDay() {
-    // Check if we should show welcome day (evening at 8 PM, different from brief)
+    // Check if we should show welcome day (anytime for now - testing)
     final now = DateTime.now();
     
-    // Show at 8 PM (or anytime after if not yet shown today)
-    final isEveningTime = now.hour >= 20 || now.hour < 6; // 8 PM to 6 AM window
+    // Show anytime for testing (remove time restriction)
+    final canShowWelcome = true; // Always allow for testing
     
-    if (isEveningTime && !_hasShownWelcomeDay && welcomeSeriesLocal.shouldShowToday()) {
+    debugPrint('🌑 Welcome check: canShow=$canShowWelcome, hasShown=$_hasShownWelcomeDay, shouldShow=${welcomeSeriesLocal.shouldShowToday()}');
+    
+    if (canShowWelcome && !_hasShownWelcomeDay && welcomeSeriesLocal.shouldShowToday()) {
       final dayContent = welcomeSeriesLocal.getTodaysContent();
+      debugPrint('🌑 Day content: ${dayContent?.day} - ${dayContent?.title}');
+      
       if (dayContent != null) {
+        debugPrint('🌑 Showing welcome day modal for Day ${dayContent.day}');
         // Show welcome day after build completes (priority after brief)
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Future.delayed(const Duration(milliseconds: 500), () {
@@ -130,7 +146,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
             }
           });
         });
+      } else {
+        debugPrint('🌑 No day content available');
       }
+    } else {
+      debugPrint('🌑 Welcome day not shown - conditions not met');
     }
   }
 
@@ -215,11 +235,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final activeDebrief = isToday ? messagesService.getLatestDebrief() : null;
     final activeLetters = isToday ? messagesService.getUnreadLetters() : [];
     
-    // Collect scroll messages (briefs, debriefs, letters)
+    // Collect scroll messages (briefs, debriefs, letters) - ONLY unread ones
     final scrollMessages = <CoachMessage>[
-      if (todaysBrief != null) todaysBrief,
-      if (activeDebrief != null) activeDebrief,
-      ...activeLetters,
+      if (todaysBrief != null && !todaysBrief.isRead) todaysBrief,
+      if (activeDebrief != null && !activeDebrief.isRead) activeDebrief,
+      ...activeLetters.where((letter) => !letter.isRead),
     ];
     
     // Format date like React: "Thursday, Oct 30, 2025"
