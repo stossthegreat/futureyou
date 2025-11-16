@@ -108,15 +108,16 @@ class WelcomeSeriesLocal {
   model.CoachMessage welcomeDayToMessage(WelcomeDayContent dayContent) {
     return model.CoachMessage(
       id: 'welcome_day_${dayContent.day}',
+      userId: 'test-user-felix', // Will be set by caller if different
       kind: model.MessageKind.letter,
-      content: '${dayContent.moonPhase} ${dayContent.title}\n\n${dayContent.content}',
-      timestamp: DateTime.now(),
+      title: '${dayContent.moonPhase} ${dayContent.title}',
+      body: dayContent.content,
+      createdAt: DateTime.now(),
       isRead: false,
-      metadata: {
+      meta: {
         'source': 'welcome_series',
         'day': dayContent.day,
         'moonPhase': dayContent.moonPhase,
-        'title': dayContent.title,
       },
     );
   }

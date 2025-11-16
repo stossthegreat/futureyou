@@ -150,10 +150,10 @@ class WelcomeDayModal extends StatelessWidget {
                         Text(
                           content,
                           textAlign: TextAlign.left,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             height: 1.8,
-                            color: Colors.white87,
+                            color: Colors.white.withOpacity(0.87),
                             fontWeight: FontWeight.w400,
                             letterSpacing: 0.3,
                           ),

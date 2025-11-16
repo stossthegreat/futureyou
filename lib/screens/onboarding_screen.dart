@@ -1381,58 +1381,115 @@ Feels: You'll feel transformed and strong, as your body recognizes this new leve
                 height: 1.2,
               ),
             ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
-              'Free users get standard tracking; premium unlocks the full AI OS experience.',
+              'Join thousands becoming their ideal self',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.emerald.withOpacity(0.8),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ).animate().fadeIn(delay: 150.ms, duration: 600.ms),
+            const SizedBox(height: 8),
+            Text(
+              'Most people drift through life. Future-You keeps you awake.',
               textAlign: TextAlign.center,
               style: AppTextStyles.body.copyWith(
                 color: AppColors.textSecondary,
                 height: 1.6,
+                fontSize: 13,
               ),
-            ).animate().fadeIn(delay: 200.ms, duration: 600.ms),
+            ).animate().fadeIn(delay: 250.ms, duration: 600.ms),
             const SizedBox(height: 32),
+            
+            // FREE TIER
             _buildPricingCard(
-              icon: LucideIcons.shieldCheck,
-              title: 'Free',
-              price: '\$0',
+              icon: LucideIcons.package,
+              title: 'Pathfinder',
+              price: 'Free',
+              subtitle: 'Start your journey',
               features: [
-                'Basic habit & task tracking',
-                'No AI, no OS features',
-                'Manual reflection diary',
+                '✓ Habit & task tracking',
+                '✓ Alarms & reminders',
+                '✓ Basic habit libraries',
+                '✗ No AI OS',
+                '✗ No What-If Engine',
               ],
               onTap: widget.onComplete,
               isPrimary: false,
               delay: 300,
             ),
             const SizedBox(height: 16),
+            
+            // TIER 2: $6.99 - AI AWAKENS
             _buildPricingCard(
-              icon: LucideIcons.crown,
-              title: 'Premium Monthly',
-              price: '\$9.99',
-              subtitle: 'Full OSO AI System',
+              icon: LucideIcons.sparkles,
+              title: 'AI Companion',
+              price: '\$6.99',
+              priceSubtext: '/month',
+              subtitle: 'Your personal AI OS awakens',
+              badge: 'MOST POPULAR',
               features: [
-                'Life\'s Task AI Discovery',
-                'Morning Briefs, Letters, and Nudges',
-                'What-If Engine Commit Feature',
+                '✓ Morning Briefs (GPT-4o powered)',
+                '✓ Evening Debriefs & Real-time Nudges',
+                '✓ Memory System (remembers everything)',
+                '✓ Weekly OS Letters',
+                '✓ Habit & System Libraries',
+                '✓ Intelligent Scheduler',
+                '✗ What-If Engine (locked)',
+                '✗ Book of Purpose (locked)',
               ],
+              valueNote: 'Competitor AI companions: \$19.99/mo',
               onTap: widget.onComplete,
               isPrimary: true,
               delay: 400,
             ),
             const SizedBox(height: 16),
+            
+            // TIER 3: $11.99 - FULL ENLIGHTENMENT
             _buildPricingCard(
-              icon: LucideIcons.creditCard,
-              title: 'Yearly',
-              price: '\$69.99',
-              subtitle: 'Save ~40% vs monthly',
+              icon: LucideIcons.crown,
+              title: 'Complete Access',
+              price: '\$11.99',
+              priceSubtext: '/month',
+              subtitle: 'Full transformation system',
+              badge: 'BEST VALUE',
               features: [
-                'All premium features',
-                'Founder\'s badge & early releases',
-                'Exclusive Future-You updates',
+                '✓ Everything in AI Companion',
+                '✓ What-If Simulator (both presets)',
+                '✓ Book of Purpose (7-chapter journey)',
+                '✓ Future Timeline Simulator',
+                '✓ Habit Architect System',
+                '✓ Deep self-discovery tools',
               ],
+              valueNote: 'Book of Purpose alone worth \$50+',
               onTap: widget.onComplete,
               isPrimary: false,
               delay: 500,
+              isHighlighted: true,
+            ),
+            const SizedBox(height: 16),
+            
+            // ANNUAL: $69.99
+            _buildPricingCard(
+              icon: LucideIcons.zap,
+              title: 'Annual Commitment',
+              price: '\$69.99',
+              priceSubtext: '/year',
+              subtitle: 'Save \$74 vs monthly (\$5.83/mo)',
+              badge: '51% OFF',
+              features: [
+                '✓ Complete Access (all features)',
+                '✓ Priority AI response',
+                '✓ Early access to new features',
+                '✓ Founder badge',
+                '✓ Exclusive updates',
+              ],
+              valueNote: '\$143.88/year → \$69.99/year',
+              onTap: widget.onComplete,
+              isPrimary: false,
+              delay: 600,
             ),
             const SizedBox(height: 32),
             Row(
@@ -1501,10 +1558,14 @@ Feels: You'll feel transformed and strong, as your body recognizes this new leve
     required IconData icon,
     required String title,
     required String price,
+    String? priceSubtext,
     String? subtitle,
+    String? badge,
+    String? valueNote,
     required List<String> features,
     required VoidCallback onTap,
     required bool isPrimary,
+    bool isHighlighted = false,
     required int delay,
   }) {
     return GestureDetector(
@@ -1514,17 +1575,19 @@ Feels: You'll feel transformed and strong, as your body recognizes this new leve
         decoration: BoxDecoration(
           color: const Color(0xFF09090B),
           border: Border.all(
-            color: isPrimary
-                ? AppColors.emerald.withOpacity(0.5)
-                : const Color(0xFF27272A),
-            width: isPrimary ? 2 : 1,
+            color: isHighlighted
+                ? AppColors.emerald
+                : isPrimary
+                    ? AppColors.emerald.withOpacity(0.5)
+                    : const Color(0xFF27272A),
+            width: isHighlighted ? 2.5 : isPrimary ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
-          boxShadow: isPrimary
+          boxShadow: (isPrimary || isHighlighted)
               ? [
                   BoxShadow(
-                    color: AppColors.emerald.withOpacity(0.2),
-                    blurRadius: 40,
+                    color: AppColors.emerald.withOpacity(isHighlighted ? 0.3 : 0.2),
+                    blurRadius: isHighlighted ? 50 : 40,
                     spreadRadius: 0,
                   ),
                 ]
@@ -1533,70 +1596,136 @@ Feels: You'll feel transformed and strong, as your body recognizes this new leve
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header with badge
             Row(
               children: [
-                Icon(icon, size: 20, color: isPrimary ? AppColors.emerald : Colors.white60),
+                Icon(icon, size: 20, color: (isPrimary || isHighlighted) ? AppColors.emerald : Colors.white60),
                 const SizedBox(width: 12),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isPrimary ? AppColors.emerald : Colors.white,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: (isPrimary || isHighlighted) ? AppColors.emerald : Colors.white,
+                    ),
                   ),
                 ),
+                if (badge != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.emerald.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: AppColors.emerald.withOpacity(0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      badge,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.emerald,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 12),
-            Text(
-              price,
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-              ),
+            
+            // Price
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  price,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+                if (priceSubtext != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6, left: 4),
+                    child: Text(
+                      priceSubtext,
+                      style: AppTextStyles.captionSmall.copyWith(
+                        color: Colors.white54,
+                      ),
+                    ),
+                  ),
+              ],
             ),
+            
+            // Subtitle
             if (subtitle != null) ...[
               const SizedBox(height: 4),
               Text(
                 subtitle,
                 style: AppTextStyles.captionSmall.copyWith(
                   color: AppColors.emerald.withOpacity(0.8),
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
+            
             const SizedBox(height: 16),
+            
+            // Features
             ...features.map(
               (feature) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   feature,
                   style: AppTextStyles.caption.copyWith(
-                    color: isPrimary ? Colors.white.withOpacity(0.8) : AppColors.textSecondary,
+                    color: feature.startsWith('✓')
+                        ? Colors.white.withOpacity(0.85)
+                        : Colors.white.withOpacity(0.4),
+                    fontSize: 12,
+                    height: 1.4,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: isPrimary ? AppColors.emeraldGradient : null,
-                color: isPrimary ? null : const Color(0xFF18181B),
-                border: isPrimary ? null : Border.all(color: const Color(0xFF27272A)),
-                borderRadius: BorderRadius.circular(AppBorderRadius.md),
-              ),
-              child: Text(
-                isPrimary ? 'Start Monthly' : 'Continue Free',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: isPrimary ? Colors.black : Colors.white,
+            
+            // Value note
+            if (valueNote != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.emerald.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.emerald.withOpacity(0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      LucideIcons.trendingDown,
+                      size: 14,
+                      color: AppColors.emerald,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        valueNote,
+                        style: AppTextStyles.captionSmall.copyWith(
+                          color: AppColors.emerald.withOpacity(0.9),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
