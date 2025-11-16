@@ -151,7 +151,7 @@ export class WelcomeSeriesService {
         type: "welcome_day_delivered"
       },
       orderBy: {
-        createdAt: "asc"
+        ts: "asc"
       }
     });
     
