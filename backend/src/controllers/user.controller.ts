@@ -106,6 +106,7 @@ export async function userController(fastify: FastifyInstance) {
 
   /**
    * 🆔 Store user identity (name, age, burning question)
+   * Also initializes 7-day welcome series for new users
    */
   fastify.post("/api/v1/user/identity", async (req: any, reply) => {
     try {
@@ -122,6 +123,11 @@ export async function userController(fastify: FastifyInstance) {
       });
       
       console.log(`✅ Identity saved for ${userId}: name="${name}", age=${age}`);
+      
+      // 🎉 Initialize 7-day welcome series for new users
+      const { welcomeSeriesService } = await import('../services/welcome-series.service');
+      await welcomeSeriesService.initializeForUser(userId);
+      
       return { success: true };
     } catch (err: any) {
       console.error(`❌ Failed to save identity:`, err);
