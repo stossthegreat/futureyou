@@ -5,13 +5,12 @@ import '../models/habit_system.dart';
 import '../design/tokens.dart';
 
 /// Beautiful glass morphism card for displaying habit systems
-/// Two modes: Tickable (Home) or Read-only with Edit/Delete (Planner)
+/// Two modes: Tickable (Home) or Read-only with Delete (Planner)
 class SystemCard extends StatelessWidget {
   final HabitSystem system;
   final List<Habit> habits;
   final Function(Habit)? onToggleHabit; // For Home page - ticking enabled
   final VoidCallback? onTap;
-  final VoidCallback? onEdit; // For Planner page - shows edit button
   final VoidCallback? onDelete; // For Planner page - delete entire system
   final VoidCallback? onDeleteHabits; // For Planner page - delete individual habits
   final bool showProgress;
@@ -22,7 +21,6 @@ class SystemCard extends StatelessWidget {
     required this.habits,
     this.onToggleHabit,
     this.onTap,
-    this.onEdit,
     this.onDelete,
     this.onDeleteHabits,
     this.showProgress = true,
@@ -128,13 +126,13 @@ class SystemCard extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                onEdit != null || onDelete != null
+                                onDelete != null
                                     ? '${habits.length} habits • Read-only'
                                     : '$completedCount/$totalCount habits today',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(onEdit != null || onDelete != null ? 0.6 : 0.8),
+                                  color: Colors.white.withOpacity(onDelete != null ? 0.6 : 0.8),
                                   fontSize: 13,
-                                  fontStyle: onEdit != null || onDelete != null ? FontStyle.italic : FontStyle.normal,
+                                  fontStyle: onDelete != null ? FontStyle.italic : FontStyle.normal,
                                 ),
                               ),
                             ],
@@ -142,24 +140,6 @@ class SystemCard extends StatelessWidget {
                         ),
                         // ✅ FIX 4: Stunning progress circle (only on Home page - when onToggleHabit is provided)
                         if (onToggleHabit != null) _buildProgressRing(completion, system.gradientColors.first),
-                        // Edit, Delete Habits, and Delete System buttons
-                        if (onEdit != null)
-                          GestureDetector(
-                            onTap: onEdit,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.edit,
-                                size: 18,
-                                color: Colors.white.withOpacity(0.9),
-                              ),
-                            ),
-                          ),
-                        if (onEdit != null) const SizedBox(width: 8),
                         // Delete individual habits button (orange)
                         if (onDeleteHabits != null)
                           GestureDetector(

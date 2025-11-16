@@ -763,15 +763,6 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             return SystemCard(
               system: system,
               habits: systemHabits,
-              onEdit: () {
-                // TODO: Implement edit system functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Edit system: ${system.name}'),
-                    backgroundColor: AppColors.emerald,
-                  ),
-                );
-              },
               // ✅ REMOVED onDelete - only individual habit deletion now
               // ✅ Delete individual habits one at a time (orange button)
               onDeleteHabits: () async {
@@ -1634,7 +1625,7 @@ class _FrequencyChip extends StatelessWidget {
   }
 }
 
-// ✅ FIX 3: Dialog for selecting individual habits to delete
+// ✅ FIX 3: Dialog for selecting ONE habit to delete at a time
 class _HabitSelectionDialog extends StatefulWidget {
   final String systemName;
   final List<Habit> habits;
@@ -1649,12 +1640,12 @@ class _HabitSelectionDialog extends StatefulWidget {
 }
 
 class _HabitSelectionDialogState extends State<_HabitSelectionDialog> {
-  late Set<String> selectedHabitIds;
+  String? selectedHabitId; // Only ONE habit at a time
 
   @override
   void initState() {
     super.initState();
-    selectedHabitIds = {};
+    selectedHabitId = null;
   }
 
   @override
@@ -1662,7 +1653,7 @@ class _HabitSelectionDialogState extends State<_HabitSelectionDialog> {
     return AlertDialog(
       backgroundColor: const Color(0xFF1a1a2e),
       title: Text(
-        'Delete Habits from ${widget.systemName}',
+        'Delete Habit from ${widget.systemName}',
         style: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w700,
@@ -1675,7 +1666,7 @@ class _HabitSelectionDialogState extends State<_HabitSelectionDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Select habits to delete:',
+              'Select ONE habit to delete:',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 12),
@@ -1685,15 +1676,16 @@ class _HabitSelectionDialogState extends State<_HabitSelectionDialog> {
                 itemCount: widget.habits.length,
                 itemBuilder: (context, index) {
                   final habit = widget.habits[index];
-                  final isSelected = selectedHabitIds.contains(habit.id);
+                  final isSelected = selectedHabitId == habit.id;
                   
                   return GestureDetector(
                     onTap: () {
                       setState(() {
+                        // Only allow selecting ONE habit at a time
                         if (isSelected) {
-                          selectedHabitIds.remove(habit.id);
+                          selectedHabitId = null; // Deselect
                         } else {
-                          selectedHabitIds.add(habit.id);
+                          selectedHabitId = habit.id; // Select this one
                         }
                       });
                     },
@@ -1716,7 +1708,7 @@ class _HabitSelectionDialogState extends State<_HabitSelectionDialog> {
                         children: [
                           Icon(
                             isSelected 
-                                ? Icons.check_circle 
+                                ? Icons.radio_button_checked 
                                 : Icons.radio_button_unchecked,
                             color: isSelected ? Colors.orange : Colors.white.withOpacity(0.3),
                             size: 20,
@@ -1748,18 +1740,18 @@ class _HabitSelectionDialogState extends State<_HabitSelectionDialog> {
           child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
         ),
         TextButton(
-          onPressed: selectedHabitIds.isEmpty
+          onPressed: selectedHabitId == null
               ? null
-              : () => Navigator.pop(context, selectedHabitIds.toList()),
+              : () => Navigator.pop(context, [selectedHabitId!]), // Return as list with one item
           style: TextButton.styleFrom(
-            backgroundColor: selectedHabitIds.isEmpty 
+            backgroundColor: selectedHabitId == null 
                 ? Colors.grey.withOpacity(0.2) 
                 : Colors.orange.withOpacity(0.2),
           ),
           child: Text(
-            'Delete ${selectedHabitIds.length} habit(s)',
+            'Delete habit',
             style: TextStyle(
-              color: selectedHabitIds.isEmpty ? Colors.grey : Colors.orange,
+              color: selectedHabitId == null ? Colors.grey : Colors.orange,
             ),
           ),
         ),
