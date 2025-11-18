@@ -125,7 +125,7 @@ export default async function coachController(fastify: FastifyInstance) {
 function mapEventTypeToKind(type: string): string {
   switch (type) {
     case "morning_brief": return "brief";
-    case "evening_debrief": return "debrief";  // ✅ Fixed: was "brief"
+    case "evening_debrief": return "debrief";  // ✅ FIXED: was "brief"
     case "nudge": return "nudge";
     case "coach": return "letter";
     case "mirror": return "mirror";

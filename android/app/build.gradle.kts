@@ -26,7 +26,6 @@ android {
     defaultConfig {
         // Application ID matching Firebase registration
         applicationId = "com.futureyou.futureyouos"
-        // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
@@ -35,11 +34,36 @@ android {
         multiDexEnabled = true
     }
 
+    /**
+     * Release signing config for Play Store (AAB)
+     *
+     * Uses the upload-keystore.jks committed in android/app and
+     * environment variables provided by GitHub Actions (or local defaults).
+     */
+    signingConfigs {
+        create("release") {
+            val keyAliasEnv = System.getenv("KEY_ALIAS")
+            val storePasswordEnv = System.getenv("STORE_PASSWORD")
+            val keyPasswordEnv = System.getenv("KEY_PASSWORD")
+
+            keyAlias = keyAliasEnv ?: "upload"
+            storeFile = file("upload-keystore.jks")
+            storePassword = storePasswordEnv ?: "pass123"
+            keyPassword = keyPasswordEnv ?: "pass123"
+        }
+    }
+
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+        getByName("debug") {
+            // Keep default debug behaviour
+            isDebuggable = true
+        }
+        getByName("release") {
+            // Play Store release: signed, non-debuggable
+            isMinifyEnabled = false
+            isShrinkResources = false
+            isDebuggable = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

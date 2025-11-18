@@ -526,13 +526,25 @@ class _ParchmentScrollCardState extends State<ParchmentScrollCard>
           label: '',
           icon: LucideIcons.x,
           onPressed: () async {
-            // Mark all messages as read to dismiss them
-            for (final message in widget.messages) {
-              await messagesService.markAsRead(message.id);
-            }
-            // Notify parent to refresh and hide the card
-            if (widget.onDismiss != null) {
-              widget.onDismiss!();
+            try {
+              debugPrint('📜 Dismissing scroll with ${widget.messages.length} messages');
+              
+              // Mark all messages as read to dismiss them
+              for (final message in widget.messages) {
+                await messagesService.markAsRead(message.id);
+                debugPrint('✅ Marked ${message.kind.name} as read: ${message.id}');
+              }
+              
+              // Small delay to ensure state updates propagate
+              await Future.delayed(const Duration(milliseconds: 100));
+              
+              // Notify parent to refresh and hide the card
+              if (widget.onDismiss != null) {
+                debugPrint('📜 Calling onDismiss callback');
+                widget.onDismiss!();
+              }
+            } catch (e) {
+              debugPrint('❌ Error dismissing scroll: $e');
             }
           },
           isPrimary: false,

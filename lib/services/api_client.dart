@@ -1064,7 +1064,7 @@ class HabitCompletion {
   }
 }
 
-enum CoachMessageKind { nudge, brief, mirror, letter }
+enum CoachMessageKind { nudge, brief, debrief, mirror, letter }
 
 class CoachMessage {
   final String id;

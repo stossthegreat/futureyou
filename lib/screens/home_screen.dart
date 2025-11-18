@@ -82,14 +82,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   Future<void> _refreshMessages() async {
     try {
       debugPrint('🔄 Refreshing messages...');
-      await messagesService.syncMessages('test-user-felix');
+      await messagesService.syncMessages();
+      
+      // Small delay to ensure local storage is updated
+      await Future.delayed(const Duration(milliseconds: 100));
+      
       if (mounted) {
-        debugPrint('✅ Messages refreshed, updating UI');
-        setState(() {});
+        setState(() {
+          debugPrint('✅ Messages refreshed, updating UI');
+        });
       }
     } catch (e) {
       debugPrint('❌ Error refreshing messages: $e');
-      // Don't crash the UI, just continue
       if (mounted) {
         setState(() {});
       }
@@ -123,66 +127,75 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   }
 
   void _checkForWelcomeDay() {
-    // Check if we should show welcome day (anytime for now - testing)
-    final now = DateTime.now();
-    
-    // Show anytime for testing (remove time restriction)
-    final canShowWelcome = true; // Always allow for testing
-    
-    debugPrint('🌑 Welcome check: canShow=$canShowWelcome, hasShown=$_hasShownWelcomeDay, shouldShow=${welcomeSeriesLocal.shouldShowToday()}');
-    
-    if (canShowWelcome && !_hasShownWelcomeDay && welcomeSeriesLocal.shouldShowToday()) {
-      final dayContent = welcomeSeriesLocal.getTodaysContent();
-      debugPrint('🌑 Day content: ${dayContent?.day} - ${dayContent?.title}');
+    try {
+      // Check if we should show welcome day
+      final now = DateTime.now();
       
-      if (dayContent != null) {
-        debugPrint('🌑 Showing welcome day modal for Day ${dayContent.day}');
-        // Show welcome day after build completes (priority after brief)
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              _showWelcomeDayModal(dayContent);
-              _hasShownWelcomeDay = true;
-            }
+      // Show anytime for testing (remove time restriction)
+      final canShowWelcome = true; // Always allow for testing
+      
+      debugPrint('🌑 Welcome check: canShow=$canShowWelcome, hasShown=$_hasShownWelcomeDay, shouldShow=${welcomeSeriesLocal.shouldShowToday()}');
+      
+      if (canShowWelcome && !_hasShownWelcomeDay && welcomeSeriesLocal.shouldShowToday()) {
+        final dayContent = welcomeSeriesLocal.getTodaysContent();
+        debugPrint('🌑 Day content: ${dayContent?.day} - ${dayContent?.title}');
+        
+        if (dayContent != null && mounted) {
+          debugPrint('🌑 Showing welcome day modal for Day ${dayContent.day}');
+          // Show welcome day after build completes (priority after brief)
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted && !_hasShownWelcomeDay) {
+                _showWelcomeDayModal(dayContent);
+                _hasShownWelcomeDay = true;
+              }
+            });
           });
-        });
+        } else {
+          debugPrint('🌑 No day content available or widget unmounted');
+        }
       } else {
-        debugPrint('🌑 No day content available');
+        debugPrint('🌑 Welcome day not shown - conditions not met');
       }
-    } else {
-      debugPrint('🌑 Welcome day not shown - conditions not met');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Welcome series check failed: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // Don't crash the app - just log the error
     }
   }
 
   void _showWelcomeDayModal(WelcomeDayContent dayContent) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => WelcomeDayModal(
-        day: dayContent.day,
-        moonPhase: dayContent.moonPhase,
-        title: dayContent.title,
-        content: dayContent.content,
-        onContinue: () async {
-          // Mark as complete
-          await welcomeSeriesLocal.markDayComplete();
-          
-          // Save to messages service for reflections tab
-          final message = welcomeSeriesLocal.welcomeDayToMessage(dayContent);
-          await messagesService.saveLocalMessage(message);
-          
-          // Close modal
-          if (mounted) {
-            Navigator.of(context).pop();
-            setState(() {});
-          }
-        },
-        onBack: () {
-          // Just close, don't mark as complete
-          Navigator.of(context).pop();
-        },
-      ),
-    );
+    if (!mounted) return;
+    
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => WelcomeDayModal(
+          dayContent: dayContent,
+          onComplete: () async {
+            try {
+              await welcomeSeriesLocal.markDayComplete();
+              if (mounted) {
+                Navigator.of(context).pop();
+                setState(() {
+                  _hasShownWelcomeDay = true;
+                });
+              }
+            } catch (e) {
+              debugPrint('❌ Error marking welcome day complete: $e');
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      debugPrint('❌ Error showing welcome day modal: $e');
+    }
   }
   
   void _onDateSelected(DateTime date) {

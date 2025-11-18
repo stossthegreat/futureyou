@@ -79,13 +79,10 @@ class _MorningBriefModalState extends State<MorningBriefModal>
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: DesignTokens.darkGradient,
-        ),
-        child: Stack(
+    return Dialog.fullscreen(
+      backgroundColor: Colors.black,
+      child: SafeArea(
+        child: Column(
           children: [
             // Animated background glow
             AnimatedBuilder(
@@ -127,88 +124,91 @@ class _MorningBriefModalState extends State<MorningBriefModal>
                 );
               },
               child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Avatar glow
-                      _buildAvatar(),
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Avatar glow
+                    _buildAvatar(),
 
-                      const SizedBox(height: 40),
+                    const SizedBox(height: 40),
 
-                      // "Morning Orders" label
-                      Text(
-                        'MORNING ORDERS',
+                    // "Morning Orders" label
+                    Text(
+                      'MORNING ORDERS',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                        color: const Color(0xFFFFB800),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Brief text
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: const Color(0xFFFFB800).withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFB800).withOpacity(0.2),
+                            blurRadius: 30,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Text(
+                            widget.brief.body,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              height: 1.6,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // Action button
+                    _buildActionButton(),
+
+                    const SizedBox(height: 16),
+
+                    // Dismiss text
+                    TextButton(
+                      onPressed: _dismiss,
+                      child: Text(
+                        'Read later',
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                          color: const Color(0xFFFFB800),
+                          color: Colors.white.withOpacity(0.5),
                         ),
                       ),
+                    ),
+                    
+                    // Extra bottom padding for scroll room
+                    const SizedBox(height: 60),
 
-                      const SizedBox(height: 24),
+                    // ✅ NEW: Feedback Section
+                    _buildFeedbackSection(),
 
-                      // Brief text
-                      Container(
-                        padding: const EdgeInsets.all(32),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.06),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: const Color(0xFFFFB800).withOpacity(0.3),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFFFB800).withOpacity(0.2),
-                              blurRadius: 30,
-                              spreadRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Text(
-                              widget.brief.body,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                height: 1.6,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      // Action button
-                      _buildActionButton(),
-
-                      const SizedBox(height: 16),
-
-                      // Dismiss text
-                      TextButton(
-                        onPressed: _dismiss,
-                        child: Text(
-                          'Read later',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.5),
-                          ),
-                        ),
-                      ),
-                      
-                      // Extra bottom padding for scroll room
-                      const SizedBox(height: 60),
-                    ],
-                  ),
+                    const SizedBox(height: 60),
+                  ],
                 ),
               ),
             ),
@@ -305,6 +305,75 @@ class _MorningBriefModalState extends State<MorningBriefModal>
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildFeedbackSection() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.emerald.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.emerald.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                '💭',
+                style: TextStyle(fontSize: 24),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                'Quick Reflection',
+                style: AppTextStyles.h3.copyWith(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'What\'s your main intention for today?',
+            style: AppTextStyles.body.copyWith(
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            maxLines: 3,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Share your thoughts...',
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.05),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppColors.emerald, width: 2),
+              ),
+            ),
+            onChanged: (value) {
+              // Store feedback response
+              // TODO: Send to backend for AI learning
+            },
+          ),
+        ],
       ),
     );
   }

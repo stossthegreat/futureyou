@@ -240,8 +240,10 @@ class MessagesService {
         return model.MessageKind.brief;
       case CoachMessageKind.nudge:
         return model.MessageKind.nudge;
-      case CoachMessageKind.mirror:
+      case CoachMessageKind.debrief:
         return model.MessageKind.debrief;
+      case CoachMessageKind.mirror:
+        return model.MessageKind.mirror;  // ✅ FIXED: was incorrectly mapped to debrief
       case CoachMessageKind.letter:
         return model.MessageKind.letter;
     }

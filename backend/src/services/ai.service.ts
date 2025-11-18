@@ -73,38 +73,30 @@ export class AIService {
         ? this.buildMemoryContext(consciousness)
         : this.buildMemoryContextSummary(consciousness);
 
+      // ✅ IMPROVED: Better name extraction logic
       const rawName = consciousness.identity?.name;
-      name =
-        rawName && !String(rawName).startsWith("user_")
-          ? rawName
-          : "Friend";
+      
+      // Check if name exists and is NOT email-based
+      if (rawName && typeof rawName === 'string') {
+        const isEmailBased = rawName.startsWith("user_") || rawName.includes("@");
+        name = isEmailBased ? "Friend" : rawName.trim();
+      } else {
+        name = "Friend";
+      }
+      
+      console.log(`🎯 AI using name: "${name}" (raw: "${rawName}", userId: ${userId.substring(0, 8)}...)`);
 
       const styleRules = this.buildStyleRulesForPurpose(purpose, name);
 
       const systemPrompt = `
 ${MENTOR.systemPrompt}
 
-WHO YOU ARE SPEAKING TO:
-- Name: ${name}
-- Phase: ${consciousness.phase} (day ${consciousness.os_phase.days_in_phase})
-- Purpose: ${consciousness.identity.purpose || "discovering"}
-- Core values: ${
-          consciousness.identity.coreValues.length
-            ? consciousness.identity.coreValues.join(", ")
-            : "not yet defined"
-        }
-- Current emotional state: ${consciousness.currentEmotionalState || "balanced"}
-- Next evolution focus: ${consciousness.nextEvolution || "building consistency"}
+${voiceGuidelines}
 
-MEMORY CONTEXT:
-${memoryContext || "No strong patterns yet — treat this as early observation."}
+${memoryContext}
 
-HOW TO SPEAK (PHASE VOICE):
-${voiceGuidelines || "Be wise, calm, and direct."}
-
-STYLE & OUTPUT RULES:
 ${styleRules}
-`.trim();
+`;
 
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         { role: "system", content: systemPrompt },
