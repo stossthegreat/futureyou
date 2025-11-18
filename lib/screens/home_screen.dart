@@ -82,7 +82,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   Future<void> _refreshMessages() async {
     try {
       debugPrint('🔄 Refreshing messages...');
-      await messagesService.syncMessages();
+      await messagesService.syncMessages('test-user-felix');
       
       // Small delay to ensure local storage is updated
       await Future.delayed(const Duration(milliseconds: 100));
@@ -174,8 +174,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         context: context,
         barrierDismissible: false,
         builder: (context) => WelcomeDayModal(
-          dayContent: dayContent,
-          onComplete: () async {
+          day: dayContent.day,
+          moonPhase: dayContent.moonPhase,
+          title: dayContent.title,
+          content: dayContent.content,
+          onContinue: () async {
             try {
               await welcomeSeriesLocal.markDayComplete();
               if (mounted) {
