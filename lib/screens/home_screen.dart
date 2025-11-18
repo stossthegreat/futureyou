@@ -46,16 +46,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   }
 
   Future<void> _initializeScreen() async {
-    await welcomeSeriesLocal.init();
-    
-    // Debug: Check welcome series status
-    final stats = welcomeSeriesLocal.getStats();
-    debugPrint('🌑 Welcome series stats: $stats');
-    
-    await _refreshMessages();
-    _checkForMorningBrief();
-    _checkForWelcomeDay();
-    _loadUnreadCount();
+    try {
+      // Initialize welcome series first
+      await welcomeSeriesLocal.init();
+      
+      // Check if welcome series needs to be started (for new users)
+      if (!welcomeSeriesLocal.hasStarted()) {
+        debugPrint('🌑 Welcome series not started, starting now...');
+        await welcomeSeriesLocal.start();
+      }
+      
+      // Debug: Check welcome series status
+      final stats = welcomeSeriesLocal.getStats();
+      debugPrint('🌑 Welcome series stats: $stats');
+      
+      // Refresh messages
+      await _refreshMessages();
+      
+      // Check for brief and welcome day
+      _checkForMorningBrief();
+      _checkForWelcomeDay();
+      
+      // Load unread count
+      _loadUnreadCount();
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error initializing home screen: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // Ensure UI still renders even if initialization fails
+      if (mounted) {
+        setState(() {});
+      }
+    }
   }
 
   @override
@@ -82,6 +103,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   Future<void> _refreshMessages() async {
     try {
       debugPrint('🔄 Refreshing messages...');
+      
+      // Ensure messages service is initialized (init() is safe to call multiple times)
+      await messagesService.init();
+      
       await messagesService.syncMessages('test-user-felix');
       
       // Small delay to ensure local storage is updated
@@ -92,10 +117,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
           debugPrint('✅ Messages refreshed, updating UI');
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('❌ Error refreshing messages: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // Always ensure UI updates even on error to prevent grey screen
       if (mounted) {
-        setState(() {});
+        setState(() {
+          debugPrint('⚠️ UI updated despite error to prevent grey screen');
+        });
       }
     }
   }
@@ -128,15 +157,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
 
   void _checkForWelcomeDay() {
     try {
+      // Ensure welcome series is initialized
+      if (!welcomeSeriesLocal.hasStarted()) {
+        debugPrint('🌑 Welcome series not started yet, skipping check');
+        return;
+      }
+      
       // Check if we should show welcome day
-      final now = DateTime.now();
+      final shouldShow = welcomeSeriesLocal.shouldShowToday();
+      debugPrint('🌑 Welcome check: hasShown=$_hasShownWelcomeDay, shouldShow=$shouldShow');
       
-      // Show anytime for testing (remove time restriction)
-      final canShowWelcome = true; // Always allow for testing
-      
-      debugPrint('🌑 Welcome check: canShow=$canShowWelcome, hasShown=$_hasShownWelcomeDay, shouldShow=${welcomeSeriesLocal.shouldShowToday()}');
-      
-      if (canShowWelcome && !_hasShownWelcomeDay && welcomeSeriesLocal.shouldShowToday()) {
+      if (!_hasShownWelcomeDay && shouldShow) {
         final dayContent = welcomeSeriesLocal.getTodaysContent();
         debugPrint('🌑 Day content: ${dayContent?.day} - ${dayContent?.title}');
         
@@ -146,10 +177,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             
-            Future.delayed(const Duration(milliseconds: 500), () {
+            // Delay to ensure brief modal doesn't conflict
+            Future.delayed(const Duration(milliseconds: 800), () {
               if (mounted && !_hasShownWelcomeDay) {
-                _showWelcomeDayModal(dayContent);
-                _hasShownWelcomeDay = true;
+                try {
+                  _showWelcomeDayModal(dayContent);
+                  _hasShownWelcomeDay = true;
+                } catch (e) {
+                  debugPrint('❌ Error showing welcome modal: $e');
+                }
               }
             });
           });
@@ -157,12 +193,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
           debugPrint('🌑 No day content available or widget unmounted');
         }
       } else {
-        debugPrint('🌑 Welcome day not shown - conditions not met');
+        if (_hasShownWelcomeDay) {
+          debugPrint('🌑 Welcome day already shown today');
+        } else if (!shouldShow) {
+          debugPrint('🌑 Welcome day should not show today (already read or complete)');
+        }
       }
     } catch (e, stackTrace) {
       debugPrint('❌ Welcome series check failed: $e');
       debugPrint('Stack trace: $stackTrace');
       // Don't crash the app - just log the error
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
