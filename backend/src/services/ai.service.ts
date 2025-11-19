@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import { prisma } from "../utils/db";
 import { memoryService } from "./memory.service";
 import { memoryIntelligence, UserConsciousness } from "./memory-intelligence.service";
+import { semanticMemory } from "./semanticMemory.service";
 import { shortTermMemory } from "./short-term-memory.service";
 import { aiPromptService } from "./ai-os-prompts.service";
 import { redis } from "../utils/redis";
@@ -394,11 +395,44 @@ ${JSON.stringify({
   async generateMorningBrief(userId: string) {
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
-      const promptTemplate = aiPromptService.buildMorningBriefPrompt(consciousness);
-      return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
-        purpose: "brief",
-        maxChars: 1200, // Increased from 600 to prevent truncation
+
+      // Query relevant semantic memories
+      const recentMemories = await semanticMemory.queryMemories({
+        userId,
+        query: "recent meaningful events, patterns, time wasting, wins, slips",
+        limit: 5,
+        minScore: 0.3,
       });
+
+      // Enhance consciousness with semantic context
+      const enhancedConsciousness = {
+        ...consciousness,
+        recentSemanticMemories: recentMemories.map((m) => ({
+          text: m.text.substring(0, 150),
+          importance: m.metadata?.importance || 3,
+        })),
+      };
+
+      const promptTemplate = aiPromptService.buildMorningBriefPrompt(enhancedConsciousness);
+      const text = await this.generateWithConsciousnessPrompt(userId, promptTemplate, {
+        purpose: "brief",
+        maxChars: 1200,
+      });
+
+      // Store in semantic memory
+      await semanticMemory.storeMemory({
+        userId,
+        type: "brief",
+        text,
+        metadata: {
+          phase: consciousness.phase,
+          consistency_score: consciousness.patterns.consistency_score,
+          drift_windows: consciousness.patterns.drift_windows.map((w) => w.time),
+        },
+        importance: 4,
+      });
+
+      return text;
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy brief:", err);
       const identity = await memoryService.getIdentityFacts(userId);
@@ -412,7 +446,7 @@ ${JSON.stringify({
         ` No poetry. No metaphors. Speak like their future self who takes no bullshit.`;
       const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "brief",
-        maxChars: 1000, // Increased from 500 to prevent truncation
+        maxChars: 1000,
       }).catch(() => this.buildFallbackText("brief", safeName));
       return text;
     }
@@ -448,14 +482,46 @@ ${JSON.stringify({
         ).length,
       };
 
+      // Query relevant semantic memories for today's reflection
+      const recentMemories = await semanticMemory.queryMemories({
+        userId,
+        query: "today's events, misses, wins, avoidance patterns, time wasting",
+        limit: 5,
+        minScore: 0.3,
+      });
+
+      // Enhance consciousness with semantic context
+      const enhancedConsciousness = {
+        ...consciousness,
+        recentSemanticMemories: recentMemories.map((m) => ({
+          text: m.text.substring(0, 150),
+          importance: m.metadata?.importance || 3,
+        })),
+      };
+
       const promptTemplate = aiPromptService.buildDebriefPrompt(
-        consciousness,
+        enhancedConsciousness,
         dayData
       );
-      return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
+      const text = await this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "debrief",
-        maxChars: 1200, // Increased from 600 to prevent truncation
+        maxChars: 1200,
       });
+
+      // Store in semantic memory
+      await semanticMemory.storeMemory({
+        userId,
+        type: "debrief",
+        text,
+        metadata: {
+          phase: consciousness.phase,
+          patterns: dayData,
+          emotional_arc: consciousness.reflectionHistory.emotional_arc,
+        },
+        importance: 4,
+      });
+
+      return text;
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy debrief:", err);
       const identity = await memoryService.getIdentityFacts(userId);
@@ -469,7 +535,7 @@ ${JSON.stringify({
         ` No poetry. No metaphors.`;
       const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "debrief",
-        maxChars: 1000, // Increased from 500 to prevent truncation
+        maxChars: 1000,
       }).catch(() => this.buildFallbackText("debrief", safeName));
       return text;
     }
@@ -478,14 +544,46 @@ ${JSON.stringify({
   async generateNudge(userId: string, reason: string) {
     try {
       const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
+
+      // Query relevant semantic memories about drifts and nudges
+      const recentMemories = await semanticMemory.queryMemories({
+        userId,
+        query: `${reason} recent drifts misses repeated patterns`,
+        limit: 3,
+        minScore: 0.3,
+      });
+
+      // Enhance consciousness with semantic context
+      const enhancedConsciousness = {
+        ...consciousness,
+        recentSemanticMemories: recentMemories.map((m) => ({
+          text: m.text.substring(0, 100),
+          importance: m.metadata?.importance || 3,
+        })),
+      };
+
       const promptTemplate = aiPromptService.buildNudgePrompt(
-        consciousness,
+        enhancedConsciousness,
         reason
       );
-      return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
+      const text = await this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "nudge",
         maxChars: 260,
       });
+
+      // Store in semantic memory
+      await semanticMemory.storeMemory({
+        userId,
+        type: "nudge",
+        text,
+        metadata: {
+          trigger: reason,
+          phase: consciousness.phase,
+        },
+        importance: 3,
+      });
+
+      return text;
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy nudge:", err);
       const identity = await memoryService.getIdentityFacts(userId);

@@ -20,6 +20,7 @@ import { whatIfController } from "./controllers/whatif.controller";
 import { futureYouChatController } from "./controllers/future-you-chat.controller";
 import { whatIfChatController } from "./controllers/what-if-chat.controller";
 import { futureYouChatControllerV2 } from "./controllers/future-you-v2.controller";
+import { reflectionsController } from "./controllers/reflections.controller";
 import { futureYouRouter } from "./modules/futureyou/router";
 import { lifeTaskRouter } from "./modules/lifetask/router";
 
@@ -101,6 +102,7 @@ const buildServer = () => {
     protectedRoutes.register(userController);
     protectedRoutes.register(insightsController); // Pattern analysis & insights
     protectedRoutes.register(whatIfController); // Purpose-aligned goals
+    protectedRoutes.register(reflectionsController); // User reflection capture (NEW)
     
     // V1 Chat (structured discovery + simple coach)
     protectedRoutes.register(futureYouChatController); // Future-You freeform chat (7 lenses)

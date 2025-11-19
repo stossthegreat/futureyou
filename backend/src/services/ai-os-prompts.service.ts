@@ -71,11 +71,66 @@ You NEVER skip the final question.
 
 class AIPromptService {
   //
+  // 🔥 BEHAVIORAL CONTEXT BUILDER
+  //
+  private buildBehavioralContext(consciousness: UserConsciousness): string {
+    const lines: string[] = [];
+
+    if (consciousness.semanticThreads) {
+      const st = consciousness.semanticThreads;
+
+      if (st.recurringExcuses.length > 0) {
+        lines.push(`RECURRING EXCUSES: ${st.recurringExcuses.slice(0, 3).join(", ")}`);
+      }
+
+      if (st.timeWasters.length > 0) {
+        lines.push(`TIME WASTERS: ${st.timeWasters.slice(0, 3).join(", ")}`);
+      }
+
+      if (st.emotionalContradictions.length > 0) {
+        lines.push(`CONTRADICTIONS: ${st.emotionalContradictions[0]}`);
+      }
+    }
+
+    if (consciousness.patterns.drift_windows.length > 0) {
+      const drifts = consciousness.patterns.drift_windows
+        .slice(0, 2)
+        .map((w) => `${w.time} (${w.description})`)
+        .join(", ");
+      lines.push(`DRIFT WINDOWS: ${drifts}`);
+    }
+
+    if (consciousness.patterns.avoidance_triggers.length > 0) {
+      lines.push(
+        `AVOIDANCE TRIGGERS: ${consciousness.patterns.avoidance_triggers.length} habits repeatedly avoided`
+      );
+    }
+
+    if (lines.length === 0) {
+      return "No strong behavioral patterns detected yet.";
+    }
+
+    return lines.join("\n");
+  }
+
+  //
   // 🌅 MORNING BRIEF
   //
   buildMorningBriefPrompt(consciousness: UserConsciousness): string {
+    const c = consciousness as any; // Allow recentSemanticMemories from enhancement
+    const semanticContext = c.recentSemanticMemories
+      ? `\n  "recent_memories": ${JSON.stringify(c.recentSemanticMemories)},`
+      : "";
+
+    const semanticThreads = consciousness.semanticThreads
+      ? `\n  "semantic_threads": ${JSON.stringify(consciousness.semanticThreads)},`
+      : "";
+
     return `
 ${FUTURE_YOU_REFLECTION_PROMPT}
+
+BEHAVIORAL CONTEXT:
+${this.buildBehavioralContext(consciousness)}
 
 BEGIN_MORNING_BRIEF
 {
@@ -93,10 +148,16 @@ BEGIN_MORNING_BRIEF
       .replace(/"/g, "'")}",
     "patterns": ${JSON.stringify(consciousness.patterns)},
     "themes": ${JSON.stringify(consciousness.reflectionThemes || [])},
-    "contradictions": ${JSON.stringify(consciousness.contradictions || [])}
+    "contradictions": ${JSON.stringify(consciousness.contradictions || [])}${semanticContext}${semanticThreads}
   }
 }
 END_MORNING_BRIEF
+
+REMEMBER TO:
+- Reference specific drift windows, avoidance triggers, and recurring excuses
+- Call out time-wasting patterns directly
+- Ask sharp questions about WHY they failed, WHAT they're avoiding, WHAT they traded time for
+- Be concrete, not abstract
 `.trim();
   }
 
@@ -107,8 +168,20 @@ END_MORNING_BRIEF
     consciousness: UserConsciousness,
     dayData: { kept: number; missed: number }
   ): string {
+    const c = consciousness as any; // Allow recentSemanticMemories from enhancement
+    const semanticContext = c.recentSemanticMemories
+      ? `\n    "recent_memories": ${JSON.stringify(c.recentSemanticMemories)},`
+      : "";
+
+    const semanticThreads = consciousness.semanticThreads
+      ? `\n    "semantic_threads": ${JSON.stringify(consciousness.semanticThreads)},`
+      : "";
+
     return `
 ${FUTURE_YOU_REFLECTION_PROMPT}
+
+BEHAVIORAL CONTEXT:
+${this.buildBehavioralContext(consciousness)}
 
 BEGIN_EVENING_DEBRIEF
 {
@@ -131,10 +204,17 @@ BEGIN_EVENING_DEBRIEF
     "themes": ${JSON.stringify(consciousness.reflectionThemes || [])},
     "avoidance_triggers": ${JSON.stringify(
       consciousness.patterns?.avoidance_triggers || []
-    )}
+    )}${semanticContext}${semanticThreads}
   }
 }
 END_EVENING_DEBRIEF
+
+REMEMBER TO:
+- Mirror the day against their declared intention
+- Call out where they lied to themselves, avoided, or drifted
+- Reference specific time-wasting patterns and recurring excuses
+- End with TWO questions: "What did you learn today?" and "What will you do differently tomorrow?"
+- Be surgical, not poetic
 `.trim();
   }
 
@@ -142,6 +222,16 @@ END_EVENING_DEBRIEF
   // ⚡ MIDDAY NUDGE — SHORT, PUNCHY
   //
   buildNudgePrompt(consciousness: UserConsciousness, reason: string): string {
+    const c = consciousness as any;
+    const semanticContext = c.recentSemanticMemories
+      ? `\n  "recent_memories": ${JSON.stringify(c.recentSemanticMemories)},`
+      : "";
+
+    const recurringExcuses =
+      consciousness.semanticThreads?.recurringExcuses.slice(0, 3) || [];
+    const timeWasters =
+      consciousness.semanticThreads?.timeWasters.slice(0, 3) || [];
+
     return `
 You are FUTURE-YOU OS.
 
@@ -149,6 +239,8 @@ NUDGE RULES:
 - 2–3 sentences ONLY.
 - No metaphors, no softeners.
 - One direct call-out, one move, one question.
+- Reference the SPECIFIC pattern (e.g., "this is the same late-night scroll trap as three days ago")
+- Tie to the SPECIFIC habit or streak at risk
 
 BEGIN_NUDGE
 {
@@ -159,9 +251,13 @@ BEGIN_NUDGE
   "consistency_score": ${consciousness.patterns?.consistency_score || 0},
   "avoidance_triggers": ${JSON.stringify(
     consciousness.patterns?.avoidance_triggers || []
-  )}
+  )},
+  "recurring_excuses": ${JSON.stringify(recurringExcuses)},
+  "time_wasters": ${JSON.stringify(timeWasters)}${semanticContext}
 }
 END_NUDGE
+
+Ask ONE sharp question: "What are you avoiding by picking up your phone right now?" or similar.
 `.trim();
   }
 

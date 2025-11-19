@@ -1,5 +1,6 @@
 import { prisma } from "../utils/db";
 import { memoryService } from "./memory.service";
+import { semanticMemory } from "./semanticMemory.service";
 import OpenAI from "openai";
 
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o";
@@ -63,6 +64,13 @@ export interface OSPhase {
   phase_transitions: Array<{ from: AIPhase; to: AIPhase; at: Date }>;
 }
 
+export interface SemanticThreads {
+  recentHighlights: string[]; // last N important memories
+  recurringExcuses: string[]; // phrases user repeats (time wasting / failure reasons)
+  timeWasters: string[]; // e.g. "YouTube spiral", "doomscroll", etc
+  emotionalContradictions: string[]; // "says X but does Y"
+}
+
 export interface UserConsciousness {
   identity: {
     name: string;
@@ -91,6 +99,9 @@ export interface UserConsciousness {
 
   reflectionThemes: string[];
   legacyCode: string[];
+
+  // NEW: Semantic memory threads
+  semanticThreads?: SemanticThreads;
 }
 
 export interface VoiceIntensity {
@@ -136,6 +147,9 @@ export class MemoryIntelligenceService {
       depth_score: 0,
     };
 
+    // NEW: Build semantic threads from vector memory
+    const semanticThreads = await this.buildSemanticThreads(userId);
+
     return {
       identity: {
         name: identity.name,
@@ -159,7 +173,160 @@ export class MemoryIntelligenceService {
       oracle: factsData.oracle,
       reflectionThemes: reflectionHistory.themes,
       legacyCode: factsData.oracle?.legacy_code || [],
+      semanticThreads,
     };
+  }
+
+  // ============================================================
+  // 🧵 Build Semantic Threads from Vector Memory
+  // ============================================================
+  private async buildSemanticThreads(userId: string): Promise<SemanticThreads> {
+    try {
+      // Fetch recent memories from semantic store
+      const recentMemories = await semanticMemory.getRecentMemories({
+        userId,
+        limit: 20,
+      });
+
+      if (recentMemories.length === 0) {
+        return {
+          recentHighlights: [],
+          recurringExcuses: [],
+          timeWasters: [],
+          emotionalContradictions: [],
+        };
+      }
+
+      // Extract patterns
+      const highlights = recentMemories
+        .filter((m) => m.metadata?.importance >= 4)
+        .map((m) => m.text.substring(0, 100))
+        .slice(0, 5);
+
+      const recurringExcuses = this.extractRecurringPhrases(
+        recentMemories.map((m) => m.text),
+        [
+          "didn't have time",
+          "was tired",
+          "wasn't in the mood",
+          "couldn't be bothered",
+          "too busy",
+          "didn't feel like it",
+          "later",
+          "tomorrow",
+        ]
+      );
+
+      const timeWasters = this.extractRecurringPhrases(
+        recentMemories.map((m) => m.text),
+        [
+          "scroll",
+          "scrolling",
+          "youtube",
+          "tiktok",
+          "instagram",
+          "social media",
+          "netflix",
+          "gaming",
+          "binge",
+          "doom",
+          "wasted time",
+        ]
+      );
+
+      const emotionalContradictions = this.detectContradictoryPatterns(recentMemories);
+
+      return {
+        recentHighlights: highlights,
+        recurringExcuses,
+        timeWasters,
+        emotionalContradictions,
+      };
+    } catch (err) {
+      console.warn("⚠️ Failed to build semantic threads:", err);
+      return {
+        recentHighlights: [],
+        recurringExcuses: [],
+        timeWasters: [],
+        emotionalContradictions: [],
+      };
+    }
+  }
+
+  /**
+   * Extract recurring phrases from memory texts
+   */
+  private extractRecurringPhrases(texts: string[], keywords: string[]): string[] {
+    const found: Record<string, number> = {};
+
+    for (const text of texts) {
+      const lower = text.toLowerCase();
+      for (const keyword of keywords) {
+        if (lower.includes(keyword)) {
+          found[keyword] = (found[keyword] || 0) + 1;
+        }
+      }
+    }
+
+    // Return phrases that appear 2+ times, sorted by frequency
+    return Object.entries(found)
+      .filter(([, count]) => count >= 2)
+      .sort(([, a], [, b]) => b - a)
+      .map(([phrase]) => phrase)
+      .slice(0, 5);
+  }
+
+  /**
+   * Detect behavioral contradictions from memories
+   */
+  private detectContradictoryPatterns(memories: any[]): string[] {
+    // Look for patterns like: "I want X" but behavior shows "not doing X"
+    const contradictions: string[] = [];
+    const texts = memories.map((m) => m.text);
+
+    // Simple heuristic: find "want" statements and check for failure patterns
+    for (const text of texts) {
+      const lower = text.toLowerCase();
+      if (
+        (lower.includes("want") || lower.includes("need") || lower.includes("should")) &&
+        (lower.includes("but") || lower.includes("didn't") || lower.includes("missed"))
+      ) {
+        // Extract a snippet
+        const snippet = text.substring(0, 80) + (text.length > 80 ? "..." : "");
+        contradictions.push(snippet);
+        if (contradictions.length >= 3) break;
+      }
+    }
+
+    return contradictions;
+  }
+
+  /**
+   * Summary of behavioral contradictions for prompts
+   */
+  summarizeBehaviouralContradictions(c: UserConsciousness): string[] {
+    const summary: string[] = [];
+
+    if (!c.semanticThreads) return summary;
+
+    // Time-wasting vs goals
+    if (c.semanticThreads.timeWasters.length > 0 && c.semanticThreads.recurringExcuses.includes("didn't have time")) {
+      const waster = c.semanticThreads.timeWasters[0];
+      summary.push(`You say you don't have time, but you lose hours to ${waster}.`);
+    }
+
+    // Recurring excuses
+    if (c.semanticThreads.recurringExcuses.length >= 2) {
+      const excuses = c.semanticThreads.recurringExcuses.slice(0, 2).join('", "');
+      summary.push(`Your recurring excuses: "${excuses}".`);
+    }
+
+    // Emotional contradictions
+    if (c.semanticThreads.emotionalContradictions.length > 0) {
+      summary.push(c.semanticThreads.emotionalContradictions[0]);
+    }
+
+    return summary;
   }
 
   // ============================================================
@@ -177,7 +344,10 @@ export class MemoryIntelligenceService {
     const drift_windows = this.findDriftWindows(habitTicks);
     const consistency_score = this.calculateConsistency(habitTicks);
 
-    const chatMessages = events.filter((e) => e.type === "chat_message");
+    // Include reflection_answer events in chat analysis
+    const chatMessages = events.filter(
+      (e) => e.type === "chat_message" || e.type === "reflection_answer"
+    );
     const reflectionThemes = await this.extractThemesWithAI(chatMessages);
     const depth_score = this.scoreReflectionDepth(chatMessages);
 
@@ -395,11 +565,11 @@ export class MemoryIntelligenceService {
   private extractReturnProtocols(events: any[]) {
     const out: Protocol[] = [];
     const refs = events
-      .filter((e) => e.type === "chat_message" || e.type === "debrief")
+      .filter((e) => e.type === "chat_message" || e.type === "debrief" || e.type === "reflection_answer")
       .slice(0, 10);
 
     for (const r of refs) {
-      const text = (r.payload as any)?.text || "";
+      const text = (r.payload as any)?.text || (r.payload as any)?.answer || "";
       if (
         text.includes("came back") ||
         text.includes("returned") ||
