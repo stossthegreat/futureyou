@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:timezone/timezone.dart' as tz;
+
 import '../models/habit.dart';
 
 class AlarmService {
@@ -28,18 +29,14 @@ class AlarmService {
     try {
       debugPrint('🔧 Initializing AlarmService...');
 
-      // Step 1: Initialize AndroidAlarmManager
-      await AndroidAlarmManager.initialize();
-      debugPrint('✅ AndroidAlarmManager initialized');
-
-      // Step 2: Request permissions
+      // Request permissions
       final notifStatus = await Permission.notification.request();
       debugPrint('📱 Notification permission: $notifStatus');
 
       final alarmStatus = await Permission.scheduleExactAlarm.request();
       debugPrint('⏰ Exact alarm permission: $alarmStatus');
 
-      // Step 3: Initialize notification plugin
+      // Initialize notification plugin
       const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
       const iosInit = DarwinInitializationSettings(
         requestAlertPermission: true,
@@ -87,7 +84,7 @@ class AlarmService {
     debugPrint('🔔 Notification tapped: ${response.payload}');
   }
 
-  /// Schedule alarm for a habit
+  /// Schedule weekly alarms for a habit using local notifications only
   static Future<void> scheduleAlarm(Habit habit) async {
     if (!habit.reminderOn) {
       debugPrint(
@@ -109,7 +106,7 @@ class AlarmService {
       debugPrint('   - repeatDays: ${habit.repeatDays}');
       debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-      // Cancel any existing alarms first
+      // Cancel existing alarms so we don't duplicate notifications
       await cancelAlarm(habit.id);
 
       int successCount = 0;
@@ -118,45 +115,61 @@ class AlarmService {
       // Schedule for each repeat day
       for (final day in habit.repeatDays) {
         final alarmId = _getAlarmId(habit.id, day);
-        final nextTime = _getNextAlarmTime(day, habit.timeOfDay);
+        final scheduledTime = _getNextAlarmTime(day, habit.timeOfDay);
 
         debugPrint('📅 Scheduling alarm for ${_getDayName(day)}:');
         debugPrint('   - alarmId: $alarmId');
         debugPrint('   - time: ${habit.time}');
-        debugPrint('   - next occurrence: $nextTime');
+        debugPrint('   - next occurrence: $scheduledTime');
 
         try {
-          final success = await AndroidAlarmManager.oneShotAt(
-            nextTime,
+          await _notifications.zonedSchedule(
             alarmId,
-            _alarmCallback,
-            exact: true,
-            wakeup: true,
-            allowWhileIdle: true,
-            rescheduleOnReboot: true,
-            params: {
-              'habitTitle': habit.title,
-              'habitId': habit.id,
-              'day': day,
-              'hour': habit.timeOfDay.hour,
-              'minute': habit.timeOfDay.minute,
-            },
+            '🔥 ${habit.title}',
+            '${_getMotivationalQuote()}\n\nTap to mark as complete',
+            scheduledTime,
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                _channelId,
+                _channelName,
+                channelDescription: _channelDescription,
+                importance: Importance.max,
+                priority: Priority.high,
+                playSound: true,
+                sound: const RawResourceAndroidNotificationSound('notification'),
+                enableVibration: true,
+                enableLights: true,
+                fullScreenIntent: true,
+                styleInformation: BigTextStyleInformation(
+                  '${_getMotivationalQuote()}\n\nTap to mark as complete',
+                  contentTitle: '🔥 ${habit.title}',
+                  summaryText: 'Future You OS',
+                ),
+              ),
+              iOS: const DarwinNotificationDetails(
+                presentAlert: true,
+                presentSound: true,
+                presentBadge: true,
+              ),
+            ),
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            payload: habit.id,
           );
 
-          if (success) {
-            successCount++;
-            debugPrint('   ✅ SUCCESS for ${_getDayName(day)}');
+          successCount++;
+          debugPrint('   ✅ SUCCESS for ${_getDayName(day)}');
 
-            // 🔥 Track this alarm for the debugger screen
-            _scheduledAlarms[alarmId] = {
-              'habitTitle': habit.title,
-              'habitId': habit.id,
-              'day': day,
-            };
-          } else {
-            failCount++;
-            debugPrint('   ❌ FAILED for ${_getDayName(day)}');
-          }
+          // 🔥 Track this alarm for the debugger screen
+          _scheduledAlarms[alarmId] = {
+            'habitTitle': habit.title,
+            'habitId': habit.id,
+            'day': day,
+            'time': habit.time,
+            'scheduledAt': scheduledTime.toIso8601String(),
+          };
         } catch (e) {
           failCount++;
           debugPrint('   ❌ ERROR for ${_getDayName(day)}: $e');
@@ -174,126 +187,11 @@ class AlarmService {
     }
   }
 
-  /// Alarm callback - THIS FIRES WHEN THE ALARM GOES OFF
-  @pragma('vm:entry-point')
-  static Future<void> _alarmCallback(
-      int id, Map<String, dynamic>? params) async {
-    debugPrint('🔥🔥🔥 ALARM FIRING! 🔥🔥🔥');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('⏰ Alarm ID: $id');
-    debugPrint('📦 Params: $params');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-    try {
-      // CRITICAL: Initialize Flutter bindings in this isolate
-      WidgetsFlutterBinding.ensureInitialized();
-
-      final habitTitle = params?['habitTitle'] ?? 'Habit Reminder';
-      final habitId = params?['habitId'] ?? '';
-      final day = params?['day'] ?? 0;
-      final hour = params?['hour'] ?? 9;
-      final minute = params?['minute'] ?? 0;
-
-      debugPrint('🔔 Alarm details:');
-      debugPrint('   - habitTitle: $habitTitle');
-      debugPrint('   - habitId: $habitId');
-      debugPrint('   - day: $day (${_getDayName(day)})');
-      debugPrint(
-          '   - time: ${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}');
-
-      // Initialize notification plugin in this isolate
-      final notifications = FlutterLocalNotificationsPlugin();
-      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-      await notifications.initialize(
-        const InitializationSettings(android: androidInit),
-      );
-      debugPrint('✅ Notification plugin initialized in callback');
-
-      // Create notification channel in this isolate
-      const channel = AndroidNotificationChannel(
-        'habit_alarms',
-        'Habit Alarms',
-        description: 'Alarm notifications',
-        importance: Importance.max,
-        playSound: true,
-        sound: RawResourceAndroidNotificationSound('notification'),
-        enableVibration: true,
-        enableLights: true,
-      );
-
-      await notifications
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(channel);
-      debugPrint('✅ Notification channel created in callback');
-
-      // Show notification with SOUND
-      await notifications.show(
-        id,
-        '🔥 $habitTitle',
-        '${_getMotivationalQuote()}\n\nTap to mark as complete',
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'habit_alarms',
-            'Habit Alarms',
-            channelDescription: 'Alarm notifications',
-            importance: Importance.max,
-            priority: Priority.high,
-            playSound: true,
-            sound: const RawResourceAndroidNotificationSound('notification'),
-            enableVibration: true,
-            enableLights: true,
-            fullScreenIntent: true,
-            ongoing: false,
-            autoCancel: true,
-            styleInformation: BigTextStyleInformation(
-              '${_getMotivationalQuote()}\n\nTap to mark as complete',
-              contentTitle: '🔥 $habitTitle',
-              summaryText: 'Future You OS',
-            ),
-          ),
-        ),
-        payload: habitId,
-      );
-
-      debugPrint('✅ Notification shown successfully with SOUND');
-
-      // Reschedule for next week
-      final nextTime = _getNextAlarmTimeForCallback(day, hour, minute);
-      await AndroidAlarmManager.oneShotAt(
-        nextTime,
-        id,
-        _alarmCallback,
-        exact: true,
-        wakeup: true,
-        allowWhileIdle: true,
-        rescheduleOnReboot: true,
-
-        // 🔧 FIX: oneShotAt expects a non-null Map<String, dynamic>
-        params: params ??
-            {
-              'habitTitle': habitTitle,
-              'habitId': habitId,
-              'day': day,
-              'hour': hour,
-              'minute': minute,
-            },
-      );
-
-      debugPrint('🔁 Rescheduled for next occurrence: $nextTime');
-      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    } catch (e, stack) {
-      debugPrint('❌ Alarm callback error: $e');
-      debugPrint('Stack: $stack');
-    }
-  }
-
   /// Cancel all alarms for a habit
   static Future<void> cancelAlarm(String habitId) async {
     debugPrint('🗑️ Cancelling alarms for habit: $habitId');
     for (int day = 0; day < 7; day++) {
       final id = _getAlarmId(habitId, day);
-      await AndroidAlarmManager.cancel(id);
       await _notifications.cancel(id);
       _scheduledAlarms.remove(id); // 🔥 keep map in sync
     }
@@ -303,42 +201,29 @@ class AlarmService {
   /// Cancel all alarms
   static Future<void> cancelAll() async {
     await _notifications.cancelAll();
-    for (final id in _scheduledAlarms.keys.toList()) {
-      await AndroidAlarmManager.cancel(id);
-    }
     _scheduledAlarms.clear();
     debugPrint('🗑️ All alarms cancelled');
   }
 
-  /// Get next alarm time for a given day and time
-  static DateTime _getNextAlarmTime(int weekday, TimeOfDay time) {
-    final now = DateTime.now();
-    var next = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+  /// Get next alarm time (tz-aware) for a given day and time
+  static tz.TZDateTime _getNextAlarmTime(int weekday, TimeOfDay time) {
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      time.hour,
+      time.minute,
+    );
 
-    // Convert weekday: our model uses 0=Sun, 6=Sat
-    // Dart uses 1=Mon, 7=Sun
-    final targetWeekday = weekday == 0 ? 7 : weekday;
+    final targetWeekday = weekday == 0 ? DateTime.sunday : weekday;
 
-    // Find next occurrence of this weekday
-    while (next.weekday != targetWeekday || next.isBefore(now)) {
-      next = next.add(const Duration(days: 1));
+    while (scheduled.weekday != targetWeekday || !scheduled.isAfter(now)) {
+      scheduled = scheduled.add(const Duration(days: 1));
     }
 
-    return next;
-  }
-
-  /// Get next alarm time in callback (simpler, no dependencies)
-  static DateTime _getNextAlarmTimeForCallback(
-      int weekday, int hour, int minute) {
-    final now = DateTime.now();
-    var next = DateTime(now.year, now.month, now.day, hour, minute);
-    final targetWeekday = weekday == 0 ? 7 : weekday;
-
-    while (next.weekday != targetWeekday || next.isBefore(now)) {
-      next = next.add(const Duration(days: 1));
-    }
-
-    return next;
+    return scheduled;
   }
 
   /// Generate unique alarm ID
@@ -379,45 +264,53 @@ class AlarmService {
   /// Schedule a test alarm (fires in 1 minute)
   static Future<void> scheduleTestAlarm() async {
     try {
-      final testTime = DateTime.now().add(const Duration(minutes: 1));
+      final testTime = tz.TZDateTime.now(tz.local).add(const Duration(minutes: 1));
       const testId = 999999;
 
       debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       debugPrint('🧪 SCHEDULING TEST ALARM');
-      debugPrint('   - Current time: ${DateTime.now()}');
+      debugPrint('   - Current time: ${tz.TZDateTime.now(tz.local)}');
       debugPrint('   - Test alarm time: $testTime');
       debugPrint('   - Alarm ID: $testId');
       debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-      final success = await AndroidAlarmManager.oneShotAt(
-        testTime,
+      await _notifications.zonedSchedule(
         testId,
-        _alarmCallback,
-        exact: true,
-        wakeup: true,
-        allowWhileIdle: true,
-        params: {
-          'habitTitle': '🧪 TEST ALARM',
-          'habitId': 'test',
-          'day': 0,
-          'hour': testTime.hour,
-          'minute': testTime.minute,
-        },
+        '🧪 TEST ALARM',
+        'This is a 1-minute test alarm.',
+        testTime,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: _channelDescription,
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: true,
+            sound: RawResourceAndroidNotificationSound('notification'),
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentSound: true,
+            presentBadge: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
       );
 
-      if (success) {
-        debugPrint('✅ Test alarm scheduled successfully!');
-        debugPrint('⏰ Should fire at: $testTime');
+      debugPrint('✅ Test alarm scheduled successfully!');
+      debugPrint('⏰ Should fire at: $testTime');
 
-        // 🔥 Track test alarm as well
-        _scheduledAlarms[testId] = {
-          'habitTitle': '🧪 TEST ALARM',
-          'habitId': 'test',
-          'day': 0,
-        };
-      } else {
-        debugPrint('❌ Test alarm scheduling FAILED');
-      }
+      // 🔥 Track test alarm as well
+      _scheduledAlarms[testId] = {
+        'habitTitle': '🧪 TEST ALARM',
+        'habitId': 'test',
+        'day': 0,
+        'time': '${testTime.hour.toString().padLeft(2, '0')}:${testTime.minute.toString().padLeft(2, '0')}',
+        'scheduledAt': testTime.toIso8601String(),
+      };
     } catch (e, stack) {
       debugPrint('❌ Test alarm error: $e');
       debugPrint('Stack: $stack');
