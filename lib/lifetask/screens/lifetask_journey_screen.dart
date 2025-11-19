@@ -11,7 +11,7 @@ import 'chapter_screen.dart';
 /// Beautiful, immersive, inspiring
 
 // 🔧 DEBUG MODE: Set to true to unlock all chapters for testing
-const bool DEBUG_UNLOCK_ALL_CHAPTERS = true; // TODO: Set to false before release
+const bool DEBUG_UNLOCK_ALL_CHAPTERS = false; // Locked flow by default
 
 class LifeTaskJourneyScreen extends StatefulWidget {
   const LifeTaskJourneyScreen({Key? key}) : super(key: key);
