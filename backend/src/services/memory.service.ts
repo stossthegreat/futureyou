@@ -163,6 +163,15 @@ Keep JSON valid and concise.
 
     // NAME: try identity.name → facts.name → user.name (if ever added) → email prefix → "Friend"
     const emailName = user?.email ? user.email.split("@")[0] : null;
+    
+    // DEBUG: Log what we're actually finding
+    console.log(`🔍 [Name Debug] userId: ${userId.substring(0, 8)}`);
+    console.log(`🔍 [Name Debug] identityFacts.name: "${identityFacts.name}"`);
+    console.log(`🔍 [Name Debug] identityFacts.displayName: "${identityFacts.displayName}"`);
+    console.log(`🔍 [Name Debug] facts.name: "${facts.name}"`);
+    console.log(`🔍 [Name Debug] emailName: "${emailName}"`);
+    console.log(`🔍 [Name Debug] Full identityFacts:`, JSON.stringify(identityFacts));
+    
     const name =
       identityFacts.displayName ||
       identityFacts.name ||
@@ -170,6 +179,8 @@ Keep JSON valid and concise.
       (user as any)?.name || // safe even if column doesn't exist yet
       emailName ||
       "Friend";
+    
+    console.log(`🔍 [Name Debug] Final resolved name: "${name}"`);
 
     // AGE
     const age = facts.age || identityFacts.age || null;
