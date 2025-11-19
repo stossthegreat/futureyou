@@ -55,15 +55,16 @@ class AlarmService {
       debugPrint('✅ Notification plugin initialized');
 
       // Step 4: Create notification channel with MAXIMUM PRIORITY and SOUND
+      // Use default sound since we don't have a custom one
       const channel = AndroidNotificationChannel(
         _channelId,
         _channelName,
         description: _channelDescription,
         importance: Importance.max,
         playSound: true,
-        sound: RawResourceAndroidNotificationSound('notification'),
         enableVibration: true,
         enableLights: true,
+        showBadge: true,
       );
 
       await _notifications
@@ -128,7 +129,7 @@ class AlarmService {
             '🔥 ${habit.title}',
             '${_getMotivationalQuote()}\n\nTap to mark as complete',
             scheduledTime,
-            NotificationDetails(
+            const NotificationDetails(
               android: AndroidNotificationDetails(
                 _channelId,
                 _channelName,
@@ -136,17 +137,14 @@ class AlarmService {
                 importance: Importance.max,
                 priority: Priority.high,
                 playSound: true,
-                sound: const RawResourceAndroidNotificationSound('notification'),
                 enableVibration: true,
                 enableLights: true,
                 fullScreenIntent: true,
-                styleInformation: BigTextStyleInformation(
-                  '${_getMotivationalQuote()}\n\nTap to mark as complete',
-                  contentTitle: '🔥 ${habit.title}',
-                  summaryText: 'Future You OS',
-                ),
+                showBadge: true,
+                ongoing: false,
+                autoCancel: true,
               ),
-              iOS: const DarwinNotificationDetails(
+              iOS: DarwinNotificationDetails(
                 presentAlert: true,
                 presentSound: true,
                 presentBadge: true,
@@ -277,7 +275,7 @@ class AlarmService {
       await _notifications.zonedSchedule(
         testId,
         '🧪 TEST ALARM',
-        'This is a 1-minute test alarm.',
+        'This is a 1-minute test alarm. If you see this, alarms work!',
         testTime,
         const NotificationDetails(
           android: AndroidNotificationDetails(
@@ -287,7 +285,8 @@ class AlarmService {
             importance: Importance.max,
             priority: Priority.high,
             playSound: true,
-            sound: RawResourceAndroidNotificationSound('notification'),
+            enableVibration: true,
+            showBadge: true,
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
