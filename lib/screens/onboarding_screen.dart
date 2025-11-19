@@ -81,17 +81,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await LocalStorageService.saveSetting('userAge', age);
     await LocalStorageService.saveSetting('burningQuestion', burningQuestion);
     
-    // 🔥 NEW: Save to backend so AI OS can use it!
+    debugPrint('🔍 [Onboarding] Saving identity - name: "$name", age: $age');
+    
+    // 🔥 Save to backend so AI OS can use it!
+    // Check if user is authenticated first
+    final userId = ApiClient.userId;
+    if (userId == null) {
+      debugPrint('⚠️ [Onboarding] User not authenticated yet - identity will sync later');
+      // Don't try to save to backend without auth
+      // It will sync when they first open the app after auth
+      return;
+    }
+    
     try {
+      debugPrint('🔍 [Onboarding] Attempting to save to backend for user: ${userId.substring(0, 8)}...');
       await ApiClient.saveUserIdentity(
         name: name.isNotEmpty ? name : null,
         age: age > 0 ? age : null,
         burningQuestion: burningQuestion.isNotEmpty ? burningQuestion : null,
       );
-      debugPrint('✅ Identity saved to backend: $name');
+      debugPrint('✅ [Onboarding] Identity saved to backend: $name');
     } catch (e) {
-      debugPrint('⚠️ Failed to save identity to backend: $e');
-      // Don't block onboarding if backend fails
+      debugPrint('⚠️ [Onboarding] Failed to save identity to backend: $e');
+      // Mark as not synced so it will retry later
+      await LocalStorageService.saveSetting('identitySynced', false);
     }
   }
 

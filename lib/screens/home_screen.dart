@@ -47,6 +47,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
 
   Future<void> _initializeScreen() async {
     try {
+      // 🔥 NEW: Sync identity to backend if not already synced
+      try {
+        await apiClient.syncIdentityToBackend();
+      } catch (e) {
+        debugPrint('⚠️ Identity sync skipped: $e');
+      }
+      
       // Initialize welcome series first
       await welcomeSeriesLocal.init();
       
