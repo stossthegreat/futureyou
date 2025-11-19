@@ -223,7 +223,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
           content: dayContent.content,
           onContinue: () async {
             try {
+              // Save welcome message to reflections tab
+              final message = welcomeSeriesLocal.welcomeDayToMessage(dayContent);
+              await messagesService.saveLocalMessage(message);
+              
+              // Mark day as complete
               await welcomeSeriesLocal.markDayComplete();
+              
               if (mounted) {
                 Navigator.of(context).pop();
                 setState(() {

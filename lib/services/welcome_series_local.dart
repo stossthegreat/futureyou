@@ -62,26 +62,58 @@ class WelcomeSeriesLocal {
            lastRead.day == now.day;
   }
 
-  /// Mark current day as read and advance to next day
+  /// Calculate which day should be shown based on start date
+  /// Returns the day number (1-7) that should be shown today, or null if complete
+  int? getDayToShowToday() {
+    if (!_initialized || !hasStarted()) return null;
+    
+    final startDateStr = _box.get('start_date');
+    if (startDateStr == null) return null;
+    
+    final startDate = DateTime.parse(startDateStr as String);
+    final now = DateTime.now();
+    
+    // Calculate days since start (0-indexed, so day 1 = day 0)
+    final daysSinceStart = now.difference(startDate).inDays;
+    
+    // Day 1 is shown on day 0, day 2 on day 1, etc.
+    final dayToShow = daysSinceStart + 1;
+    
+    // Check if this day has already been read
+    final readDate = _box.get('day_${dayToShow}_read_date');
+    if (readDate != null) {
+      final read = DateTime.parse(readDate as String);
+      // If already read today, don't show again
+      if (read.year == now.year && read.month == now.month && read.day == now.day) {
+        return null;
+      }
+    }
+    
+    // If beyond day 7, series is complete
+    if (dayToShow > 7) return null;
+    
+    return dayToShow;
+  }
+
+  /// Mark current day as read (doesn't advance - advancement is based on calendar days)
   Future<void> markDayComplete() async {
     if (!_initialized) await init();
     
-    final currentDay = getCurrentDay();
-    if (currentDay > 7) return;
+    final dayToShow = getDayToShowToday();
+    if (dayToShow == null || dayToShow > 7) return;
     
-    // Mark current day as read
-    await _box.put('day_${currentDay}_read_date', DateTime.now().toIso8601String());
+    // Mark this day as read
+    await _box.put('day_${dayToShow}_read_date', DateTime.now().toIso8601String());
     
-    // Advance to next day
-    final nextDay = currentDay + 1;
-    await _box.put('current_day', nextDay);
+    // Update current day
+    await _box.put('current_day', dayToShow);
     
-    if (nextDay > 7) {
+    if (dayToShow >= 7) {
       await _box.put('completed', true);
       await _box.put('completed_date', DateTime.now().toIso8601String());
       debugPrint('✨ Welcome Series completed!');
     } else {
-      debugPrint('✅ Day $currentDay complete. Next: Day $nextDay');
+      debugPrint('✅ Day $dayToShow marked as read');
     }
   }
 
@@ -89,19 +121,25 @@ class WelcomeSeriesLocal {
   /// Only shows if:
   /// 1. Series has started
   /// 2. Not yet complete (day <= 7)
-  /// 3. Current day hasn't been read today
+  /// 3. Today's day hasn't been read yet
   bool shouldShowToday() {
     if (!hasStarted()) return false;
-    if (isComplete()) return false;
-    if (hasTodayBeenRead()) return false;
-    return true;
+    final dayToShow = getDayToShowToday();
+    return dayToShow != null;
   }
 
   /// Get the content for today's day
   WelcomeDayContent? getTodaysContent() {
     if (!shouldShowToday()) return null;
-    final day = getCurrentDay();
-    return getWelcomeDay(day);
+    final dayToShow = getDayToShowToday();
+    if (dayToShow == null) return null;
+    
+    // Update current day to match what should be shown
+    if (getCurrentDay() != dayToShow) {
+      _box.put('current_day', dayToShow);
+    }
+    
+    return getWelcomeDay(dayToShow);
   }
 
   /// Convert welcome day to CoachMessage for storage in reflections

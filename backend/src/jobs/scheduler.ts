@@ -32,12 +32,25 @@ export async function bootstrapSchedulers() {
   console.log("⏰ Schedulers active (OS brain only)");
 
   // Re-upsert daily brief / debrief / nudge schedules per user (respect tz)
-  await schedulerQueue.add("ensure-daily-briefs", {}, repeatHourly());
-  await schedulerQueue.add("ensure-evening-debriefs", {}, repeatHourly());
-  await schedulerQueue.add("ensure-nudges", {}, repeatHourly());
+  // Run every 6 hours instead of hourly to prevent duplicate job creation
+  await schedulerQueue.add("ensure-daily-briefs", {}, {
+    repeat: { every: 6 * 60 * 60_000 },
+    removeOnComplete: true,
+    removeOnFail: true,
+  });
+  await schedulerQueue.add("ensure-evening-debriefs", {}, {
+    repeat: { every: 6 * 60 * 60_000 },
+    removeOnComplete: true,
+    removeOnFail: true,
+  });
+  await schedulerQueue.add("ensure-nudges", {}, {
+    repeat: { every: 6 * 60 * 60_000 },
+    removeOnComplete: true,
+    removeOnFail: true,
+  });
 
-  // Auto pattern-based nudges every hour
-  await schedulerQueue.add("auto-nudges-hourly", {}, repeatHourly());
+  // REMOVED: auto-nudges-hourly - this was causing duplicate nudges
+  // We already have scheduled nudges at 10am, 2pm, and 6pm via ensure-nudges
 
   // Weekly memory consolidation (Sundays at midnight)
   await schedulerQueue.add("weekly-consolidation", {}, {
@@ -95,6 +108,24 @@ async function ensureNudgeJobs() {
   for (const u of users) {
     if (!u.nudgesEnabled) continue;
     const tz = u.tz || "Europe/London";
+
+    // Remove existing nudge jobs for this user to prevent duplicates
+    const jobIds = [
+      `nudge-morning:${u.id}`,
+      `nudge-afternoon:${u.id}`,
+      `nudge-evening:${u.id}`,
+    ];
+    
+    for (const jobId of jobIds) {
+      try {
+        const job = await schedulerQueue.getJob(jobId);
+        if (job) {
+          await job.remove();
+        }
+      } catch (err) {
+        // Job doesn't exist, that's fine
+      }
+    }
 
     // Morning nudge (10am)
     await schedulerQueue.add(
@@ -267,8 +298,7 @@ new Worker(
         return runEveningDebrief(job.data.userId);
       case "nudge":
         return runNudge(job.data.userId, job.data.trigger);
-      case "auto-nudges-hourly":
-        return autoNudgesHourly();
+      // REMOVED: auto-nudges-hourly case - no longer used
       case "weekly-consolidation":
         return runWeeklyConsolidation();
       default:
