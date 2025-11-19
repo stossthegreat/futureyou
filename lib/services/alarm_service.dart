@@ -64,7 +64,6 @@ class AlarmService {
         playSound: true,
         enableVibration: true,
         enableLights: true,
-        showBadge: true,
       );
 
       await _notifications
@@ -140,7 +139,6 @@ class AlarmService {
                 enableVibration: true,
                 enableLights: true,
                 fullScreenIntent: true,
-                showBadge: true,
                 ongoing: false,
                 autoCancel: true,
               ),
@@ -286,7 +284,6 @@ class AlarmService {
             priority: Priority.high,
             playSound: true,
             enableVibration: true,
-            showBadge: true,
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,

@@ -49,7 +49,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     try {
       // 🔥 NEW: Sync identity to backend if not already synced
       try {
-        await apiClient.syncIdentityToBackend();
+        await ApiClient.syncIdentityToBackend();
       } catch (e) {
         debugPrint('⚠️ Identity sync skipped: $e');
       }

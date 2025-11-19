@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../design/tokens.dart';
 import '../models/coach_message.dart';
 import '../services/messages_service.dart';
-import '../services/api_client.dart';
+import '../services/api_client.dart' as api;
 
 class DesignTokens {
   static const accentColor = AppColors.emerald;
@@ -100,7 +100,7 @@ class _MorningBriefModalState extends State<MorningBriefModal>
     try {
       final dayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
       
-      await ApiClient.post('/api/os/reflections', {
+      await api.ApiClient.post('/api/os/reflections', {
         'source': 'morning_brief',
         'dayKey': dayKey,
         'answer': answer,
