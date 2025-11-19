@@ -88,6 +88,36 @@ const buildServer = () => {
     };
   });
 
+  // DEBUG: Check what name is stored for a user (NO AUTH - REMOVE IN PRODUCTION)
+  fastify.get("/debug/user-name/:userId", async (req: any) => {
+    try {
+      const { userId } = req.params;
+      const { memoryService } = await import("./services/memory.service");
+      const { prisma } = await import("./utils/db");
+      
+      const [identity, factsRow, user] = await Promise.all([
+        memoryService.getIdentityFacts(userId),
+        prisma.userFacts.findUnique({ where: { userId } }),
+        prisma.user.findUnique({ where: { id: userId } }),
+      ]);
+      
+      const facts = (factsRow?.json as any) || {};
+      
+      return {
+        userId: userId.substring(0, 8) + "...",
+        email: user?.email,
+        resolvedName: identity.name,
+        rawData: {
+          "facts.identity": facts.identity,
+          "facts.name": facts.name,
+          "identity.name": identity.name,
+        }
+      };
+    } catch (err: any) {
+      return { error: err.message };
+    }
+  });
+
   // Protected routes (Firebase auth required)
   // Apply auth middleware to all controllers
   fastify.register(async (protectedRoutes) => {
