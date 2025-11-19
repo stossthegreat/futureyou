@@ -263,12 +263,22 @@ async function runWeeklyConsolidation() {
     try {
       const { insightsService } = await import("../services/insights.service");
       const result = await insightsService.weeklyConsolidation(u.id);
-      if (result.ok && result.reflection) {
-        await notificationsService.send(
-          u.id,
-          "📊 Weekly Insights",
-          result.reflection.slice(0, 180)
-        );
+      if (result.ok) {
+        // Notify about weekly letter if generated
+        if (result.letterText) {
+          await notificationsService.send(
+            u.id,
+            "📜 Weekly Letter from Future You",
+            result.letterText.slice(0, 180)
+          );
+        } else if (result.reflection) {
+          // Fallback to reflection if letter generation failed
+          await notificationsService.send(
+            u.id,
+            "📊 Weekly Insights",
+            result.reflection.slice(0, 180)
+          );
+        }
       }
     } catch (err) {
       console.error(`Failed weekly consolidation for ${u.id}:`, err);

@@ -104,7 +104,7 @@ export class InsightsService {
   }
 
   /**
-   * 📅 Weekly memory consolidation - summarize long-term patterns
+   * 📅 Weekly memory consolidation - summarize long-term patterns and generate weekly letter
    */
   async weeklyConsolidation(userId: string) {
     const insights = await this.analyzePatterns(userId);
@@ -121,6 +121,7 @@ Recent events (last 100):
 ${context.recentEvents.slice(0, 100).map((e) => e.type).join(", ")}
 `;
 
+    // 1. Memory consolidation (update facts)
     const completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: 0.3,
@@ -149,15 +150,40 @@ ${context.recentEvents.slice(0, 100).map((e) => e.type).join(", ")}
       await memoryService.upsertFacts(userId, parsed.factsPatch);
     }
 
+    // 2. Generate and save weekly letter as CoachMessage
+    let weeklyLetterText = "";
+    try {
+      const { aiService } = await import("./ai.service");
+      weeklyLetterText = await aiService.generateWeeklyLetter(userId);
+      
+      // Save as CoachMessage (kind = letter)
+      const { coachMessageService } = await import("./coach-message.service");
+      await coachMessageService.createMessage(userId, "letter", weeklyLetterText, {
+        source: "weekly_consolidation",
+        insights: insights.map((i) => ({ type: i.type, title: i.title })),
+      });
+      
+      console.log(`✅ Weekly letter generated and saved for user ${userId}`);
+    } catch (err) {
+      console.error(`❌ Failed to generate weekly letter for ${userId}:`, err);
+      // Continue even if letter generation fails
+    }
+
+    // 3. Save event for backward compatibility
     await prisma.event.create({
       data: {
         userId,
         type: "weekly_consolidation",
-        payload: { reflection: parsed.weeklyReflection, insights, factsPatch: parsed.factsPatch },
+        payload: { 
+          reflection: parsed.weeklyReflection, 
+          insights, 
+          factsPatch: parsed.factsPatch,
+          letterGenerated: !!weeklyLetterText,
+        },
       },
     });
 
-    return { ok: true, reflection: parsed.weeklyReflection, insights };
+    return { ok: true, reflection: parsed.weeklyReflection, insights, letterText: weeklyLetterText };
   }
 
   /**

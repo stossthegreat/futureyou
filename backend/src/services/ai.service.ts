@@ -112,7 +112,7 @@ ${styleRules}
       let completion = await openai.chat.completions.create({
         model: OPENAI_MODEL,
         max_completion_tokens: opts.maxChars
-          ? Math.ceil(opts.maxChars / 2) // Better ratio for GPT-4o (was /3)
+          ? Math.ceil(opts.maxChars / 3) // Tokens are roughly 3-4 chars, so /3 gives more room
           : LLM_MAX_TOKENS,
         messages,
       });
@@ -397,7 +397,7 @@ ${JSON.stringify({
       const promptTemplate = aiPromptService.buildMorningBriefPrompt(consciousness);
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "brief",
-        maxChars: 600,
+        maxChars: 1200, // Increased from 600 to prevent truncation
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy brief:", err);
@@ -412,7 +412,7 @@ ${JSON.stringify({
         ` No poetry. No metaphors. Speak like their future self who takes no bullshit.`;
       const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "brief",
-        maxChars: 500,
+        maxChars: 1000, // Increased from 500 to prevent truncation
       }).catch(() => this.buildFallbackText("brief", safeName));
       return text;
     }
@@ -454,7 +454,7 @@ ${JSON.stringify({
       );
       return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
         purpose: "debrief",
-        maxChars: 600,
+        maxChars: 1200, // Increased from 600 to prevent truncation
       });
     } catch (err) {
       console.log("⚠️ Consciousness system failed, using legacy debrief:", err);
@@ -469,7 +469,7 @@ ${JSON.stringify({
         ` No poetry. No metaphors.`;
       const text = await this.generateFutureYouReply(userId, prompt, {
         purpose: "debrief",
-        maxChars: 500,
+        maxChars: 1000, // Increased from 500 to prevent truncation
       }).catch(() => this.buildFallbackText("debrief", safeName));
       return text;
     }
@@ -501,6 +501,35 @@ ${JSON.stringify({
         purpose: "nudge",
         maxChars: 220,
       }).catch(() => this.buildFallbackText("nudge", safeName));
+      return text;
+    }
+  }
+
+  async generateWeeklyLetter(userId: string) {
+    try {
+      const consciousness = await memoryIntelligence.buildUserConsciousness(userId);
+      const promptTemplate = aiPromptService.buildWeeklyLetterPrompt(consciousness);
+      return this.generateWithConsciousnessPrompt(userId, promptTemplate, {
+        purpose: "letter",
+        maxChars: 2000, // Weekly letters should be longer and more reflective
+      });
+    } catch (err) {
+      console.log("⚠️ Consciousness system failed, using legacy weekly letter:", err);
+      const identity = await memoryService.getIdentityFacts(userId);
+      const safeName =
+        identity.name && !String(identity.name).startsWith("user_")
+          ? identity.name
+          : "Friend";
+      const prompt = `Write a reflective weekly letter from Future You to ${safeName}. 
+- Reflect on the past week's patterns, growth, and drift.
+- Be honest but encouraging.
+- Connect their actions to their deeper purpose.
+- End with a question that invites deeper reflection.
+- 3-4 paragraphs, philosophical but grounded.`;
+      const text = await this.generateFutureYouReply(userId, prompt, {
+        purpose: "letter",
+        maxChars: 1500,
+      }).catch(() => this.buildFallbackText("letter", safeName));
       return text;
     }
   }
