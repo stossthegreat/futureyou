@@ -17,6 +17,7 @@ import '../providers/habit_provider.dart';
 import '../services/messages_service.dart';
 import '../services/weekly_stats_service.dart';
 import '../services/local_storage.dart';
+import '../services/api_client.dart';
 import '../models/habit_system.dart';
 import '../models/habit.dart';
 import '../models/coach_message.dart';
