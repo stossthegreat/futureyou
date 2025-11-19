@@ -17,7 +17,7 @@ import '../providers/habit_provider.dart';
 import '../services/messages_service.dart';
 import '../services/weekly_stats_service.dart';
 import '../services/local_storage.dart';
-import '../services/api_client.dart';
+import '../services/api_client.dart' as api;
 import '../models/habit_system.dart';
 import '../models/habit.dart';
 import '../models/coach_message.dart';
@@ -50,7 +50,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     try {
       // 🔥 NEW: Sync identity to backend if not already synced
       try {
-        await ApiClient.syncIdentityToBackend();
+        await api.ApiClient.syncIdentityToBackend();
       } catch (e) {
         debugPrint('⚠️ Identity sync skipped: $e');
       }
