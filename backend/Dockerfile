@@ -6,7 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+# Use --legacy-peer-deps for chromadb compatibility with openai@6
+RUN npm ci --only=production --legacy-peer-deps
 
 # Copy built application
 COPY dist/ ./dist/

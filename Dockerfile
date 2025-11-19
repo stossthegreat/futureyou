@@ -4,7 +4,8 @@ WORKDIR /app
 # Install backend dependencies first (better layer caching)
 COPY backend/package*.json ./backend/
 # Install deps without running scripts (postinstall) before sources are present
-RUN cd backend && npm ci --ignore-scripts
+# Use --legacy-peer-deps for chromadb compatibility with openai@6
+RUN cd backend && npm ci --ignore-scripts --legacy-peer-deps
 
 # Copy backend source (including prisma/)
 COPY backend ./backend
