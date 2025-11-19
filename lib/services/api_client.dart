@@ -30,6 +30,11 @@ class ApiClient {
   
   static String? get userId => FirebaseAuth.instance.currentUser?.uid;
   
+  // Public POST method for direct API calls
+  static Future<http.Response> post(String endpoint, Map<String, dynamic> data) async {
+    return _post(endpoint, data);
+  }
+  
   // Get headers with Firebase token
   static Future<Map<String, String>> get _headers async {
     final headers = {

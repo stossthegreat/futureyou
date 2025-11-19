@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:intl/intl.dart';
 import '../design/tokens.dart';
 import '../models/coach_message.dart';
 import '../services/messages_service.dart';
+import '../services/api_client.dart';
 
 class DesignTokens {
   static const accentColor = AppColors.emerald;
@@ -29,6 +31,9 @@ class _MorningBriefModalState extends State<MorningBriefModal>
   late Animation<double> _slideAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<double> _glowAnimation;
+  
+  final TextEditingController _reflectionController = TextEditingController();
+  bool _isSubmittingReflection = false;
 
   @override
   void initState() {
@@ -67,6 +72,7 @@ class _MorningBriefModalState extends State<MorningBriefModal>
 
   @override
   void dispose() {
+    _reflectionController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -75,6 +81,54 @@ class _MorningBriefModalState extends State<MorningBriefModal>
     await messagesService.markAsRead(widget.brief.id);
     await _controller.reverse();
     widget.onDismiss();
+  }
+
+  Future<void> _submitReflection() async {
+    final answer = _reflectionController.text.trim();
+    if (answer.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please write your reflection first'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmittingReflection = true);
+
+    try {
+      final dayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      
+      await ApiClient.post('/api/os/reflections', {
+        'source': 'morning_brief',
+        'dayKey': dayKey,
+        'answer': answer,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Reflection saved'),
+            backgroundColor: Color(0xFF10B981), // Emerald
+          ),
+        );
+        _reflectionController.clear();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingReflection = false);
+      }
+    }
   }
 
   @override
@@ -348,6 +402,7 @@ class _MorningBriefModalState extends State<MorningBriefModal>
           ),
           const SizedBox(height: AppSpacing.md),
           TextField(
+            controller: _reflectionController,
             maxLines: 3,
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
@@ -368,10 +423,37 @@ class _MorningBriefModalState extends State<MorningBriefModal>
                 borderSide: BorderSide(color: AppColors.emerald, width: 2),
               ),
             ),
-            onChanged: (value) {
-              // Store feedback response
-              // TODO: Send to backend for AI learning
-            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isSubmittingReflection ? null : _submitReflection,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.emerald,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _isSubmittingReflection
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      'Save Reflection',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
           ),
         ],
       ),
