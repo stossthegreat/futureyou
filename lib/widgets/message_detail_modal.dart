@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../design/tokens.dart';
 import '../models/coach_message.dart';
 import '../services/messages_service.dart';
+import '../services/api_client.dart' as api;
 
 class DesignTokens {
   static const accentColor = AppColors.emerald;
@@ -26,6 +27,8 @@ class _MessageDetailModalState extends State<MessageDetailModal> with SingleTick
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+  final TextEditingController _reflectionController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -53,6 +56,7 @@ class _MessageDetailModalState extends State<MessageDetailModal> with SingleTick
   @override
   void dispose() {
     _controller.dispose();
+    _reflectionController.dispose();
     super.dispose();
   }
 
@@ -202,6 +206,13 @@ class _MessageDetailModalState extends State<MessageDetailModal> with SingleTick
                             height: 1.6,
                           ),
                         ),
+                        
+                        // ✅ NEW: Reflection Section for briefs and debriefs
+                        if (widget.message.kind == MessageKind.brief || 
+                            widget.message.kind == MessageKind.debrief) ...[
+                          const SizedBox(height: 32),
+                          _buildReflectionSection(),
+                        ],
                       ],
                     ),
                   ),
@@ -266,6 +277,161 @@ class _MessageDetailModalState extends State<MessageDetailModal> with SingleTick
     hour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
     String minute = dateTime.minute.toString().padLeft(2, '0');
     return '$hour:$minute $period';
+  }
+
+  Widget _buildReflectionSection() {
+    final String prompt = widget.message.kind == MessageKind.brief
+        ? 'What\'s your main intention for today?'
+        : 'What did you learn today?';
+    
+    final String emoji = widget.message.kind == MessageKind.brief
+        ? '💭'
+        : '🌙';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _getKindColor().withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _getKindColor().withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                emoji,
+                style: const TextStyle(fontSize: 24),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Quick Reflection',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            prompt,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _reflectionController,
+            maxLines: 3,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Share your thoughts...',
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              filled: true,
+              fillColor: Colors.black.withOpacity(0.3),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: _getKindColor().withOpacity(0.5),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: _getKindColor().withOpacity(0.3),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: _getKindColor(),
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _submitReflection,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _getKindColor(),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      'Submit Reflection',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submitReflection() async {
+    final text = _reflectionController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final apiClient = api.ApiClient();
+      await apiClient.post('/api/os/reflections', {
+        'message_id': widget.message.id,
+        'message_kind': widget.message.kind.name,
+        'reflection_text': text,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('✅ Reflection saved'),
+            backgroundColor: _getKindColor(),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        _reflectionController.clear();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Failed to save reflection'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 }
 
