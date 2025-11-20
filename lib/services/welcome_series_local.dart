@@ -79,19 +79,30 @@ class WelcomeSeriesLocal {
     // Day 1 is shown on day 0, day 2 on day 1, etc.
     final dayToShow = daysSinceStart + 1;
     
-    // Check if this day has already been read
+    debugPrint('🌑 getDayToShowToday():');
+    debugPrint('   - startDate: $startDate');
+    debugPrint('   - now: $now');
+    debugPrint('   - daysSinceStart: $daysSinceStart');
+    debugPrint('   - dayToShow: $dayToShow');
+    
+    // Check if this day has already been completed
+    // Once a day is marked as read, it should never show again
     final readDate = _box.get('day_${dayToShow}_read_date');
+    debugPrint('   - day_${dayToShow}_read_date: $readDate');
+    
     if (readDate != null) {
-      final read = DateTime.parse(readDate as String);
-      // If already read today, don't show again
-      if (read.year == now.year && read.month == now.month && read.day == now.day) {
-        return null;
-      }
+      // If this day was ever marked as read, it's complete - don't show again
+      debugPrint('   - Day $dayToShow was already completed, skipping');
+      return null;
     }
     
     // If beyond day 7, series is complete
-    if (dayToShow > 7) return null;
+    if (dayToShow > 7) {
+      debugPrint('   - Day $dayToShow > 7, series complete');
+      return null;
+    }
     
+    debugPrint('   - Returning dayToShow: $dayToShow');
     return dayToShow;
   }
 
