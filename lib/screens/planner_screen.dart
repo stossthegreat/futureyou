@@ -75,7 +75,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     setState(() {
       _systemHabitControllers.add(TextEditingController());
       _systemHabitEmojis.add(null);
-      _systemHabitTimes.add(const TimeOfDay(hour: 9, minute: 0));
+      _systemHabitTimes.add(TimeOfDay.now()); // Use current time instead of 9:00
       _systemHabitTimeEnabled.add(false);
       _systemHabitAlarmEnabled.add(false);
     });
@@ -1622,6 +1622,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         if (_systemHabitTimeEnabled[i]) {
           final time = _systemHabitTimes[i];
           timeString = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+          debugPrint('✅ System habit "$habitText" - Time enabled: $timeString, Alarm: ${_systemHabitAlarmEnabled[i]}');
+        } else {
+          debugPrint('⏰ System habit "$habitText" - Time NOT enabled');
         }
         
         final habitId = DateTime.now().millisecondsSinceEpoch.toString() + '_$i';
@@ -1674,7 +1677,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         _systemHabitEmojis.fillRange(0, _systemHabitEmojis.length, null);
         // Reset individual habit settings
         for (int i = 0; i < _systemHabitTimes.length; i++) {
-          _systemHabitTimes[i] = const TimeOfDay(hour: 9, minute: 0);
+          _systemHabitTimes[i] = TimeOfDay.now();
           _systemHabitTimeEnabled[i] = false;
           _systemHabitAlarmEnabled[i] = false;
         }
