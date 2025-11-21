@@ -5,7 +5,6 @@ import swaggerUI from "@fastify/swagger-ui";
 import dotenv from "dotenv";
 import { prisma } from "./utils/db";
 import { getRedis } from "./utils/redis";
-import { bootstrapSchedulers } from "./jobs/scheduler";
 import { initializeFirebaseAdmin } from "./utils/firebase-admin";
 import { authMiddleware, optionalAuthMiddleware } from "./middleware/auth.middleware";
 
@@ -165,8 +164,8 @@ const start = async () => {
     const host = process.env.HOST || "0.0.0.0";
     await server.listen({ port, host });
 
-    console.log("📖 Docs: /docs | 🩺 Health: /health | ⏰ Schedulers active");
-    await bootstrapSchedulers();
+    console.log("📖 Docs: /docs | 🩺 Health: /health");
+    console.log("⚠️ Note: Schedulers run in separate worker.ts process");
   } catch (err) {
     console.error("❌ Startup failed:", err);
     process.exit(1);
