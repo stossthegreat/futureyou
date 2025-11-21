@@ -1318,7 +1318,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                               width: 45,
                               height: 45,
                               decoration: BoxDecoration(
-                                color: AppColors.backgroundDark,
+                                color: AppColors.baseDark2,
                                 borderRadius: BorderRadius.circular(AppBorderRadius.sm),
                                 border: Border.all(color: AppColors.glassBorder),
                               ),
@@ -1340,7 +1340,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                                 hintText: 'Habit ${index + 1}',
                                 hintStyle: AppTextStyles.body.copyWith(color: AppColors.textTertiary),
                                 filled: true,
-                                fillColor: AppColors.backgroundDark,
+                                fillColor: AppColors.baseDark2,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(AppBorderRadius.sm),
                                   borderSide: BorderSide(color: AppColors.glassBorder),
@@ -1369,7 +1369,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                       Row(
                         children: [
                           Icon(
-                            _systemHabitTimeEnabled[index] ? LucideIcons.clock : LucideIcons.clockOff,
+                            _systemHabitTimeEnabled[index] ? LucideIcons.clock : LucideIcons.clock,
                             size: 16,
                             color: _systemHabitTimeEnabled[index] ? AppColors.emerald : AppColors.textTertiary,
                           ),
@@ -1398,7 +1398,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             decoration: BoxDecoration(
-                              color: AppColors.backgroundDark,
+                              color: AppColors.baseDark2,
                               borderRadius: BorderRadius.circular(AppBorderRadius.sm),
                               border: Border.all(color: AppColors.emerald.withOpacity(0.3)),
                             ),
