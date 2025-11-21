@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../models/habit.dart';
 import '../models/habit_system.dart';
 import '../design/tokens.dart';
