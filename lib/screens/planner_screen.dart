@@ -48,6 +48,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   // System creation state
   final List<TextEditingController> _systemHabitControllers = [];
   final List<String?> _systemHabitEmojis = [];
+  final List<TimeOfDay> _systemHabitTimes = []; // Individual time for each habit
+  final List<bool> _systemHabitTimeEnabled = []; // Time enabled per habit
+  final List<bool> _systemHabitAlarmEnabled = []; // Alarm enabled per habit
   final _systemNameController = TextEditingController();
   final _systemTaglineController = TextEditingController();
   String? _systemEmoji;
@@ -55,9 +58,6 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   List<Color> _systemGradientColors = [AppColors.emerald, AppColors.emerald.withOpacity(0.7)];
   DateTime _systemStartDate = DateTime.now();
   DateTime _systemEndDate = DateTime.now();
-  TimeOfDay _systemTime = const TimeOfDay(hour: 9, minute: 0);
-  bool _systemTimeEnabled = false;
-  bool _systemAlarmEnabled = false;
 
   @override
   void initState() {
@@ -75,6 +75,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
     setState(() {
       _systemHabitControllers.add(TextEditingController());
       _systemHabitEmojis.add(null);
+      _systemHabitTimes.add(const TimeOfDay(hour: 9, minute: 0));
+      _systemHabitTimeEnabled.add(false);
+      _systemHabitAlarmEnabled.add(false);
     });
   }
 
@@ -84,6 +87,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         _systemHabitControllers[index].dispose();
         _systemHabitControllers.removeAt(index);
         _systemHabitEmojis.removeAt(index);
+        _systemHabitTimes.removeAt(index);
+        _systemHabitTimeEnabled.removeAt(index);
+        _systemHabitAlarmEnabled.removeAt(index);
       });
     }
   }
@@ -167,6 +173,31 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       setState(() {
         _timeController.text =
             '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      });
+    }
+  }
+
+  Future<void> _selectSystemHabitTime(int index) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _systemHabitTimes[index],
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: Theme.of(context).colorScheme.copyWith(
+            primary: AppColors.emerald,
+            onSurface: AppColors.textPrimary,
+          ),
+          timePickerTheme: const TimePickerThemeData(
+            backgroundColor: AppColors.baseDark2,
+            dialBackgroundColor: AppColors.baseDark3,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _systemHabitTimes[index] = picked;
       });
     }
   }
@@ -1266,54 +1297,152 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             // Habit fields
             ...List.generate(_systemHabitControllers.length, (index) {
               return Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: Row(
-                  children: [
-                    // Emoji picker
-                    GestureDetector(
-                      onTap: () => _showHabitEmojiPicker(index),
-                      child: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: AppColors.glassBackground,
-                          borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                          border: Border.all(color: AppColors.glassBorder),
-                        ),
-                        child: Center(
-                          child: Text(
-                            _systemHabitEmojis[index] ?? '➕',
-                            style: const TextStyle(fontSize: 24),
+                padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                child: Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.glassBackground,
+                    borderRadius: BorderRadius.circular(AppBorderRadius.md),
+                    border: Border.all(color: AppColors.glassBorder),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Habit title row
+                      Row(
+                        children: [
+                          // Emoji picker
+                          GestureDetector(
+                            onTap: () => _showHabitEmojiPicker(index),
+                            child: Container(
+                              width: 45,
+                              height: 45,
+                              decoration: BoxDecoration(
+                                color: AppColors.backgroundDark,
+                                borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                                border: Border.all(color: AppColors.glassBorder),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  _systemHabitEmojis[index] ?? '➕',
+                                  style: const TextStyle(fontSize: 22),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          // Habit title
+                          Expanded(
+                            child: TextField(
+                              controller: _systemHabitControllers[index],
+                              style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                              decoration: InputDecoration(
+                                hintText: 'Habit ${index + 1}',
+                                hintStyle: AppTextStyles.body.copyWith(color: AppColors.textTertiary),
+                                filled: true,
+                                fillColor: AppColors.backgroundDark,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                                  borderSide: BorderSide(color: AppColors.glassBorder),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                                  borderSide: BorderSide(color: AppColors.glassBorder),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              ),
+                            ),
+                          ),
+                          // Delete button
+                          if (_systemHabitControllers.length > 1)
+                            IconButton(
+                              onPressed: () => _removeSystemHabitField(index),
+                              icon: const Icon(LucideIcons.x, size: 18),
+                              color: AppColors.error,
+                            ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: AppSpacing.sm),
+                      
+                      // Time toggle
+                      Row(
+                        children: [
+                          Icon(
+                            _systemHabitTimeEnabled[index] ? LucideIcons.clock : LucideIcons.clockOff,
+                            size: 16,
+                            color: _systemHabitTimeEnabled[index] ? AppColors.emerald : AppColors.textTertiary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Time',
+                            style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+                          ),
+                          const Spacer(),
+                          Switch(
+                            value: _systemHabitTimeEnabled[index],
+                            onChanged: (value) {
+                              setState(() => _systemHabitTimeEnabled[index] = value);
+                            },
+                            activeColor: AppColors.emerald,
+                            activeTrackColor: AppColors.emerald.withOpacity(0.3),
+                          ),
+                        ],
+                      ),
+                      
+                      // Time picker (if enabled)
+                      if (_systemHabitTimeEnabled[index]) ...[
+                        const SizedBox(height: AppSpacing.xs),
+                        GestureDetector(
+                          onTap: () => _selectSystemHabitTime(index),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: AppColors.backgroundDark,
+                              borderRadius: BorderRadius.circular(AppBorderRadius.sm),
+                              border: Border.all(color: AppColors.emerald.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(LucideIcons.clock, size: 16, color: AppColors.emerald),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _systemHabitTimes[index].format(context),
+                                  style: AppTextStyles.bodySemiBold.copyWith(color: AppColors.textPrimary),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    // Habit title
-                    Expanded(
-                      child: TextField(
-                        controller: _systemHabitControllers[index],
-                        style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
-                        decoration: InputDecoration(
-                          hintText: 'Habit ${index + 1}',
-                          hintStyle: AppTextStyles.body.copyWith(color: AppColors.textTertiary),
-                          filled: true,
-                          fillColor: AppColors.glassBackground,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppBorderRadius.md),
-                            borderSide: BorderSide(color: AppColors.glassBorder),
-                          ),
+                        
+                        // Alarm toggle (only shown if time is enabled)
+                        const SizedBox(height: AppSpacing.sm),
+                        Row(
+                          children: [
+                            Icon(
+                              _systemHabitAlarmEnabled[index] ? LucideIcons.bell : LucideIcons.bellOff,
+                              size: 16,
+                              color: _systemHabitAlarmEnabled[index] ? AppColors.emerald : AppColors.textTertiary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Reminder Alarm',
+                              style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+                            ),
+                            const Spacer(),
+                            Switch(
+                              value: _systemHabitAlarmEnabled[index],
+                              onChanged: (value) {
+                                setState(() => _systemHabitAlarmEnabled[index] = value);
+                              },
+                              activeColor: AppColors.emerald,
+                              activeTrackColor: AppColors.emerald.withOpacity(0.3),
+                            ),
+                          ],
                         ),
-                      ),
-                    ),
-                    // Delete button
-                    if (_systemHabitControllers.length > 1)
-                      IconButton(
-                        onPressed: () => _removeSystemHabitField(index),
-                        icon: const Icon(LucideIcons.x, size: 20),
-                        color: AppColors.error,
-                      ),
-                  ],
+                      ],
+                    ],
+                  ),
                 ),
               );
             }),
@@ -1515,27 +1644,35 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       final habitIds = <String>[];
       final systemId = 'system_${DateTime.now().millisecondsSinceEpoch}'; // Generate unique system ID
       
-      // Prepare time string
-      String timeString = '';
-      if (_systemTimeEnabled) {
-        timeString = '${_systemTime.hour.toString().padLeft(2, '0')}:${_systemTime.minute.toString().padLeft(2, '0')}';
-      }
-      
-      for (final habitText in validHabits) {
-        final habitId = DateTime.now().millisecondsSinceEpoch.toString() + '_${validHabits.indexOf(habitText)}';
+      // Create habits with individual settings
+      for (int i = 0; i < _systemHabitControllers.length; i++) {
+        final habitText = _systemHabitControllers[i].text.trim();
+        if (habitText.isEmpty) continue; // Skip empty habits
+        
+        final emoji = _systemHabitEmojis[i] ?? '✅';
+        final fullText = '$emoji $habitText';
+        
+        // Prepare individual time string
+        String timeString = '';
+        if (_systemHabitTimeEnabled[i]) {
+          final time = _systemHabitTimes[i];
+          timeString = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+        }
+        
+        final habitId = DateTime.now().millisecondsSinceEpoch.toString() + '_$i';
         habitIds.add(habitId);
         
         await ref.read(habitEngineProvider.notifier).createHabit(
-          title: habitText,
+          title: fullText,
           type: 'habit',
-          time: timeString, // Use system time setting
+          time: timeString, // Use individual habit time
           startDate: _systemStartDate,
           endDate: _systemEndDate,
           repeatDays: [0, 1, 2, 3, 4, 5, 6], // Daily (all days)
           color: _systemColor,
-          emoji: habitText.split(' ').first,
-          reminderOn: _systemAlarmEnabled,
-          systemId: systemId, // NEW: Link habit to system
+          emoji: emoji,
+          reminderOn: _systemHabitAlarmEnabled[i], // Use individual alarm setting
+          systemId: systemId, // Link habit to system
         );
         
         await Future.delayed(const Duration(milliseconds: 10));
@@ -1566,19 +1703,22 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         _systemGradientColors = [AppColors.emerald, AppColors.emerald.withOpacity(0.7)];
         _systemStartDate = DateTime.now();
         _systemEndDate = DateTime.now();
-        _systemTime = const TimeOfDay(hour: 9, minute: 0);
-        _systemTimeEnabled = false;
-        _systemAlarmEnabled = false;
         for (var controller in _systemHabitControllers) {
           controller.clear();
         }
         _systemHabitEmojis.fillRange(0, _systemHabitEmojis.length, null);
+        // Reset individual habit settings
+        for (int i = 0; i < _systemHabitTimes.length; i++) {
+          _systemHabitTimes[i] = const TimeOfDay(hour: 9, minute: 0);
+          _systemHabitTimeEnabled[i] = false;
+          _systemHabitAlarmEnabled[i] = false;
+        }
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Created system "${system.name}" with ${validHabits.length} habits!'),
+            content: Text('✅ Created system "${system.name}" with ${habitIds.length} habits!'),
             backgroundColor: _systemColor,
             duration: const Duration(seconds: 3),
           ),
