@@ -101,13 +101,21 @@ async function ensureEveningDebriefJobs() {
 }
 
 async function ensureNudgeJobs() {
+  console.log(`\n🔧 ensureNudgeJobs STARTING at ${new Date().toISOString()}`);
+  
   const users = await prisma.user.findMany({
     select: { id: true, tz: true, nudgesEnabled: true },
   });
+  
+  console.log(`🔧 Found ${users.length} total users, filtering for nudgesEnabled...`);
 
+  let enabledCount = 0;
   for (const u of users) {
     if (!u.nudgesEnabled) continue;
+    enabledCount++;
+    
     const tz = u.tz || "Europe/London";
+    console.log(`🔧 Processing user ${u.id} (tz: ${tz})`);
 
     // Remove existing nudge jobs for this user to prevent duplicates
     const jobIds = [
@@ -120,6 +128,7 @@ async function ensureNudgeJobs() {
       try {
         const job = await schedulerQueue.getJob(jobId);
         if (job) {
+          console.log(`🗑️ Removing existing job: ${jobId}`);
           await job.remove();
         }
       } catch (err) {
@@ -138,6 +147,7 @@ async function ensureNudgeJobs() {
         removeOnFail: true,
       }
     );
+    console.log(`✅ Scheduled morning nudge for ${u.id}`);
 
     // Afternoon nudge (2pm)
     await schedulerQueue.add(
@@ -150,6 +160,7 @@ async function ensureNudgeJobs() {
         removeOnFail: true,
       }
     );
+    console.log(`✅ Scheduled afternoon nudge for ${u.id}`);
 
     // Evening nudge (6pm)
     await schedulerQueue.add(
@@ -162,7 +173,10 @@ async function ensureNudgeJobs() {
         removeOnFail: true,
       }
     );
+    console.log(`✅ Scheduled evening nudge for ${u.id}`);
   }
+  
+  console.log(`🔧 ensureNudgeJobs COMPLETE: ${enabledCount} users with nudges enabled\n`);
   return { ok: true, users: users.length };
 }
 
@@ -215,19 +229,34 @@ async function runEveningDebrief(userId: string) {
 }
 
 async function runNudge(userId: string, trigger: string) {
+  const timestamp = new Date().toISOString();
+  console.log(`\n🔔 ================================`);
+  console.log(`🔔 runNudge CALLED`);
+  console.log(`🔔 Time: ${timestamp}`);
+  console.log(`🔔 User: ${userId}`);
+  console.log(`🔔 Trigger: ${trigger}`);
+  console.log(`🔔 ================================\n`);
+  
   const text =
     (await aiService.generateNudge(userId, trigger).catch(() => null)) ||
     "Check in with yourself.";
 
+  console.log(`📝 Generated nudge text: "${text.substring(0, 80)}..."`);
+
   // Store as CoachMessage (kind = nudge)
-  await coachMessageService.createMessage(userId, "nudge", text, { trigger });
+  const msg = await coachMessageService.createMessage(userId, "nudge", text, { trigger });
+  console.log(`✅ CoachMessage created: ${msg.id}`);
 
   // Backwards compat event
-  await prisma.event.create({
+  const event = await prisma.event.create({
     data: { userId, type: "nudge", payload: { text, trigger } },
   });
+  console.log(`✅ Event created: ${event.id}`);
 
   await notificationsService.send(userId, "Nudge", text.slice(0, 180));
+  console.log(`✅ Notification sent`);
+  
+  console.log(`🔔 runNudge COMPLETED for ${userId}\n`);
   return { ok: true };
 }
 
@@ -289,35 +318,61 @@ async function runWeeklyConsolidation() {
 }
 
 // ─────────────────────────────────────────────
-// WORKER
+// WORKER - ONLY START WHEN EXPLICITLY CALLED
 // ─────────────────────────────────────────────
 
-new Worker(
-  QUEUE,
-  async (job) => {
-    switch (job.name) {
-      case "ensure-daily-briefs":
-        return ensureDailyBriefJobs();
-      case "ensure-evening-debriefs":
-        return ensureEveningDebriefJobs();
-      case "ensure-nudges":
-        return ensureNudgeJobs();
-      case "daily-brief":
-        return runDailyBrief(job.data.userId);
-      case "evening-debrief":
-        return runEveningDebrief(job.data.userId);
-      case "nudge":
-        return runNudge(job.data.userId, job.data.trigger);
-      // REMOVED: auto-nudges-hourly case - no longer used
-      case "weekly-consolidation":
-        return runWeeklyConsolidation();
-      default:
-        return;
-    }
-  },
-  { 
-    connection: redis
-  }
-);
+let workerInstance: Worker | null = null;
 
-console.log("🧠 Scheduler Worker Started (OS Brain Only)");
+/**
+ * 🚨 CRITICAL: Start the worker ONLY from worker.ts
+ * This prevents duplicate workers when server.ts imports this file
+ */
+export function startWorker() {
+  if (workerInstance) {
+    console.log("⚠️ Worker already running, skipping duplicate instantiation");
+    return workerInstance;
+  }
+
+  console.log("🏭 STARTING SCHEDULER WORKER...");
+  
+  workerInstance = new Worker(
+    QUEUE,
+    async (job) => {
+      console.log(`\n🏭 WORKER processing job: ${job.name} [ID: ${job.id}] at ${new Date().toISOString()}`);
+      if (job.name === "nudge") {
+        console.log(`🏭 NUDGE JOB DATA:`, JSON.stringify(job.data));
+      }
+      
+      switch (job.name) {
+        case "ensure-daily-briefs":
+          return ensureDailyBriefJobs();
+        case "ensure-evening-debriefs":
+          return ensureEveningDebriefJobs();
+        case "ensure-nudges":
+          return ensureNudgeJobs();
+        case "daily-brief":
+          return runDailyBrief(job.data.userId);
+        case "evening-debrief":
+          return runEveningDebrief(job.data.userId);
+        case "nudge":
+          console.log(`🏭 WORKER calling runNudge for user ${job.data.userId} with trigger "${job.data.trigger}"`);
+          const result = await runNudge(job.data.userId, job.data.trigger);
+          console.log(`🏭 WORKER nudge complete for user ${job.data.userId}`);
+          return result;
+        // REMOVED: auto-nudges-hourly case - no longer used
+        case "weekly-consolidation":
+          return runWeeklyConsolidation();
+        default:
+          return;
+      }
+    },
+    { 
+      connection: redis,
+      // CRITICAL: Ensure only ONE worker processes each job
+      concurrency: 1,
+    }
+  );
+
+  console.log("🧠 Scheduler Worker Started (OS Brain Only)");
+  return workerInstance;
+}

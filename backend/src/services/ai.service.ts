@@ -1009,10 +1009,11 @@ Do not use mystical metaphors — be clear and unforgivingly honest.`;
       );
     } else if (purpose === "nudge") {
       base.push(
-        `Write ONE sentence nudge:`,
-        `- Call out avoidance.`,
-        `- Tell them exactly what to do now.`,
-        `- One sentence only.`
+        `Write a sharp, direct nudge (2-3 sentences):`,
+        `- Call out the specific avoidance pattern.`,
+        `- Tell them exactly what to do RIGHT NOW.`,
+        `- End with ONE pointed question.`,
+        `- Must be 2-3 sentences total (NOT just one sentence).`
       );
     } else {
       base.push(`Give one clear, direct coaching response.`);
