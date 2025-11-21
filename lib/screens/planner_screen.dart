@@ -1610,6 +1610,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       final systemId = 'system_${DateTime.now().millisecondsSinceEpoch}'; // Generate unique system ID
       
       // Create habits with individual settings
+      int habitCounter = 0; // Counter for creating unique IDs
       for (int i = 0; i < _systemHabitControllers.length; i++) {
         final habitText = _systemHabitControllers[i].text.trim();
         if (habitText.isEmpty) continue; // Skip empty habits
@@ -1627,8 +1628,13 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           debugPrint('⏰ System habit "$habitText" - Time NOT enabled');
         }
         
-        final habitId = DateTime.now().millisecondsSinceEpoch.toString() + '_$i';
+        // Generate UNIQUE habit ID using system ID + counter
+        // This ensures no hash collisions in alarm scheduling
+        final habitId = '${systemId}_habit_$habitCounter';
         habitIds.add(habitId);
+        habitCounter++;
+        
+        debugPrint('🆔 Creating habit with ID: $habitId');
         
         await ref.read(habitEngineProvider.notifier).createHabit(
           title: fullText,
@@ -1643,7 +1649,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           systemId: systemId, // Link habit to system
         );
         
-        await Future.delayed(const Duration(milliseconds: 10));
+        // Longer delay to ensure alarms don't interfere
+        await Future.delayed(const Duration(milliseconds: 100));
       }
 
       // Save system metadata
