@@ -317,23 +317,41 @@ class SystemCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            // Time if available (only show on read-only mode)
-            if (isReadOnly && habit.time != null && habit.time!.isNotEmpty)
+            // Time if available (show in both modes)
+            if (habit.time != null && habit.time!.isNotEmpty) ...[
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  habit.time!,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 0.5,
                   ),
                 ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.clock,
+                      size: 9,
+                      color: Colors.white.withOpacity(0.6),
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      habit.time!,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ],
           ],
         ),
       ),
