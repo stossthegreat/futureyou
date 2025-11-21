@@ -54,9 +54,9 @@ class AlarmService {
       );
       debugPrint('✅ Notification plugin initialized');
 
-      // Step 4: Create notification channel with MAXIMUM PRIORITY and SOUND
-      // Use default sound since we don't have a custom one
-      const channel = AndroidNotificationChannel(
+      // Step 4: Create notification channels with MAXIMUM PRIORITY and SOUND
+      // Channel 1: Habit reminders
+      const habitChannel = AndroidNotificationChannel(
         _channelId,
         _channelName,
         description: _channelDescription,
@@ -66,11 +66,24 @@ class AlarmService {
         enableLights: true,
       );
 
-      await _notifications
+      // Channel 2: Coach messages (briefs, debriefs, nudges, letters)
+      const coachChannel = AndroidNotificationChannel(
+        'coach_messages',
+        'Coach Messages',
+        description: 'Notifications for briefs, debriefs, nudges, and letters',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+      );
+
+      final androidPlugin = _notifications
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(channel);
-      debugPrint('✅ Notification channel created with SOUND');
+              AndroidFlutterLocalNotificationsPlugin>();
+      
+      await androidPlugin?.createNotificationChannel(habitChannel);
+      await androidPlugin?.createNotificationChannel(coachChannel);
+      debugPrint('✅ Notification channels created (habits + coach messages)');
 
       _initialized = true;
       debugPrint('🎉 AlarmService fully initialized!');

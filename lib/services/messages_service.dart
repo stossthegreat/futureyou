@@ -94,6 +94,81 @@ class MessagesService {
     await _updateAppBadge();
   }
 
+  /// Show a notification for a new message
+  Future<void> _showMessageNotification(model.CoachMessage message) async {
+    try {
+      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      
+      // Get message type emoji and title
+      String emoji = message.emoji;
+      String kindLabel = message.kindLabel;
+      
+      // Customize notification based on message kind
+      String notificationTitle;
+      String notificationBody;
+      
+      switch (message.kind) {
+        case model.MessageKind.brief:
+          notificationTitle = '$emoji Morning Brief Ready';
+          notificationBody = message.title;
+          break;
+        case model.MessageKind.debrief:
+          notificationTitle = '$emoji Evening Debrief Ready';
+          notificationBody = message.title;
+          break;
+        case model.MessageKind.nudge:
+          notificationTitle = '$emoji Nudge from Future You';
+          notificationBody = message.title;
+          break;
+        case model.MessageKind.letter:
+          notificationTitle = '$emoji Weekly Letter Arrived';
+          notificationBody = message.title;
+          break;
+        default:
+          notificationTitle = '$emoji $kindLabel';
+          notificationBody = message.title;
+      }
+      
+      const androidDetails = AndroidNotificationDetails(
+        'coach_messages',
+        'Coach Messages',
+        channelDescription: 'Notifications for briefs, debriefs, nudges, and letters',
+        importance: Importance.high,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+        styleInformation: BigTextStyleInformation(''),
+      );
+      
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentSound: true,
+        presentBadge: true,
+      );
+      
+      const notificationDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+      
+      // Use message ID hash as notification ID to avoid duplicates
+      final notificationId = message.id.hashCode.abs() % 100000;
+      
+      await flutterLocalNotificationsPlugin.show(
+        notificationId,
+        notificationTitle,
+        notificationBody,
+        notificationDetails,
+        payload: message.id,
+      );
+      
+      debugPrint('🔔 Notification shown for message: ${message.id} ($kindLabel)');
+    } catch (e) {
+      debugPrint('⚠️ Failed to show notification: $e');
+    }
+  }
+
   /// Update app icon badge with unread count
   /// Uses flutter_local_notifications for cross-platform badge support
   Future<void> _updateAppBadge() async {
@@ -168,6 +243,11 @@ class MessagesService {
           );
           
           await _box.put(message.id, message);
+          
+          // Show notification for new messages (only if not read)
+          if (existing == null && !message.isRead) {
+            await _showMessageNotification(message);
+          }
         }
         
         _lastSyncTime = DateTime.now();
@@ -308,6 +388,12 @@ class MessagesService {
     if (!_box.containsKey(message.id) && !_deletedBox.containsKey(message.id)) {
       await _box.put(message.id, message);
       debugPrint('💾 Saved local message: ${message.id} (${message.kind})');
+      
+      // Show notification for local messages too
+      if (!message.isRead) {
+        await _showMessageNotification(message);
+      }
+      
       await _updateAppBadge();
     }
   }
