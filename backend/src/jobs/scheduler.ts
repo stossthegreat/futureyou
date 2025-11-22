@@ -143,8 +143,8 @@ async function ensureNudgeJobs() {
       {
         repeat: { pattern: "0 10 * * *", tz },
         jobId: `nudge-morning:${u.id}`,
-        removeOnComplete: true,
-        removeOnFail: true,
+        removeOnComplete: { count: 10 }, // Keep last 10 for debugging
+        removeOnFail: { count: 10 },
       }
     );
     console.log(`✅ Scheduled morning nudge for ${u.id}`);
@@ -156,8 +156,8 @@ async function ensureNudgeJobs() {
       {
         repeat: { pattern: "0 14 * * *", tz },
         jobId: `nudge-afternoon:${u.id}`,
-        removeOnComplete: true,
-        removeOnFail: true,
+        removeOnComplete: { count: 10 },
+        removeOnFail: { count: 10 },
       }
     );
     console.log(`✅ Scheduled afternoon nudge for ${u.id}`);
@@ -169,8 +169,8 @@ async function ensureNudgeJobs() {
       {
         repeat: { pattern: "0 18 * * *", tz },
         jobId: `nudge-evening:${u.id}`,
-        removeOnComplete: true,
-        removeOnFail: true,
+        removeOnComplete: { count: 10 },
+        removeOnFail: { count: 10 },
       }
     );
     console.log(`✅ Scheduled evening nudge for ${u.id}`);
@@ -216,8 +216,8 @@ async function runEveningDebrief(userId: string) {
     audioUrl = null;
   }
 
-  // Store as CoachMessage (kind = mirror)
-  await coachMessageService.createMessage(userId, "mirror", text, { audioUrl });
+  // Store as CoachMessage (kind = debrief)
+  await coachMessageService.createMessage(userId, "debrief", text, { audioUrl });
 
   // Backwards compat event
   await prisma.event.create({
@@ -236,6 +236,24 @@ async function runNudge(userId: string, trigger: string) {
   console.log(`🔔 User: ${userId}`);
   console.log(`🔔 Trigger: ${trigger}`);
   console.log(`🔔 ================================\n`);
+  
+  // ✅ ANTI-DUPLICATE CHECK: Don't send another nudge if one was just sent
+  const recentNudges = await prisma.coachMessage.findMany({
+    where: {
+      userId,
+      kind: "nudge",
+      createdAt: {
+        gte: new Date(Date.now() - 15 * 60 * 1000), // Last 15 minutes
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 1,
+  });
+
+  if (recentNudges.length > 0) {
+    console.log(`⚠️ DUPLICATE NUDGE PREVENTED - nudge sent ${Math.floor((Date.now() - recentNudges[0].createdAt.getTime()) / 1000 / 60)} minutes ago`);
+    return { ok: true, skipped: true, reason: "duplicate_prevention" };
+  }
   
   const text =
     (await aiService.generateNudge(userId, trigger).catch(() => null)) ||

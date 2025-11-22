@@ -72,8 +72,12 @@ class _MessageDetailModalState extends State<MessageDetailModal> with SingleTick
         return const Color(0xFFF0F0F0);
       case MessageKind.mirror:
         return const Color(0xFF06B6D4);
-      default:
+      case MessageKind.awakening:
+        return const Color(0xFF4A5568); // Dark gray/slate for awakening journey
+      case MessageKind.chat:
         return DesignTokens.accentColor;
+      case MessageKind.vault:
+        return const Color(0xFFFFD700);
     }
   }
 

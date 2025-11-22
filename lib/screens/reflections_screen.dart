@@ -134,6 +134,13 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                             isSelected: _filter == MessageKind.letter,
                             onTap: () => _setFilter(MessageKind.letter),
                           ),
+                          const SizedBox(width: AppSpacing.sm),
+                          _FilterChip(
+                            label: 'Awakening',
+                            emoji: '🌑',
+                            isSelected: _filter == MessageKind.awakening,
+                            onTap: () => _setFilter(MessageKind.awakening),
+                          ),
                           // ✅ Removed Vault filter - moved to Habit Vault in Habit Master tab
                         ],
                       ),
@@ -292,6 +299,8 @@ class _LetterCard extends StatelessWidget {
         return AppColors.cyan;
       case MessageKind.vault:
         return const Color(0xFFFFD700);
+      case MessageKind.awakening:
+        return const Color(0xFF4A5568); // Dark gray/slate for awakening journey
       default:
         return AppColors.emerald;
     }

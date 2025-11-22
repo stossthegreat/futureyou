@@ -158,7 +158,7 @@ class WelcomeSeriesLocal {
     return model.CoachMessage(
       id: 'welcome_day_${dayContent.day}',
       userId: 'test-user-felix', // Will be set by caller if different
-      kind: model.MessageKind.letter,
+      kind: model.MessageKind.awakening, // ✅ Use awakening kind for separate UI
       title: '${dayContent.moonPhase} ${dayContent.title}',
       body: dayContent.content,
       createdAt: DateTime.now(),

@@ -18,6 +18,8 @@ enum MessageKind {
   chat,
   @HiveField(6)
   vault,
+  @HiveField(7)
+  awakening, // 7-day welcome series messages
 }
 
 @HiveType(typeId: 3)
@@ -99,6 +101,8 @@ class CoachMessage extends HiveObject {
         return MessageKind.chat;
       case 'vault':
         return MessageKind.vault;
+      case 'awakening':
+        return MessageKind.awakening;
       default:
         return MessageKind.chat;
     }
@@ -120,6 +124,8 @@ class CoachMessage extends HiveObject {
         return '💬';
       case MessageKind.vault:
         return '💎';
+      case MessageKind.awakening:
+        return '🌑'; // Moon phase emoji
     }
   }
 
@@ -139,6 +145,8 @@ class CoachMessage extends HiveObject {
         return 'Chat';
       case MessageKind.vault:
         return 'Vault';
+      case MessageKind.awakening:
+        return 'Awakening Journey';
     }
   }
 }
