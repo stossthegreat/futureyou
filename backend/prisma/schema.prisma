@@ -193,6 +193,7 @@ model Completion {
 enum CoachMessageKind {
   nudge
   brief
+  debrief
   mirror
   letter
 }
