@@ -51,28 +51,30 @@ export default async function coachController(fastify: FastifyInstance) {
 
   /**
    * 🧠 Fetch coach messages (nudges, briefs, letters)
+   * ✅ FIXED: Now returns CoachMessage records instead of Event records
+   * This eliminates duplicate nudges (previously created both CoachMessage + Event)
    */
   fastify.get("/api/v1/coach/messages", async (req: any, reply) => {
     try {
       const userId = getUserIdOr401(req);
-      const events = await prisma.event.findMany({
-        where: {
-          userId,
-          type: { in: ["morning_brief", "evening_debrief", "nudge", "coach", "mirror"] },
-        },
-        orderBy: { ts: "desc" },
+      
+      // Query CoachMessage table (new system) instead of Event table (old system)
+      const coachMessages = await prisma.coachMessage.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
         take: 30,
       });
 
-      const messages = events.map((e) => ({
-        id: e.id,
-        userId,
-        kind: mapEventTypeToKind(e.type),
-        title: titleForKind(e.type),
-        body: (e.payload as any)?.text ?? "",
-        meta: e.payload,
-        createdAt: e.ts,
-        readAt: null,
+      // Convert to API response format
+      const messages = coachMessages.map((msg) => ({
+        id: msg.id,
+        userId: msg.userId,
+        kind: msg.kind,
+        title: msg.title,
+        body: msg.body,
+        meta: msg.meta || {},
+        createdAt: msg.createdAt,
+        readAt: msg.readAt,
       }));
 
       return { messages };

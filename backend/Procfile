@@ -1,2 +1,2 @@
-web: npx prisma migrate deploy && node dist/server.js
+web: npx prisma migrate deploy && npx concurrently --kill-others "node dist/server.js" "node dist/worker.js"
 
