@@ -158,6 +158,27 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                             children: _messages.asMap().entries.map((entry) {
                               final index = entry.key;
                               final message = entry.value;
+                              
+                              // Use special Awakening card for awakening messages
+                              if (message.kind == MessageKind.awakening) {
+                                return _AwakeningCard(
+                                  message: message,
+                                  index: index,
+                                  onRead: () {
+                                    messagesService.markAsRead(message.id);
+                                    setState(() {});
+                                  },
+                                  onDelete: () async {
+                                    debugPrint('🗑️ DELETE STARTED: ${message.id}');
+                                    await messagesService.deleteMessage(message.id);
+                                    debugPrint('🗑️ DELETE COMPLETED, RELOADING FROM HIVE...');
+                                    await _loadMessages(syncFromBackend: false);
+                                    debugPrint('🗑️ UI REFRESHED - ${_messages.length} messages remaining');
+                                  },
+                                );
+                              }
+                              
+                              // Use standard Letter card for all other messages
                               return _LetterCard(
                                 message: message,
                                 index: index,
@@ -169,7 +190,6 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                                   debugPrint('🗑️ DELETE STARTED: ${message.id}');
                                   await messagesService.deleteMessage(message.id);
                                   debugPrint('🗑️ DELETE COMPLETED, RELOADING FROM HIVE...');
-                                  // Reload from Hive only (don't sync from backend)
                                   await _loadMessages(syncFromBackend: false);
                                   debugPrint('🗑️ UI REFRESHED - ${_messages.length} messages remaining');
                                 },
@@ -272,6 +292,228 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// AWAKENING CARD - Special UI for 7-day welcome series
+// ═══════════════════════════════════════════════════════════════
+class _AwakeningCard extends StatelessWidget {
+  final CoachMessage message;
+  final int index;
+  final VoidCallback onRead;
+  final Future<void> Function() onDelete;
+
+  const _AwakeningCard({
+    required this.message,
+    required this.index,
+    required this.onRead,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final card = Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppBorderRadius.xxl),
+        // Darker, mystical gradient
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF2D3748).withOpacity(0.5), // Dark slate
+            const Color(0xFF1A202C).withOpacity(0.3), // Darker slate
+            Colors.black.withOpacity(0.2),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 32,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF0A0A0A), // Nearly black background
+          borderRadius: BorderRadius.circular(AppBorderRadius.xxl - 2),
+          border: Border.all(
+            color: const Color(0xFF4A5568).withOpacity(0.3), // Subtle border
+            width: 1,
+          ),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with moon phase
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      message.emoji,
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Text(
+                      'AWAKENING',
+                      style: AppTextStyles.captionSmall.copyWith(
+                        color: const Color(0xFF718096), // Muted gray
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // Title with special formatting
+            Text(
+              message.title,
+              style: AppTextStyles.h3.copyWith(
+                fontWeight: FontWeight.w300, // Lighter weight for philosophical feel
+                letterSpacing: 0.5,
+                height: 1.4,
+                color: const Color(0xFFE2E8F0), // Light gray
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // Divider line
+            Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    const Color(0xFF4A5568).withOpacity(0.5),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // Body text
+            Text(
+              message.body,
+              style: AppTextStyles.body.copyWith(
+                color: const Color(0xFFA0AEC0), // Softer gray
+                height: 1.8,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.xl),
+
+            // Action buttons
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                _ActionButton(
+                  label: 'Copy',
+                  icon: LucideIcons.copy,
+                  onTap: () async {
+                    await Clipboard.setData(ClipboardData(text: message.body));
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(LucideIcons.check, color: Colors.white, size: 16),
+                            const SizedBox(width: 8),
+                            const Text('Copied to clipboard'),
+                          ],
+                        ),
+                        backgroundColor: const Color(0xFF4A5568),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                ),
+                _ActionButton(
+                  label: 'Share',
+                  icon: LucideIcons.share2,
+                  onTap: () async {
+                    await Share.share(
+                      '${message.title}\n\n${message.body}\n\n— Future-You OS',
+                      subject: message.title,
+                    );
+                  },
+                ),
+                _ActionButton(
+                  label: 'Delete',
+                  icon: LucideIcons.trash2,
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: const Color(0xFF1A1A1A),
+                        title: Text(
+                          'Delete Message?',
+                          style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
+                        ),
+                        content: Text(
+                          'This awakening message will be permanently deleted.',
+                          style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(color: AppColors.textTertiary),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await onDelete();
+                            },
+                            child: const Text(
+                              'Delete',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  isDestructive: true,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+      child: card
+          .animate(delay: (index * 80).ms)
+          .fadeIn(duration: 600.ms)
+          .slideY(begin: 0.15, end: 0, duration: 600.ms, curve: Curves.easeOutCubic)
+          .then()
+          .shimmer(
+            duration: 3000.ms,
+            delay: 800.ms,
+            color: const Color(0xFF4A5568).withOpacity(0.1),
+          ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LETTER CARD - Standard UI for briefs, debriefs, nudges, letters
+// ═══════════════════════════════════════════════════════════════
 class _LetterCard extends StatelessWidget {
   final CoachMessage message;
   final int index;
