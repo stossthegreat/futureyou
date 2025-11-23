@@ -1,10 +1,5 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'vault_item.g.dart';
-
 /// Model for items saved to the Habit Vault
 /// Stores What-If simulations, goal plans, and other saved outputs
-@JsonSerializable()
 class HabitVaultItem {
   final String id;
   final String title;
@@ -26,10 +21,33 @@ class HabitVaultItem {
     this.tags,
   });
 
-  factory HabitVaultItem.fromJson(Map<String, dynamic> json) =>
-      _$HabitVaultItemFromJson(json);
+  factory HabitVaultItem.fromJson(Map<String, dynamic> json) {
+    return HabitVaultItem(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      summary: json['summary'] as String?,
+      sections: (json['sections'] as List<dynamic>)
+          .map((e) => VaultSection.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      habits: (json['habits'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      goalType: json['goalType'] as String?,
+      savedAt: DateTime.parse(json['savedAt'] as String),
+      tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$HabitVaultItemToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'summary': summary,
+      'sections': sections.map((e) => e.toJson()).toList(),
+      'habits': habits,
+      'goalType': goalType,
+      'savedAt': savedAt.toIso8601String(),
+      'tags': tags,
+    };
+  }
 
   /// Create from What-If screen output
   factory HabitVaultItem.fromWhatIfCard({
@@ -100,7 +118,6 @@ class HabitVaultItem {
   }
 }
 
-@JsonSerializable()
 class VaultSection {
   final String title;
   final String content;
@@ -110,9 +127,18 @@ class VaultSection {
     required this.content,
   });
 
-  factory VaultSection.fromJson(Map<String, dynamic> json) =>
-      _$VaultSectionFromJson(json);
+  factory VaultSection.fromJson(Map<String, dynamic> json) {
+    return VaultSection(
+      title: json['title'] as String,
+      content: json['content'] as String,
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$VaultSectionToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'content': content,
+    };
+  }
 }
 
